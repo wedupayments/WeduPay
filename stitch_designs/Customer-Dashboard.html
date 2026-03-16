@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>WeduPay Student Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#11d473",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#102219",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar Navigation -->
+<aside class="w-64 border-r border-slate-200 dark:border-primary/10 bg-white dark:bg-background-dark hidden lg:flex flex-col">
+<div class="p-6 flex items-center gap-3">
+<div class="size-8 bg-primary rounded-lg flex items-center justify-center text-background-dark">
+<span class="material-symbols-outlined font-bold">payments</span>
+</div>
+<h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">WeduPay</h2>
+</div>
+<nav class="flex-1 px-4 space-y-2 mt-4">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary font-semibold" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                    Dashboard
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-primary/5 transition-colors" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+                    Payments
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-primary/5 transition-colors" href="#">
+<span class="material-symbols-outlined">history</span>
+                    History
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-primary/5 transition-colors" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+                    Funding
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-primary/5 transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+                    Settings
+                </a>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-primary/10">
+<div class="flex items-center gap-3 p-2 rounded-xl bg-slate-100 dark:bg-primary/5">
+<div class="size-10 rounded-full bg-slate-300 dark:bg-primary/20 bg-cover bg-center" data-alt="User profile avatar of Alex Johnson" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDaNeQT9w2s_Rl_txLzUwf7RD76XvtTCbnE2HB2jEc__qtkvlqF2yBWhZUaUnCR6gKoAiT5NtEIjI0g_vwVoEHed3N8MU6jtHeenC5qwNHlksn5BUBvvmrfhzmmEBr7ONEjbgIGSvoUczxB3uQhOeamHJRqpbfR_Xak8p45wu0SJMGlkT5qYFiiCWXfB8sMMB1Ui0RR-QY4qVwenipe1mtjEkusg5p-0u3MS4QAleArUjO92p39Zc0ttqqkmXmdZpL8OKaaqEefPvc')"></div>
+<div class="overflow-hidden">
+<p class="text-sm font-bold truncate">Alex Johnson</p>
+<p class="text-xs text-slate-500 dark:text-slate-400 truncate">ID: 88291</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col overflow-y-auto bg-slate-50 dark:bg-background-dark/50">
+<!-- Header -->
+<header class="h-16 border-b border-slate-200 dark:border-primary/10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-8 flex items-center justify-between sticky top-0 z-10">
+<div class="flex items-center gap-4">
+<button class="lg:hidden text-slate-600 dark:text-slate-400">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="text-lg font-bold">Student Dashboard</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-primary/10 text-slate-600 dark:text-slate-400 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-primary rounded-full border-2 border-white dark:border-background-dark"></span>
+</button>
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-primary/10 text-slate-600 dark:text-slate-400">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</div>
+</header>
+<div class="p-8 max-w-6xl mx-auto w-full space-y-8">
+<!-- Welcome Section -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div>
+<h2 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Welcome back, Alex</h2>
+<p class="text-slate-600 dark:text-slate-400 mt-1">Ready to manage your education payments?</p>
+</div>
+<button class="flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-background-dark px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">add</span>
+                        New Payment
+                    </button>
+</div>
+<!-- Stats / Quick Actions Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/10 p-6 rounded-2xl">
+<div class="flex items-center justify-between mb-4">
+<span class="p-2 rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined">pending_actions</span>
+</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Pending Approvals</p>
+<h3 class="text-2xl font-bold mt-1">2</h3>
+</div>
+<div class="bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/10 p-6 rounded-2xl">
+<div class="flex items-center justify-between mb-4">
+<span class="p-2 rounded-lg bg-blue-500/10 text-blue-500">
+<span class="material-symbols-outlined">verified</span>
+</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Verified This Semester</p>
+<h3 class="text-2xl font-bold mt-1">$1,240.00</h3>
+</div>
+<div class="bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/10 p-6 rounded-2xl">
+<div class="flex items-center justify-between mb-4">
+<span class="p-2 rounded-lg bg-orange-500/10 text-orange-500">
+<span class="material-symbols-outlined">account_balance</span>
+</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Primary Merchant</p>
+<h3 class="text-xl font-bold mt-1">BYU-Pathway</h3>
+</div>
+</div>
+<!-- Active References Section -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold">Active Payment References</h3>
+<a class="text-primary text-sm font-semibold hover:underline" href="#">View all</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/20 p-5 rounded-2xl flex items-center justify-between group hover:border-primary transition-colors cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-xl bg-slate-100 dark:bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">school</span>
+</div>
+<div>
+<h4 class="font-bold">BYU-Pathway Worldwide</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Ref: BYU-2024-88291</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+<div class="bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/20 p-5 rounded-2xl flex items-center justify-between group hover:border-primary transition-colors cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-xl bg-slate-100 dark:bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">menu_book</span>
+</div>
+<div>
+<h4 class="font-bold">Course Materials Fund</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Ref: MAT-BK-2024</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- Transactions Table -->
+<section>
+<h3 class="text-xl font-bold mb-4">Recent Transactions</h3>
+<div class="bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/10 rounded-2xl overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50 dark:bg-primary/5 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
+<th class="px-6 py-4 font-semibold">Merchant / Purpose</th>
+<th class="px-6 py-4 font-semibold">Date</th>
+<th class="px-6 py-4 font-semibold text-right">Amount</th>
+<th class="px-6 py-4 font-semibold text-center">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-primary/5">
+<tr class="hover:bg-slate-50 dark:hover:bg-primary/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="font-bold text-sm">BYU-Pathway Tuition</span>
+<span class="text-xs text-slate-500">Term: Winter 2024</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">Oct 12, 2024</td>
+<td class="px-6 py-4 text-sm font-bold text-right">$450.00</td>
+<td class="px-6 py-4 text-center">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-primary/20 text-primary border border-primary/20">Verified</span>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-primary/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="font-bold text-sm">Application Fee</span>
+<span class="text-xs text-slate-500">Global Enrollment</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">Oct 10, 2024</td>
+<td class="px-6 py-4 text-sm font-bold text-right">$35.00</td>
+<td class="px-6 py-4 text-center">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-orange-500/20 text-orange-500 border border-orange-500/20">Pending</span>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-primary/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="font-bold text-sm">BYU-Pathway Tuition</span>
+<span class="text-xs text-slate-500">Term: Fall 2023</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">Sep 15, 2023</td>
+<td class="px-6 py-4 text-sm font-bold text-right">$755.00</td>
+<td class="px-6 py-4 text-center">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-primary/20 text-primary border border-primary/20">Verified</span>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="p-4 border-t border-slate-100 dark:border-primary/5 bg-slate-50/50 dark:bg-transparent text-center">
+<button class="text-sm font-semibold text-primary hover:text-primary/80">See Full History</button>
+</div>
+</div>
+</section>
+<!-- Security Tip -->
+<div class="bg-primary/5 border border-primary/20 rounded-2xl p-6 flex items-start gap-4">
+<span class="material-symbols-outlined text-primary">verified_user</span>
+<div>
+<h4 class="font-bold text-primary">Secure Payment System</h4>
+<p class="text-sm text-slate-600 dark:text-slate-400 mt-1">WeduPay uses end-to-end encryption for all institutional transfers. Your payments are verified directly with BYU-Pathway within 24-48 business hours.</p>
+</div>
+</div>
+</div>
+<!-- Footer Spacer -->
+<footer class="mt-auto py-8 text-center text-slate-500 text-xs">
+                © 2024 WeduPay Education Financial Services. All rights reserved.
+            </footer>
+</main>
+</div>
+<!-- Mobile Nav Bar (Bottom) -->
+<div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 flex justify-around p-3 z-20">
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] font-bold">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="text-[10px] font-bold">Payments</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined">history</span>
+<span class="text-[10px] font-bold">History</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-bold">Profile</span>
+</button>
+</div>
+</body></html>

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>WeduPay Admin - Merchant Detail View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#11d473",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#102219",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .active-nav { @apply bg-primary/10 text-primary border-r-4 border-primary; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+<!-- Sidebar Navigation -->
+<aside class="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col">
+<div class="p-6 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<h1 class="font-bold text-lg leading-none">WeduPay</h1>
+<p class="text-xs text-slate-500">Admin Portal</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-slate-500">dashboard</span>
+<span class="font-medium text-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">storefront</span>
+<span class="font-medium text-sm">Merchants</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-slate-500">receipt_long</span>
+<span class="font-medium text-sm">Transactions</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-slate-500">account_balance_wallet</span>
+<span class="font-medium text-sm">Settlements</span>
+</a>
+<div class="pt-4 pb-2 px-3">
+<p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">System</p>
+</div>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-slate-500">settings_ethernet</span>
+<span class="font-medium text-sm">API Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-slate-500">help_center</span>
+<span class="font-medium text-sm">Support</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3 p-2">
+<div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+<img alt="Admin" class="w-full h-full object-cover" data-alt="Admin user profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCcixAaezXz1FI0NP7w_dvtKQSRtLzWqRX0rGu3jsYDDoZt-3b7Bz75Fgt_0A1n7ahzsBRQy8ogC1u8TiVhbXgb8GotHHqIIdHeHdoq3nDPZGBIv8ep2apIiF-SRpYGTSZTcDgjL5RvLJOTKq9uOuVQZVwR0TY_x1DdWxrHslGZ8A0_5RiDIm1jMbUU-tYITTBiBlxPflN_i3LTsyu-z80TxdQg11WYAJ2dMgFEqlcDol4O_y0Qvy7o0aXLOLV8O6N-An_qNfJVASQ"/>
+</div>
+<div class="flex-1 overflow-hidden">
+<p class="text-sm font-medium truncate">Alexander Ross</p>
+<p class="text-xs text-slate-500 truncate">Super Admin</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto">
+<!-- Header & Breadcrumbs -->
+<header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">
+<div class="px-8 py-4 flex items-center justify-between">
+<div class="flex items-center gap-2 text-sm">
+<a class="text-slate-500 hover:text-primary" href="#">Admin Dashboard</a>
+<span class="material-symbols-outlined text-base text-slate-400">chevron_right</span>
+<a class="text-slate-500 hover:text-primary" href="#">Merchants</a>
+<span class="material-symbols-outlined text-base text-slate-400">chevron_right</span>
+<span class="font-medium text-slate-900 dark:text-slate-100">BYU-Pathway Worldwide</span>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">download</span> Export Report
+                        </button>
+<button class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">edit</span> Edit Merchant
+                        </button>
+</div>
+</div>
+</header>
+<div class="p-8 space-y-8">
+<!-- Merchant Profile Header Card -->
+<div class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-6 items-start md:items-center">
+<div class="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center p-4 border border-slate-100 dark:border-slate-700">
+<img alt="BYU-Pathway" class="max-w-full max-h-full object-contain" data-alt="BYU-Pathway logo placeholder" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxIpvn0FjI9MysXNvTkZGGOKAag2Emy2PLYZHcyB_GPgTp_0LMyoJEGWfxlJnJEMzlsdleuI4KD1a5qOpbrQ4Q9JSJTlT1oB3Naz2QI5R7jFfuDBh3G5LLs-9WazTVNLDxoByLn-8og59Hc3ORkgFp9daEgSv3RwqZPuCmpou9w0dSKXV9Q6E3QqcNYqOMQNevqsZfBgjCSGfsnOWHWHRmJcsSbtlgDLWGEcWK6S_OHDzQyTPmWbpo2R2nLX577aclRuqF2U5dV08"/>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-1">
+<h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">BYU-Pathway Worldwide</h2>
+<span class="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">Active</span>
+</div>
+<div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-lg">fingerprint</span>
+<span>ID: <span class="text-slate-700 dark:text-slate-300 font-medium">MPW-99283</span></span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-lg">hub</span>
+<span>Integration: <span class="text-slate-700 dark:text-slate-300 font-medium">API Stage 1</span></span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-lg">calendar_today</span>
+<span>Onboarded: <span class="text-slate-700 dark:text-slate-300 font-medium">Oct 12, 2023</span></span>
+</div>
+</div>
+</div>
+<div class="w-full md:w-auto flex flex-col items-end gap-2">
+<div class="text-right">
+<p class="text-xs text-slate-400 font-bold uppercase">Quick Actions</p>
+</div>
+<div class="flex gap-2">
+<button class="p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800" title="Disable Merchant">
+<span class="material-symbols-outlined text-slate-500">block</span>
+</button>
+<button class="p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800" title="Manage Keys">
+<span class="material-symbols-outlined text-slate-500">key</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Financial Summary & Settlement Overview -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Stats Cards Column -->
+<div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+<p class="text-sm font-medium text-slate-500">Total Routed Volume</p>
+<div class="mt-4">
+<h3 class="text-2xl font-bold">$425,800.00</h3>
+<p class="text-primary text-xs font-bold mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">trending_up</span> +12.5% this month
+                                </p>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+<p class="text-sm font-medium text-slate-500">Student Payments</p>
+<div class="mt-4">
+<h3 class="text-2xl font-bold">12,450</h3>
+<p class="text-primary text-xs font-bold mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">trending_up</span> +5.2% vs LW
+                                </p>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+<p class="text-sm font-medium text-slate-500">Avg. Transaction Size</p>
+<div class="mt-4">
+<h3 class="text-2xl font-bold">$34.20</h3>
+<p class="text-red-500 text-xs font-bold mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">trending_down</span> -1.1%
+                                </p>
+</div>
+</div>
+</div>
+<!-- Settlement Overview Card -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+<h4 class="font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">account_balance</span> Settlement Overview
+                        </h4>
+<div class="space-y-4">
+<div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+<p class="text-xs text-slate-500 font-medium">Settled to Bank</p>
+<p class="text-lg font-bold text-slate-900 dark:text-slate-100">$380,450.00</p>
+<div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 85%"></div>
+</div>
+</div>
+<div class="p-3 border border-slate-100 dark:border-slate-800 rounded-lg">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-xs text-slate-500 font-medium">Pending Verifications</p>
+<p class="text-lg font-bold text-slate-900 dark:text-slate-100">$45,350.00</p>
+</div>
+<span class="material-symbols-outlined text-slate-300">hourglass_empty</span>
+</div>
+</div>
+</div>
+<button class="w-full mt-4 text-xs font-bold text-primary hover:underline flex items-center justify-center gap-1">
+                            View Settlement History <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Transaction List -->
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<h3 class="font-bold text-lg text-slate-900 dark:text-slate-100">Student Transactions</h3>
+<div class="flex flex-wrap gap-3">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary w-full md:w-64" placeholder="Search by name or ID..." type="text"/>
+</div>
+<button class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700">
+<span class="material-symbols-outlined text-lg">filter_list</span> Filter
+                            </button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50 dark:bg-slate-800 text-slate-500 text-xs font-bold uppercase tracking-wider">
+<th class="px-6 py-4">Student Name / ID</th>
+<th class="px-6 py-4">Amount</th>
+<th class="px-6 py-4">Wallet</th>
+<th class="px-6 py-4">Reference</th>
+<th class="px-6 py-4">Status</th>
+<th class="px-6 py-4 text-right">Timestamp</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="px-6 py-4">
+<div>
+<p class="font-bold text-sm text-slate-900 dark:text-slate-100">Tendai Moyo</p>
+<p class="text-xs text-slate-500">ID: STU-88219</p>
+</div>
+</td>
+<td class="px-6 py-4 font-medium text-sm">$45.00</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600">EC</div>
+<span class="text-sm">EcoCash</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-mono text-slate-500">REF-9283-BPU</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Verified
+                                        </span>
+</td>
+<td class="px-6 py-4 text-right text-xs text-slate-500">Oct 24, 14:22</td>
+</tr>
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="px-6 py-4">
+<div>
+<p class="font-bold text-sm text-slate-900 dark:text-slate-100">Aisha Kamau</p>
+<p class="text-xs text-slate-500">ID: STU-91022</p>
+</div>
+</td>
+<td class="px-6 py-4 font-medium text-sm">$120.00</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-[10px] font-bold text-orange-600">MK</div>
+<span class="text-sm">Mukuru</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-mono text-slate-500">REF-1142-BPU</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span> Pending
+                                        </span>
+</td>
+<td class="px-6 py-4 text-right text-xs text-slate-500">Oct 24, 13:58</td>
+</tr>
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="px-6 py-4">
+<div>
+<p class="font-bold text-sm text-slate-900 dark:text-slate-100">Kofi Mensah</p>
+<p class="text-xs text-slate-500">ID: STU-77341</p>
+</div>
+</td>
+<td class="px-6 py-4 font-medium text-sm">$32.50</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600">EC</div>
+<span class="text-sm">EcoCash</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-mono text-slate-500">REF-8831-BPU</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Failed
+                                        </span>
+</td>
+<td class="px-6 py-4 text-right text-xs text-slate-500">Oct 24, 11:15</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 bg-slate-50 dark:bg-slate-800 flex items-center justify-between border-t border-slate-200 dark:border-slate-800">
+<p class="text-xs text-slate-500 italic">Showing 10 of 12,450 transactions</p>
+<div class="flex gap-2">
+<button class="px-3 py-1 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-900 text-xs font-medium disabled:opacity-50">Previous</button>
+<button class="px-3 py-1 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-900 text-xs font-medium">Next</button>
+</div>
+</div>
+</div>
+<!-- Integration Settings & Webhooks -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 pb-12">
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">webhook</span> Webhook Configuration
+                            </h3>
+<button class="text-xs text-primary font-bold hover:underline">Configure</button>
+</div>
+<div class="space-y-4">
+<div>
+<label class="text-[10px] font-bold uppercase text-slate-400 block mb-1">Production Webhook URL</label>
+<div class="flex gap-2">
+<input class="flex-1 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-xs py-2 px-3 text-slate-600 font-mono" readonly="" type="text" value="https://api.byu-pathway.org/webhooks/wedupay"/>
+<button class="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-2 text-xs text-slate-500">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span>Status: Healthy (200 OK)</span>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">key</span> API Credentials
+                            </h3>
+<button class="text-xs text-primary font-bold hover:underline">Rotate Keys</button>
+</div>
+<div class="space-y-4">
+<div>
+<label class="text-[10px] font-bold uppercase text-slate-400 block mb-1">Live Secret Key</label>
+<div class="flex gap-2">
+<input class="flex-1 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-xs py-2 px-3 text-slate-600 font-mono" readonly="" type="password" value="sk_live_51M087XFGs9v87S7F98as7d"/>
+<button class="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+</div>
+</div>
+<p class="text-[10px] text-slate-400 leading-tight">Last rotated on August 15, 2023. Ensure you keep your keys secure.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

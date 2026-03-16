@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>WeduPay Admin - Stage 1 Verification</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#11d473",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#102219",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+<!-- Sidebar Navigation -->
+<aside class="w-64 border-r border-primary/10 bg-white dark:bg-background-dark flex flex-col shrink-0">
+<div class="p-6 flex flex-col gap-1">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-3xl font-bold">account_balance_wallet</span>
+<h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">WeduPay</h1>
+</div>
+<p class="text-xs font-semibold uppercase tracking-wider text-slate-500 mt-4">Stage 1 Verification</p>
+</div>
+<nav class="flex-1 px-4 space-y-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span>Transactions</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">storefront</span>
+<span>Merchants</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span>Wallets</span>
+</a>
+<div class="pt-4 mt-4 border-t border-primary/10">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</nav>
+<div class="p-4 border-t border-primary/10">
+<div class="flex items-center gap-3 px-2 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold">JD</div>
+<div class="flex flex-col overflow-hidden">
+<span class="text-sm font-semibold truncate">John Doe</span>
+<span class="text-xs text-slate-500 truncate">Senior Auditor</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col overflow-hidden">
+<!-- Header -->
+<header class="h-16 border-b border-primary/10 bg-white dark:bg-background-dark flex items-center justify-between px-8">
+<h2 class="text-lg font-bold">Verification Queue</h2>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary w-64 text-sm" placeholder="Search Student ID or Ref..." type="text"/>
+</div>
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+</button>
+</div>
+</header>
+<!-- Dashboard Body -->
+<div class="flex-1 overflow-y-auto p-8 space-y-8">
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-primary/10 shadow-sm">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-sm font-medium text-slate-500">Total Transactions</p>
+<h3 class="text-2xl font-bold mt-1">1,284</h3>
+</div>
+<span class="px-2 py-1 rounded bg-primary/10 text-primary text-xs font-bold">+12.5%</span>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-primary/10 shadow-sm">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-sm font-medium text-slate-500">Pending Verification</p>
+<h3 class="text-2xl font-bold mt-1 text-amber-500">42</h3>
+</div>
+<span class="px-2 py-1 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-600 text-xs font-bold">High Priority</span>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-primary/10 shadow-sm">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-sm font-medium text-slate-500">Total Value Routed (ZWL)</p>
+<h3 class="text-2xl font-bold mt-1">4.2M</h3>
+</div>
+<span class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 text-xs font-bold">Phase 1</span>
+</div>
+</div>
+</div>
+<!-- Filters -->
+<div class="flex flex-wrap items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-primary/10 text-sm font-medium">
+<span class="material-symbols-outlined text-lg">filter_alt</span>
+                        Merchant: BYU-Pathway
+                        <span class="material-symbols-outlined text-lg">expand_more</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-primary/10 text-sm font-medium">
+                        Wallet: All Providers
+                        <span class="material-symbols-outlined text-lg">expand_more</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-primary/10 text-sm font-medium">
+                        Status: Pending
+                        <span class="material-symbols-outlined text-lg">expand_more</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-primary/10 text-sm font-medium">
+                        Date: Last 7 Days
+                        <span class="material-symbols-outlined text-lg">expand_more</span>
+</button>
+<div class="flex-1"></div>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-lg">download</span>
+                        Export CSV
+                    </button>
+</div>
+<!-- Transaction Table -->
+<div class="bg-white dark:bg-slate-800 rounded-xl border border-primary/10 overflow-hidden shadow-sm">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50 dark:bg-slate-900/50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+<th class="px-6 py-4">TX ID</th>
+<th class="px-6 py-4">Timestamp</th>
+<th class="px-6 py-4">Student Name / ID</th>
+<th class="px-6 py-4">Amount</th>
+<th class="px-6 py-4">Wallet Provider</th>
+<th class="px-6 py-4">Payment Reference</th>
+<th class="px-6 py-4 text-center">Status</th>
+<th class="px-6 py-4 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-primary/5">
+<!-- Row 1 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-6 py-4 text-sm font-mono font-medium">#WD-8921</td>
+<td class="px-6 py-4 text-sm">Oct 24, 14:32</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold">Tariro Moyo</span>
+<span class="text-xs text-slate-500">STU-99021</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-bold">ZWL 45,000</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded bg-blue-100 flex items-center justify-center">
+<span class="material-symbols-outlined text-blue-600 text-sm">account_balance_wallet</span>
+</div>
+<span class="text-sm">EcoCash</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-medium">REF-X001-92A</td>
+<td class="px-6 py-4 text-center">
+<span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">PENDING</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="bg-primary hover:bg-primary/90 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition-all shadow-md shadow-primary/10">Verify</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-primary/5 transition-colors">
+<td class="px-6 py-4 text-sm font-mono font-medium">#WD-8920</td>
+<td class="px-6 py-4 text-sm">Oct 24, 13:15</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold">Blessing Chanda</span>
+<span class="text-xs text-slate-500">STU-44582</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-bold">ZWL 12,800</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded bg-orange-100 flex items-center justify-center">
+<span class="material-symbols-outlined text-orange-600 text-sm">payments</span>
+</div>
+<span class="text-sm">Mukuru</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-medium">MUK-00982-ZZ</td>
+<td class="px-6 py-4 text-center">
+<span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">PENDING</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="bg-primary hover:bg-primary/90 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition-all shadow-md shadow-primary/10">Verify</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-primary/5 transition-colors opacity-70">
+<td class="px-6 py-4 text-sm font-mono font-medium">#WD-8919</td>
+<td class="px-6 py-4 text-sm">Oct 24, 10:45</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold">John Smith</span>
+<span class="text-xs text-slate-500">STU-11234</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-bold">ZWL 60,000</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded bg-blue-100 flex items-center justify-center">
+<span class="material-symbols-outlined text-blue-600 text-sm">account_balance_wallet</span>
+</div>
+<span class="text-sm">EcoCash</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-medium">REF-V882-10L</td>
+<td class="px-6 py-4 text-center">
+<span class="px-2.5 py-1 rounded-full bg-primary/20 text-primary text-xs font-bold">VERIFIED</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-slate-600"><span class="material-symbols-outlined">visibility</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</div>
+<!-- Verification Detail Modal (Simulated Overlay) -->
+<div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+<div class="bg-white dark:bg-background-dark w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-primary/20">
+<div class="px-8 py-6 border-b border-primary/10 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+<div class="flex flex-col">
+<h2 class="text-xl font-bold">Transaction Verification</h2>
+<p class="text-sm text-slate-500">Cross-reference with bank statement for #WD-8921</p>
+</div>
+<button class="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-8 grid grid-cols-2 gap-8">
+<!-- Left Side: System Record -->
+<div class="space-y-4">
+<h3 class="text-xs font-bold uppercase tracking-widest text-primary">System Record</h3>
+<div class="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
+<div class="flex justify-between">
+<span class="text-sm text-slate-500">Student ID:</span>
+<span class="text-sm font-bold">STU-99021</span>
+</div>
+<div class="flex justify-between">
+<span class="text-sm text-slate-500">Amount:</span>
+<span class="text-sm font-bold text-slate-900 dark:text-white">ZWL 45,000.00</span>
+</div>
+<div class="flex justify-between">
+<span class="text-sm text-slate-500">Provider Ref:</span>
+<span class="text-sm font-mono font-bold">REF-X001-92A</span>
+</div>
+<div class="flex justify-between">
+<span class="text-sm text-slate-500">Date:</span>
+<span class="text-sm font-bold">Oct 24, 2023</span>
+</div>
+</div>
+</div>
+<!-- Right Side: Manual Verification Entry -->
+<div class="space-y-4">
+<h3 class="text-xs font-bold uppercase tracking-widest text-slate-500">Statement Entry</h3>
+<div class="space-y-3">
+<div>
+<label class="block text-xs font-medium text-slate-500 mb-1">Bank Reference ID</label>
+<input class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary text-sm font-mono" type="text" value="REF-X001-92A"/>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="block text-xs font-medium text-slate-500 mb-1">Confirmed Amount</label>
+<input class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary text-sm font-bold" type="text" value="45000"/>
+</div>
+<div>
+<label class="block text-xs font-medium text-slate-500 mb-1">Statement Date</label>
+<input class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary text-sm" type="date" value="2023-10-24"/>
+</div>
+</div>
+<div class="flex items-center gap-2 pt-2">
+<input checked="" class="rounded text-primary focus:ring-primary border-slate-300" id="match" type="checkbox"/>
+<label class="text-xs font-medium" for="match">Reference IDs match bank record</label>
+</div>
+</div>
+</div>
+</div>
+<div class="px-8 py-6 bg-slate-50 dark:bg-slate-900/50 flex gap-3 justify-end border-t border-primary/10">
+<button class="px-6 py-2 rounded-lg border border-slate-300 text-sm font-bold hover:bg-slate-100 transition-colors">Flag for Review</button>
+<button class="px-8 py-2 rounded-lg bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">Confirm Verification</button>
+</div>
+</div>
+</div>
+</body></html>
