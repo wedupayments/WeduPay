@@ -1,6 +1,8 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { WaitlistForm } from "@/components/WaitlistForm";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -22,13 +24,13 @@ export default function Home() {
                                 Empowering African merchants and students with direct settlement and real-time tracking for seamless cross-border transactions.
                             </p>
 </div>
-<div className="flex flex-wrap gap-4">
-<button className="flex min-w-[160px] items-center justify-center rounded-xl h-14 px-6 bg-primary text-background-dark text-base font-bold shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform">
-                                Merchant Signup
-                            </button>
-<button className="flex min-w-[160px] items-center justify-center rounded-xl h-14 px-6 border border-slate-300 dark:border-primary/30 text-base font-bold hover:bg-slate-100 dark:hover:bg-primary/10 transition-colors">
-                                Student Portal
-                            </button>
+<div className="flex flex-col gap-4 max-w-md">
+  <p className="text-sm font-bold text-primary uppercase tracking-wider">Join the Merchant Waitlist</p>
+  <WaitlistForm type="MERCHANT" buttonText="Join as Merchant" />
+  <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+    <span>Are you a student?</span>
+    <Link href="#cta" className="text-primary hover:underline italic">Sign up below</Link>
+  </div>
 </div>
 <div className="flex items-center gap-4 pt-4">
 <div className="flex -space-x-3">
@@ -181,13 +183,11 @@ export default function Home() {
                                 Join hundreds of merchants and thousands of students already using WeduPay for faster, cheaper, and safer transactions.
                             </p>
 </div>
-<div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto relative z-10">
-<button className="px-8 py-4 bg-background-dark text-primary rounded-xl font-bold text-lg hover:brightness-125 transition-all">
-                                Create Account
-                            </button>
-<button className="px-8 py-4 bg-primary/20 border border-background-dark/20 backdrop-blur-sm rounded-xl font-bold text-lg hover:bg-primary/30 transition-all">
-                                Contact Sales
-                            </button>
+<div className="flex flex-col gap-6 w-full lg:w-auto relative z-10" id="cta">
+  <div className="bg-background-dark/10 p-6 rounded-2xl border border-background-dark/10 backdrop-blur-sm">
+    <p className="text-sm font-bold mb-3 uppercase tracking-widest opacity-80">Students: Get Early Access</p>
+    <WaitlistForm type="STUDENT" buttonText="Join Student Waitlist" className="min-w-[320px]" />
+  </div>
 </div>
 </div>
 </div>

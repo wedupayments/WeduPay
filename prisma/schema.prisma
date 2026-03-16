@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Waitlist {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  type      String   // "MERCHANT" or "STUDENT"
+  createdAt DateTime @default(now())
+
+  @@map("waitlist")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  phoneNumber String
+  country     String
+  kycStatus   String
+  createdAt   DateTime @default(now())
+
+  wallets     Wallet[]
+  transactions Transaction[]
+
+  @@map("users")
+}
+
+model Wallet {
+  id         String   @id @default(uuid())
+  userId     String
+  walletType String
+  currency   String
+  balance    Float
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("wallets")
+}
+
+model Transaction {
+  id        String   @id @default(uuid())
+  userId    String
+  amount    Float
+  currency  String
+  status    String
+  type      String
+  reference String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("transactions")
+}
+
+model LedgerEntry {
+  id            String   @id @default(uuid())
+  transactionId String
+  accountId     String
+  entryType     String
+  amount        Float
+  currency      String
+  createdAt     DateTime @default(now())
+
+  @@map("ledger_entries")
+}
