@@ -202,7 +202,7 @@ export default function AdminDashboard() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 dark:bg-emerald-900/10 text-slate-500 dark:text-emerald-700 text-xs font-black uppercase tracking-[0.1em] border-b border-slate-100 dark:border-emerald-900/20">
+                  <tr className="bg-slate-50 dark:bg-emerald-900/10 text-slate-500 dark:text-emerald-700 text-xs font-black uppercase tracking-widest border-b border-slate-100 dark:border-emerald-900/20">
                     <th className="px-6 py-5">Merchant</th>
                     <th className="px-6 py-5">Channel</th>
                     <th className="px-6 py-5">Amount</th>
