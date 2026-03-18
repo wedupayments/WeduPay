@@ -9,7 +9,7 @@ const navItems = [
 
 export function AdminSidebar() {
   return (
-    <aside className="w-full lg:w-64 bg-slate-50 dark:bg-background-dark/50 border-r border-slate-200 dark:border-emerald-900/30 p-4 space-y-6 flex flex-col h-screen sticky top-0">
+    <aside className="w-full lg:w-64 bg-slate-50 dark:bg-background-dark/50 border-r border-slate-200 dark:border-emerald-900/30 p-4 space-y-6 flex flex-col h-screen sticky top-0 overflow-y-auto">
       <div className="space-y-1">
         <p className="px-3 text-xs font-bold text-slate-400 dark:text-emerald-800 uppercase tracking-wider mb-2">Main Menu</p>
         {navItems.map((item) => (

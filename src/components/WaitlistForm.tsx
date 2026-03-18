@@ -53,12 +53,12 @@ export function WaitlistForm({ type, buttonText, className }: WaitlistFormProps)
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="flex-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-primary/20 bg-background-light dark:bg-background-dark focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+          className="flex-1 min-w-0 px-4 py-3 rounded-xl border border-slate-300 dark:border-white/20 bg-white dark:bg-white/15 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/50 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
         />
         <button
           type="submit"
           disabled={loading}
-          className="flex items-center justify-center px-6 py-3 bg-primary text-background-dark font-bold rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="shrink-0 whitespace-nowrap flex items-center justify-center px-5 py-3 bg-primary text-background-dark font-bold rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? "Joining..." : buttonText}
         </button>

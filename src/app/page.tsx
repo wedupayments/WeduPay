@@ -17,7 +17,7 @@ export default function Home() {
 <span className="inline-block px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-bold uppercase tracking-wider">
                                 Cross-Border Fintech
                             </span>
-<h1 className="text-4xl lg:text-6xl font-black leading-tight tracking-tight">
+<h1 className="text-3xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight">
                                 Secure payment routing for <span className="text-primary">mobile wallets</span> in Africa
                             </h1>
 <p className="text-lg text-slate-600 dark:text-slate-400 max-w-xl">
@@ -50,7 +50,7 @@ export default function Home() {
 <div className="relative">
 <div className="aspect-square rounded-3xl overflow-hidden bg-linear-to-br from-primary/30 to-background-dark border border-primary/20" data-alt="Abstract visualization of digital payment network connecting Africa">
 <div className="absolute inset-0 flex items-center justify-center">
-<span className="material-symbols-outlined text-[120px] text-primary/40">language</span>
+<span className="material-symbols-outlined text-[64px] md:text-[120px] text-primary/40">language</span>
 </div>
 <div className="absolute bottom-10 left-10 right-10 p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
 <div className="flex justify-between items-center mb-4">
@@ -160,7 +160,7 @@ export default function Home() {
 </div>
 </section>
 {/* Network Map Section */}
-            <section className="py-32 bg-slate-50/50 dark:bg-background-dark/30 overflow-hidden relative">
+            <section className="py-16 lg:py-32 bg-slate-50/50 dark:bg-background-dark/30 overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-[50%] h-full bg-linear-to-l from-primary/5 to-transparent pointer-events-none"></div>
                 <div className="max-w-7xl mx-auto px-6 relative">
                     <div className="grid lg:grid-cols-2 gap-20 items-center">
@@ -222,7 +222,7 @@ export default function Home() {
 
                                 {/* Floating Hub Info Card - Enhanced Glassmorphism */}
                                 <div className="absolute top-[35%] left-[60%] pointer-events-none group-hover:translate-x-4 transition-transform duration-700 ease-out">
-                                    <div className="bg-white/40 dark:bg-background-dark/40 backdrop-blur-2xl border border-white/20 dark:border-primary/20 p-6 rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] dark:shadow-[0_32px_64px_-16px_rgba(17,212,115,0.1)] space-y-3">
+                                    <div className="bg-white/40 dark:bg-background-dark/40 backdrop-blur-2xl border border-white/20 dark:border-primary/20 p-6 rounded-4xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] dark:shadow-[0_32px_64px_-16px_rgba(17,212,115,0.1)] space-y-3">
                                         <div className="flex items-center gap-3">
                                             <div className="size-3 rounded-full bg-primary shadow-[0_0_12px_#11d473] animate-pulse"></div>
                                             <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">Master Hub</span>
@@ -250,7 +250,7 @@ export default function Home() {
                                 <div className="inline-flex items-center px-4 py-2 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-black uppercase tracking-[0.3em]">
                                     Continental Architecture
                                 </div>
-                                <h2 className="text-5xl lg:text-7xl font-black tracking-tighter leading-tight dark:text-white">
+                                <h2 className="text-4xl lg:text-6xl font-black tracking-tighter leading-tight dark:text-white">
                                     The Fintech <span className="text-primary italic">Backbone</span> of Africa.
                                 </h2>
                             </div>
@@ -284,25 +284,25 @@ export default function Home() {
             <section className="border-y border-slate-200 dark:border-primary/10 py-12">
 <div className="max-w-7xl mx-auto px-6">
 <p className="text-center text-sm font-bold text-slate-500 uppercase tracking-widest mb-8">Powering payments across the continent</p>
-<div className="flex flex-wrap justify-center items-center gap-12 grayscale opacity-60">
-<div className="text-2xl font-black">ZIMBABWE</div>
-<div className="text-2xl font-black">SOUTH AFRICA</div>
-<div className="text-2xl font-black">NIGERIA</div>
-<div className="text-2xl font-black">KENYA</div>
-<div className="text-2xl font-black">GHANA</div>
-<div className="text-2xl font-black">RWANDA</div>
-<div className="text-2xl font-black">UGANDA</div>
-<div className="text-2xl font-black">TANZANIA</div>
+<div className="flex flex-wrap justify-center items-center gap-3 md:gap-6 lg:gap-10 grayscale opacity-60">
+<div className="text-xs md:text-sm lg:text-base font-black">ZIMBABWE</div>
+<div className="text-xs md:text-sm lg:text-base font-black">SOUTH AFRICA</div>
+<div className="text-xs md:text-sm lg:text-base font-black">NIGERIA</div>
+<div className="text-xs md:text-sm lg:text-base font-black">KENYA</div>
+<div className="text-xs md:text-sm lg:text-base font-black">GHANA</div>
+<div className="text-xs md:text-sm lg:text-base font-black">RWANDA</div>
+<div className="text-xs md:text-sm lg:text-base font-black">UGANDA</div>
+<div className="text-xs md:text-sm lg:text-base font-black">TANZANIA</div>
 </div>
 </div>
 </section>
 {/* CTA Section */}
 <section className="py-20">
 <div className="max-w-7xl mx-auto px-6">
-<div className="rounded-3xl bg-primary p-8 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-12 text-background-dark overflow-hidden relative">
+<div className="rounded-3xl bg-primary p-6 md:p-8 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 text-background-dark overflow-hidden relative">
 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
 <div className="max-w-2xl relative z-10">
-<h2 className="text-3xl lg:text-5xl font-black mb-6">Ready to scale your business across Africa?</h2>
+<h2 className="text-2xl md:text-3xl lg:text-5xl font-black mb-4 md:mb-6">Ready to scale your business across Africa?</h2>
 <p className="text-lg font-medium opacity-90">
                                 Join hundreds of merchants and thousands of students already using WeduPay for faster, cheaper, and safer transactions.
                             </p>
@@ -310,7 +310,7 @@ export default function Home() {
 <div className="flex flex-col gap-6 w-full lg:w-auto relative z-10" id="cta">
   <div className="bg-background-dark/10 p-6 rounded-2xl border border-background-dark/10 backdrop-blur-sm">
     <p className="text-sm font-bold mb-3 uppercase tracking-widest opacity-80">Students: Get Early Access</p>
-    <WaitlistForm type="STUDENT" buttonText="Join Student Waitlist" className="min-w-[320px]" />
+    <WaitlistForm type="STUDENT" buttonText="Join Student Waitlist" className="w-full" />
   </div>
 </div>
 </div>
