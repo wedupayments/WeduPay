@@ -14,7 +14,7 @@ export function Navbar() {
         <Link className="text-sm font-medium hover:text-primary transition-colors" href="#solutions">Solutions</Link>
         <Link className="text-sm font-medium hover:text-primary transition-colors" href="#benefits">Benefits</Link>
         <Link className="text-sm font-medium hover:text-primary transition-colors" href="#how-it-works">How it Works</Link>
-        <Link className="text-sm font-medium hover:text-primary transition-colors" href="#pricing">Pricing</Link>
+
       </nav>
       <div className="flex gap-2 md:gap-3 items-center">
         <ThemeToggle />

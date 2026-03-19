@@ -54,8 +54,8 @@ export default function Home() {
 </div>
 <div className="absolute bottom-10 left-10 right-10 p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
 <div className="flex justify-between items-center mb-4">
-<span className="text-xs font-bold uppercase tracking-widest text-primary">Live Transaction</span>
-<span className="text-xs text-slate-300">Just now</span>
+<span className="text-xs font-bold uppercase tracking-widest text-primary">Example Transaction</span>
+<span className="text-xs text-slate-300">Demo</span>
 </div>
 <div className="flex items-center gap-3">
 <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-background-dark">
@@ -251,7 +251,7 @@ export default function Home() {
                                     Continental Architecture
                                 </div>
                                 <h2 className="text-4xl lg:text-6xl font-black tracking-tighter leading-tight dark:text-white">
-                                    The Fintech <span className="text-primary italic">Backbone</span> of Africa.
+                                    Built to be the Fintech <span className="text-primary italic">Backbone</span> of Africa.
                                 </h2>
                             </div>
                             
@@ -262,7 +262,7 @@ export default function Home() {
                             <div className="grid gap-8 pt-4">
                                 {[
                                     { title: "Direct Routing", desc: "Native API integration with local wallet providers.", icon: "settings_input_component" },
-                                    { title: "Institutional Settlement", desc: "Guaranteed settlement for universities and businesses.", icon: "account_balance" }
+                                    { title: "Institutional Settlement", desc: "Direct settlement for universities and businesses, with full transaction transparency.", icon: "account_balance" }
                                 ].map((item) => (
                                     <div key={item.title} className="flex gap-6 group">
                                         <div className="w-14 h-14 shrink-0 rounded-2xl bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 flex items-center justify-center group-hover:border-primary transition-all shadow-sm">
@@ -283,7 +283,7 @@ export default function Home() {
             {/* Trust Indicators */}
             <section className="border-y border-slate-200 dark:border-primary/10 py-12">
 <div className="max-w-7xl mx-auto px-6">
-<p className="text-center text-sm font-bold text-slate-500 uppercase tracking-widest mb-8">Powering payments across the continent</p>
+<p className="text-center text-sm font-bold text-slate-500 uppercase tracking-widest mb-8">Targeting markets across Africa</p>
 <div className="flex flex-wrap justify-center items-center gap-3 md:gap-6 lg:gap-10 grayscale opacity-60">
 <div className="text-xs md:text-sm lg:text-base font-black">ZIMBABWE</div>
 <div className="text-xs md:text-sm lg:text-base font-black">SOUTH AFRICA</div>

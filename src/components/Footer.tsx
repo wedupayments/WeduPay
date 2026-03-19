@@ -51,7 +51,7 @@ export function Footer() {
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-slate-200 dark:border-primary/10 text-center text-slate-500 text-xs">
-        &copy; {new Date().getFullYear()} WeduPay Inc. All rights reserved. Licensed and regulated according to local jurisdiction.
+        &copy; {new Date().getFullYear()} WeduPay Inc. All rights reserved. Committed to operating within applicable local regulations.
       </div>
     </footer>
   );
