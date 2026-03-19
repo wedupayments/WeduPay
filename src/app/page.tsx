@@ -44,7 +44,7 @@ export default function Home() {
   <Image src="/images/avatar_3.png" alt="User 3" fill className="object-cover" />
 </div>
 </div>
-<p className="text-sm font-medium text-slate-500">Trusted by 10k+ users across Africa</p>
+<p className="text-sm font-medium text-slate-500">Be among the first to experience WeduPay</p>
 </div>
 </div>
 <div className="relative">
@@ -304,7 +304,7 @@ export default function Home() {
 <div className="max-w-2xl relative z-10">
 <h2 className="text-2xl md:text-3xl lg:text-5xl font-black mb-4 md:mb-6">Ready to scale your business across Africa?</h2>
 <p className="text-lg font-medium opacity-90">
-                                Join hundreds of merchants and thousands of students already using WeduPay for faster, cheaper, and safer transactions.
+                                Be among the first merchants and students to access WeduPay — built for faster, cheaper, and safer cross-border transactions across Africa.
                             </p>
 </div>
 <div className="flex flex-col gap-6 w-full lg:w-auto relative z-10" id="cta">
