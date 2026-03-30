@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden">
 <Navbar />
-{/* Hero Section */}
+{/* Hero Section off the app */}
 <main className="flex-1">
 <section className="max-w-7xl mx-auto px-6 py-12 lg:py-20">
 <div className="grid lg:grid-cols-2 gap-12 items-center">
