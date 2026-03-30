@@ -19,6 +19,21 @@ const navItems = [
   { label: "Settings", icon: "settings", href: "/dashboard/customer/settings" },
 ];
 
+const bottomNavItems = [
+  { label: "Dashboard", icon: "dashboard", href: "/dashboard/customer" },
+  { label: "Payments", icon: "receipt_long", href: "/dashboard/customer/payments" },
+  { label: "History", icon: "history", href: "/dashboard/customer/history" },
+  { label: "Funding", icon: "account_balance_wallet", href: "/dashboard/customer/funding" },
+  { label: "Settings", icon: "settings", href: "/dashboard/customer/settings" },
+];
+
+function handleSignOut() {
+  document.cookie = "sb-access-token=; path=/; max-age=0";
+  document.cookie = "wedupay-user-id=; path=/; max-age=0";
+  document.cookie = "wedupay-user-email=; path=/; max-age=0";
+  window.location.href = "/auth/login";
+}
+
 export function CustomerLayout({ children, userName = "Student", userId = "00000", title = "Dashboard" }: CustomerLayoutProps) {
   const pathname = usePathname();
 
@@ -59,7 +74,7 @@ export function CustomerLayout({ children, userName = "Student", userId = "00000
           })}
         </nav>
 
-        <div className="p-3 sm:p-4 border-t border-slate-200 dark:border-primary/10">
+        <div className="p-3 sm:p-4 border-t border-slate-200 dark:border-primary/10 space-y-2">
           <div className="flex items-center gap-2 sm:gap-3 p-2 rounded-xl bg-slate-100 dark:bg-primary/5">
             <div className="size-8 sm:size-10 rounded-full bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center text-background-dark font-bold text-xs sm:text-sm shrink-0">
               {userName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
@@ -69,6 +84,13 @@ export function CustomerLayout({ children, userName = "Student", userId = "00000
               <p className="text-xs text-slate-500 dark:text-slate-400 truncate">ID: {userId}</p>
             </div>
           </div>
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-3 px-3 sm:px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all text-sm"
+          >
+            <span className="material-symbols-outlined">logout</span>
+            <span className="hidden sm:inline">Sign Out</span>
+          </button>
         </div>
       </aside>
 
@@ -99,13 +121,13 @@ export function CustomerLayout({ children, userName = "Student", userId = "00000
 
       {/* Mobile Bottom Nav */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 flex justify-around p-2 z-30 safe-area-bottom">
-        {navItems.slice(0, 5).map((item) => {
+        {bottomNavItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg ${isActive ? "text-primary" : "text-slate-500"}`}
+              className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg min-h-[44px] min-w-[44px] justify-center ${isActive ? "text-primary" : "text-slate-500"}`}
             >
               <span className="material-symbols-outlined text-xl">{item.icon}</span>
               <span className="text-[9px] font-bold">{item.label}</span>

@@ -32,10 +32,9 @@ export type CustomerDashboardData = {
 
 interface Props {
   data: CustomerDashboardData;
-  isDemo?: boolean;
 }
 
-export function CustomerDashboardShell({ data, isDemo = false }: Props) {
+export function CustomerDashboardShell({ data }: Props) {
   const empty = (val: string | number | null, fallback = "—") =>
     val !== null && val !== undefined ? String(val) : fallback;
 
@@ -44,20 +43,7 @@ export function CustomerDashboardShell({ data, isDemo = false }: Props) {
 
   return (
     <>
-      <DashboardHeader title={isDemo ? "Student Dashboard (Demo)" : "Student Dashboard"} />
-
-      {/* Demo Banner */}
-      {isDemo && (
-        <div className="mx-8 mt-6 flex items-center justify-between gap-3 px-5 py-3 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/40 text-yellow-800 dark:text-yellow-300">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-xl">science</span>
-            <p className="text-sm font-bold">Demo Mode — Transactions, references and stats below are sample placeholder data only.</p>
-          </div>
-          <Link href="/dashboard/customer" className="text-xs font-black uppercase tracking-widest underline shrink-0">
-            Go to Live Dashboard →
-          </Link>
-        </div>
-      )}
+      <DashboardHeader title="Student Dashboard" />
 
       <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full space-y-6 sm:space-y-8 mb-20 lg:mb-0">
         {/* Welcome Section */}
@@ -68,10 +54,13 @@ export function CustomerDashboardShell({ data, isDemo = false }: Props) {
             </h2>
             <p className="text-slate-600 dark:text-slate-400 mt-1 text-lg">Ready to manage your education payments?</p>
           </div>
-          <button className="flex items-center justify-center gap-2 bg-primary hover:brightness-110 text-background-dark px-8 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 scale-100 hover:scale-[1.02] active:scale-[0.98]">
+          <Link 
+            href="/dashboard/customer/funding"
+            className="flex items-center justify-center gap-2 bg-primary hover:brightness-110 text-background-dark px-8 py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 scale-100 hover:scale-[1.02] active:scale-[0.98]"
+          >
             <span className="material-symbols-outlined">add</span>
             New Payment
-          </button>
+          </Link>
         </div>
 
         {/* Stats Grid */}
@@ -167,16 +156,13 @@ export function CustomerDashboardShell({ data, isDemo = false }: Props) {
                 Once you make your first payment, your transaction history, active references, and account stats will appear here.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-background-dark text-sm font-black shadow-lg shadow-primary/20 hover:brightness-110 transition-all">
-                <span className="material-symbols-outlined text-sm">add</span>
-                Make First Payment
-              </button>
-              <Link href="/demo/customer" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary/10 text-primary border border-primary/20 text-sm font-black hover:bg-primary/20 transition-colors">
-                <span className="material-symbols-outlined text-sm">science</span>
-                Preview with demo data
-              </Link>
-            </div>
+            <Link 
+              href="/dashboard/customer/funding"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-background-dark text-sm font-black shadow-lg shadow-primary/20 hover:brightness-110 transition-all"
+            >
+              <span className="material-symbols-outlined text-sm">add</span>
+              Make First Payment
+            </Link>
           </div>
         )}
 

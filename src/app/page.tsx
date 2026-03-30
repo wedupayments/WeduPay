@@ -55,7 +55,7 @@ export default function Home() {
 <div className="absolute bottom-10 left-10 right-10 p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
 <div className="flex justify-between items-center mb-4">
 <span className="text-xs font-bold uppercase tracking-widest text-primary">Example Transaction</span>
-<span className="text-xs text-slate-300">Demo</span>
+<span className="text-xs text-slate-300">Live</span>
 </div>
 <div className="flex items-center gap-3">
 <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-background-dark">

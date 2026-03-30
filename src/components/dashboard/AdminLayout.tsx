@@ -16,6 +16,21 @@ const navItems = [
   { label: "Settings", icon: "settings", href: "/dashboard/settings" },
 ];
 
+const bottomNavItems = [
+  { label: "Overview", icon: "dashboard", href: "/dashboard" },
+  { label: "Merchants", icon: "storefront", href: "/dashboard/merchants" },
+  { label: "Network", icon: "hub", href: "/dashboard/network" },
+  { label: "Reports", icon: "analytics", href: "/dashboard/reports" },
+  { label: "Settings", icon: "settings", href: "/dashboard/settings" },
+];
+
+function handleSignOut() {
+  document.cookie = "sb-access-token=; path=/; max-age=0";
+  document.cookie = "wedupay-user-id=; path=/; max-age=0";
+  document.cookie = "wedupay-user-email=; path=/; max-age=0";
+  window.location.href = "/auth/login";
+}
+
 export function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
 
@@ -55,7 +70,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-200 dark:border-primary/10">
+        <div className="p-4 border-t border-slate-200 dark:border-primary/10 space-y-2">
           <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-100 dark:bg-primary/5">
             <div className="size-10 rounded-full bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center text-background-dark font-bold text-sm shrink-0">
               A
@@ -65,6 +80,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Administrator</p>
             </div>
           </div>
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all text-sm"
+          >
+            <span className="material-symbols-outlined">logout</span>
+            <span>Sign Out</span>
+          </button>
         </div>
       </aside>
 
@@ -95,7 +117,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Mobile Bottom Nav */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 flex justify-around p-2 z-30">
-        {navItems.slice(0, 5).map((item) => {
+        {bottomNavItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link

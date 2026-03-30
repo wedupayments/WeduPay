@@ -1,5 +1,4 @@
 import { DashboardHeader } from "@/components/dashboard/Header";
-import Link from "next/link";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,28 +36,14 @@ export type AdminDashboardData = {
 
 interface Props {
   data: AdminDashboardData;
-  isDemo?: boolean;
 }
 
-export function AdminDashboardShell({ data, isDemo = false }: Props) {
+export function AdminDashboardShell({ data }: Props) {
   const empty = (val: string | number | null) => val ?? "—";
 
   return (
     <>
-      <DashboardHeader title={isDemo ? "Platform Overview (Demo)" : "Platform Overview"} />
-
-      {/* Demo Banner */}
-      {isDemo && (
-        <div className="mx-8 mt-6 flex items-center justify-between gap-3 px-5 py-3 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/40 text-yellow-800 dark:text-yellow-300">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-xl">science</span>
-            <p className="text-sm font-bold">Demo Mode — All metrics and transactions are sample placeholder data only.</p>
-          </div>
-          <Link href="/dashboard/admin" className="text-xs font-black uppercase tracking-widest underline shrink-0">
-            Go to Live Dashboard →
-          </Link>
-        </div>
-      )}
+      <DashboardHeader title="Platform Overview" />
 
       <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6 sm:space-y-8 mb-20 lg:mb-0">
         {/* Header */}
@@ -118,49 +103,14 @@ export function AdminDashboardShell({ data, isDemo = false }: Props) {
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white">Transaction Volume Trends</h3>
                 <p className="text-sm text-slate-500 dark:text-emerald-700 mt-1">Weekly routing distribution across all channels</p>
               </div>
-              {isDemo && (
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <div className="size-2.5 rounded-full bg-primary ring-4 ring-primary/10"></div>
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Current</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="size-2.5 rounded-full bg-slate-300 dark:bg-emerald-900 ring-4 ring-slate-100 dark:ring-emerald-900/20"></div>
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Previous</span>
-                  </div>
-                </div>
-              )}
             </div>
 
-            {isDemo ? (
-              <div className="h-64 relative">
-                <svg className="w-full h-full lg:h-72" fill="none" preserveAspectRatio="none" viewBox="0 0 478 150">
-                  <path d="M0 109C18.1538 109 18.1538 21 36.3077 21C54.4615 21 54.4615 41 72.6154 41C90.7692 41 90.7692 93 108.923 93C127.077 93 127.077 33 145.231 33C163.385 33 163.385 101 181.538 101C199.692 101 199.692 61 217.846 61C236 61 236 45 254.154 45C272.308 45 272.308 121 290.462 121C308.615 121 308.615 149 326.769 149C344.923 149 344.923 1 363.077 1C381.231 1 381.231 81 399.385 81C417.538 81 417.538 129 435.692 129C453.846 129 453.846 25 472 25V149H0V109Z" fill="url(#adminChartGradient)"></path>
-                  <path d="M0 109C18.1538 109 18.1538 21 36.3077 21C54.4615 21 54.4615 41 72.6154 41C90.7692 41 90.7692 93 108.923 93C127.077 93 127.077 33 145.231 33C163.385 33 163.385 101 181.538 101C199.692 101 199.692 61 217.846 61C236 61 236 45 254.154 45C272.308 45 272.308 121 290.462 121C308.615 121 308.615 149 326.769 149C344.923 149 344.923 1 363.077 1C381.231 1 381.231 81 399.385 81C417.538 81 417.538 129 435.692 129C453.846 129 453.846 25 472 25" stroke="#11d473" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-[0_0_8px_rgba(17,212,115,0.4)]"></path>
-                  <defs>
-                    <linearGradient id="adminChartGradient" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor="#11d473" stopOpacity="0.15"></stop>
-                      <stop offset="100%" stopColor="#11d473" stopOpacity="0"></stop>
-                    </linearGradient>
-                  </defs>
-                </svg>
-                <div className="flex justify-between mt-6 px-4">
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                    <p key={day} className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{day}</p>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="h-64 flex flex-col items-center justify-center text-center gap-4">
-                <span className="material-symbols-outlined text-slate-300 dark:text-slate-700 text-5xl">bar_chart</span>
-                <p className="text-slate-400 dark:text-slate-600 text-sm font-medium max-w-xs">
-                  Volume trends will appear here once transactions start flowing through the platform.
-                </p>
-                <Link href="/demo/admin" className="text-primary text-xs font-black uppercase tracking-widest hover:underline">
-                  Preview with demo data →
-                </Link>
-              </div>
-            )}
+            <div className="h-64 flex flex-col items-center justify-center text-center gap-4">
+              <span className="material-symbols-outlined text-slate-300 dark:text-slate-700 text-5xl">bar_chart</span>
+              <p className="text-slate-400 dark:text-slate-600 text-sm font-medium max-w-xs">
+                Volume trends will appear here once transactions start flowing through the platform.
+              </p>
+            </div>
           </div>
 
           {/* Network & Quick Actions */}
