@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const DEMO_ACCOUNTS = [
+  { email: "customer@wedupay.test", password: "password123", userId: "customer-001" },
+  { email: "merchant@wedupay.test", password: "password123", userId: "merchant-001" },
+  { email: "admin@wedupay.test", password: "password123", userId: "admin-001" },
+];
 
 interface AuthFormProps {
   type: "login" | "register";
@@ -29,46 +30,25 @@ export function AuthForm({ type }: AuthFormProps) {
 
     try {
       if (type === "register") {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-
-        if (error) throw error;
-
-        // Create user record in database
-        if (data.user) {
-          const res = await fetch("/api/auth/create-user", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email,
-              userId: data.user.id,
-              userType,
-            }),
-          });
-
-          if (!res.ok) throw new Error("Failed to create user profile");
-        }
-
-        alert("Check your email for the confirmation link!");
-      } else {
-        const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) throw error;
-
-        if (data.session) {
-          document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`;
-          document.cookie = `sb-refresh-token=${data.session.refresh_token}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`;
-        }
-
-        router.push(redirectTo);
-        router.refresh();
+        setError("Registration is disabled in demo mode. Use test accounts.");
+        return;
       }
+
+      const account = DEMO_ACCOUNTS.find(
+        (a) => a.email === email && a.password === password
+      );
+
+      if (!account) {
+        throw new Error("Invalid email or password");
+      }
+
+      const mockToken = btoa(JSON.stringify({ userId: account.userId, email: account.email }));
+      document.cookie = `sb-access-token=demo-${mockToken}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`;
+      document.cookie = `wedupay-user-id=${account.userId}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`;
+      document.cookie = `wedupay-user-email=${encodeURIComponent(account.email)}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`;
+
+      router.push(redirectTo);
+      router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -78,7 +58,6 @@ export function AuthForm({ type }: AuthFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Email Field with Bulls Eye Icon */}
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
           Email
@@ -99,14 +78,13 @@ export function AuthForm({ type }: AuthFormProps) {
         </div>
       </div>
 
-      {/* Password Field with Bulls Eye Icon */}
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
           Password
         </label>
         <div className="relative">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-            <span className="material-symbols-outlined text-lg">target</span>
+            <span className="material-symbols-outlined text-lg">lock</span>
           </div>
           <input
             id="password"
@@ -120,41 +98,6 @@ export function AuthForm({ type }: AuthFormProps) {
           />
         </div>
       </div>
-
-      {/* User Type Selection (Register only) */}
-      {type === "register" && (
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            I am a
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setUserType("STUDENT")}
-              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 font-semibold transition-all ${
-                userType === "STUDENT"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-primary/50"
-              }`}
-            >
-              <span className="material-symbols-outlined text-lg">school</span>
-              Student
-            </button>
-            <button
-              type="button"
-              onClick={() => setUserType("MERCHANT")}
-              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 font-semibold transition-all ${
-                userType === "MERCHANT"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-primary/50"
-              }`}
-            >
-              <span className="material-symbols-outlined text-lg">storefront</span>
-              Merchant
-            </button>
-          </div>
-        </div>
-      )}
 
       {error && (
         <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">

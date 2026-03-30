@@ -1,84 +1,82 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { cookies } from "next/headers";
 
 export async function GET(request: Request) {
   try {
-    // Get user ID from query params (in production, get from auth session)
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    const cookieStore = await cookies();
+    const userEmail = cookieStore.get("wedupay-user-email")?.value;
+    const userId = cookieStore.get("wedupay-user-id")?.value;
 
-    if (!userId) {
-      // Return demo data if no userId provided
-      return NextResponse.json({
-        stats: {
-          pendingApprovals: 0,
-          verifiedThisSemester: "$0.00",
-          primaryMerchant: "None",
+    let user = null;
+
+    if (userEmail) {
+      user = await prisma.user.findUnique({
+        where: { email: decodeURIComponent(userEmail) },
+        include: {
+          wallets: true,
+          transactions: {
+            orderBy: { createdAt: "desc" },
+            take: 10,
+          },
+          references: true,
         },
-        references: [],
-        transactions: [],
-        wallets: [],
       });
     }
 
-    // Fetch user data
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        wallets: true,
-        transactions: {
-          orderBy: { createdAt: "desc" },
-          take: 10,
-        },
-      },
-    });
-
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({
+        stats: {
+          pendingApprovals: 2,
+          verifiedThisSemester: "$1,240.00",
+          primaryMerchant: "BYU-Pathway",
+        },
+        references: [
+          { id: "1", title: "BYU-Pathway Worldwide", ref: "BYU-2024-88291", icon: "school" },
+          { id: "2", title: "Course Materials Fund", ref: "MAT-BK-2024", icon: "menu_book" },
+        ],
+        transactions: [
+          { id: "1", merchant: "BYU-Pathway Tuition", purpose: "TUITION", term: "Winter 2024", date: "Mar 15, 2026", amount: "$450.00", status: "Verified" },
+          { id: "2", merchant: "Application Fee", purpose: "FEE", term: "Global Enrollment", date: "Mar 10, 2026", amount: "$35.00", status: "Pending" },
+        ],
+        wallets: [],
+        user: {
+          name: "Guest User",
+          userId: "00000",
+          email: "",
+        },
+      });
     }
 
-    // Calculate stats
     const pendingApprovals = user.transactions.filter(
       (t) => t.status === "PENDING"
     ).length;
 
     const verifiedThisSemester = user.transactions
-      .filter(
-        (t) => t.status === "COMPLETED" && t.type === "PAYMENT"
-      )
+      .filter((t) => t.status === "COMPLETED" && t.type === "TUITION")
       .reduce((sum, t) => sum + t.amount, 0);
 
-    // Get primary merchant (most frequent transaction recipient)
     const primaryMerchant = user.transactions.length > 0
-      ? user.transactions[0].reference // In real app, this would be merchant name
+      ? user.transactions[0].reference.split(" ")[0]
       : "None";
 
-    // Format transactions for dashboard
     const transactions = user.transactions.map((tx) => ({
       id: tx.id,
       merchant: tx.reference,
       purpose: tx.type,
-      term: new Date(tx.createdAt).toLocaleDateString(),
-      date: new Date(tx.createdAt).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
+      term: new Date(tx.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      date: new Date(tx.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
       amount: `$${tx.amount.toFixed(2)}`,
-      status:
-        tx.status === "COMPLETED"
-          ? "Verified"
-          : tx.status === "PENDING"
-          ? "Pending"
-          : tx.status === "FAILED"
-          ? "Failed"
-          : "Processing",
+      status: tx.status === "COMPLETED" ? "Verified" : tx.status === "PENDING" ? "Pending" : tx.status === "FAILED" ? "Failed" : "Processing",
     }));
 
-    // Format wallets
+    const references = user.references.map((ref) => ({
+      id: ref.id,
+      title: ref.title,
+      ref: ref.referenceCode,
+      icon: "school",
+    }));
+
     const wallets = user.wallets.map((w) => ({
       id: w.id,
       name: w.walletType,
@@ -92,20 +90,17 @@ export async function GET(request: Request) {
         verifiedThisSemester: `$${verifiedThisSemester.toFixed(2)}`,
         primaryMerchant,
       },
-      references: [], // Will be populated from payment_references table
+      references,
       transactions,
       wallets,
       user: {
-        name: user.email.split("@")[0],
+        name: user.email.split("@")[0].charAt(0).toUpperCase() + user.email.split("@")[0].slice(1),
         userId: user.id.slice(-5),
         email: user.email,
       },
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("Failed to fetch dashboard data:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch dashboard data" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch dashboard data" }, { status: 500 });
   }
 }

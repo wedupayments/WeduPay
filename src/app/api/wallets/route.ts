@@ -1,19 +1,34 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { cookies } from "next/headers";
 
-export async function GET(request: Request) {
+const DEMO_WALLETS: Record<string, { walletType: string; currency: string; balance: number }[]> = {
+  "customer-001": [
+    { walletType: "EcoCash", currency: "USD", balance: 1240.0 },
+    { walletType: "M-Pesa", currency: "USD", balance: 560.0 },
+  ],
+  "merchant-001": [
+    { walletType: "M-Pesa", currency: "USD", balance: 2180.0 },
+    { walletType: "MTN Mobile", currency: "USD", balance: 1890.0 },
+  ],
+  "admin-001": [
+    { walletType: "Admin", currency: "USD", balance: 0.0 },
+  ],
+};
+
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("wedupay-user-id")?.value;
 
-    if (!userId) {
-      return NextResponse.json({ error: "User ID required" }, { status: 400 });
+    if (!userId || !DEMO_WALLETS[userId]) {
+      return NextResponse.json({ wallets: [] });
     }
 
-    const wallets = await prisma.wallet.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-    });
+    const wallets = DEMO_WALLETS[userId].map((w, i) => ({
+      id: `${userId}-wallet-${i}`,
+      ...w,
+    }));
 
     return NextResponse.json({ wallets });
   } catch (error) {
@@ -24,46 +39,16 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { userId, walletType, amount } = await request.json();
+    const { walletType, amount } = await request.json();
 
-    if (!userId || !walletType || !amount) {
-      return NextResponse.json(
-        { error: "userId, walletType, and amount are required" },
-        { status: 400 }
-      );
+    if (!walletType || !amount) {
+      return NextResponse.json({ error: "walletType and amount required" }, { status: 400 });
     }
 
-    if (amount <= 0) {
-      return NextResponse.json({ error: "Amount must be positive" }, { status: 400 });
-    }
-
-    const wallet = await prisma.wallet.update({
-      where: { id: walletType },
-      data: { balance: { increment: amount } },
+    return NextResponse.json({ 
+      success: true, 
+      message: `Demo: Would fund ${walletType} with $${amount}` 
     });
-
-    const transaction = await prisma.transaction.create({
-      data: {
-        userId,
-        amount,
-        currency: wallet.currency,
-        status: "COMPLETED",
-        type: "FUNDING",
-        reference: `FUND-${walletType.slice(-8)}-${Date.now()}`,
-      },
-    });
-
-    await prisma.ledgerEntry.create({
-      data: {
-        transactionId: transaction.id,
-        accountId: wallet.id,
-        entryType: "CREDIT",
-        amount,
-        currency: wallet.currency,
-      },
-    });
-
-    return NextResponse.json({ success: true, wallet, transaction });
   } catch (error) {
     console.error("Failed to fund wallet:", error);
     return NextResponse.json({ error: "Failed to fund wallet" }, { status: 500 });
