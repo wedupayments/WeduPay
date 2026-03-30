@@ -12,6 +12,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "WeduPay | Secure Payment Routing for Africa and Beyond",
   description: "Secure payment routing for mobile wallets in Africa and beyond",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
