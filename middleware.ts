@@ -14,14 +14,13 @@ export function middleware(request: NextRequest) {
 
   const accessToken = request.cookies.get("sb-access-token")?.value;
 
-  if (!accessToken && !pathname.startsWith("/api/")) {
+  if (!accessToken) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const loginUrl = new URL("/auth/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
-  }
-
-  if (!accessToken && pathname.startsWith("/api/")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   return NextResponse.next();

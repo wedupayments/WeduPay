@@ -43,12 +43,11 @@ export function AuthForm({ type }: AuthFormProps) {
       }
 
       const mockToken = btoa(JSON.stringify({ userId: account.userId, email: account.email }));
-      document.cookie = `sb-access-token=demo-${mockToken}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`;
-      document.cookie = `wedupay-user-id=${account.userId}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`;
-      document.cookie = `wedupay-user-email=${encodeURIComponent(account.email)}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`;
+      document.cookie = `sb-access-token=demo-${mockToken}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax; SameSite=Lax`;
+      document.cookie = `wedupay-user-id=${account.userId}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax; SameSite=Lax`;
+      document.cookie = `wedupay-user-email=${encodeURIComponent(account.email)}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax; SameSite=Lax`;
 
-      router.push(redirectTo);
-      router.refresh();
+      window.location.href = redirectTo;
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
