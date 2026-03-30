@@ -60,7 +60,7 @@ export function AdminDashboardShell({ data, isDemo = false }: Props) {
         </div>
       )}
 
-      <div className="p-8 max-w-7xl mx-auto w-full space-y-8 mb-20 lg:mb-0">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6 sm:space-y-8 mb-20 lg:mb-0">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
@@ -110,7 +110,7 @@ export function AdminDashboardShell({ data, isDemo = false }: Props) {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {/* Chart / Empty State */}
           <div className="lg:col-span-2 rounded-2xl bg-white dark:bg-emerald-900/5 border border-slate-200 dark:border-emerald-900/30 p-8 shadow-sm">
             <div className="flex items-center justify-between mb-10">

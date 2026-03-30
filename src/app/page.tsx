@@ -10,14 +10,14 @@ export default function Home() {
 <Navbar />
 {/* Hero Section off the app */}
 <main className="flex-1">
-<section className="max-w-7xl mx-auto px-6 py-12 lg:py-20">
+<section className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-20">
 <div className="grid lg:grid-cols-2 gap-12 items-center">
 <div className="flex flex-col gap-8">
 <div className="space-y-4">
 <span className="inline-block px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-bold uppercase tracking-wider">
                                 Cross-Border Fintech
                             </span>
-<h1 className="text-3xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight">
+<h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black leading-tight tracking-tight">
                                 Secure payment routing for <span className="text-primary">mobile wallets</span> in Africa
                             </h1>
 <p className="text-lg text-slate-600 dark:text-slate-400 max-w-xl">
@@ -72,16 +72,16 @@ export default function Home() {
 </div>
 </section>
 {/* Benefits Section */}
-<section className="bg-slate-100 dark:bg-primary/5 py-20" id="benefits">
-<div className="max-w-7xl mx-auto px-6">
+<section className="bg-slate-100 dark:bg-primary/5 py-12 sm:py-16 lg:py-20" id="benefits">
+<div className="max-w-7xl mx-auto px-4 sm:px-6">
 <div className="text-center mb-16 space-y-4">
 <h2 className="text-3xl lg:text-4xl font-black">Why Choose WeduPay?</h2>
 <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
                             Experience the next generation of payment routing designed specifically for the unique needs of the African market.
                         </p>
 </div>
-<div className="grid md:grid-cols-3 gap-8">
-<div className="p-8 rounded-2xl bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/20 hover:border-primary transition-colors">
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+<div className="p-4 sm:p-6 lg:p-8 rounded-2xl bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/20 hover:border-primary transition-colors">
 <div className="w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-6">
 <span className="material-symbols-outlined text-3xl">verified_user</span>
 </div>
@@ -90,7 +90,7 @@ export default function Home() {
                                 We never hold your money. Funds move directly from sender to receiver for maximum security and peace of mind.
                             </p>
 </div>
-<div className="p-8 rounded-2xl bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/20 hover:border-primary transition-colors">
+<div className="p-4 sm:p-6 lg:p-8 rounded-2xl bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/20 hover:border-primary transition-colors">
 <div className="w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-6">
 <span className="material-symbols-outlined text-3xl">bolt</span>
 </div>
@@ -99,7 +99,7 @@ export default function Home() {
                                 Merchants receive payments instantly into their chosen bank or mobile accounts without middleman delays.
                             </p>
 </div>
-<div className="p-8 rounded-2xl bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/20 hover:border-primary transition-colors">
+<div className="p-4 sm:p-6 lg:p-8 rounded-2xl bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/20 hover:border-primary transition-colors">
 <div className="w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-6">
 <span className="material-symbols-outlined text-3xl">analytics</span>
 </div>
@@ -112,8 +112,8 @@ export default function Home() {
 </div>
 </section>
 {/* How It Works Section */}
-<section className="py-20" id="how-it-works">
-<div className="max-w-4xl mx-auto px-6">
+<section className="py-12 sm:py-16 lg:py-20" id="how-it-works">
+<div className="max-w-4xl mx-auto px-4 sm:px-6">
 <div className="text-center mb-16">
 <h2 className="text-3xl lg:text-4xl font-black">How It Works</h2>
 </div>
@@ -160,9 +160,9 @@ export default function Home() {
 </div>
 </section>
 {/* Network Map Section */}
-            <section className="py-16 lg:py-32 bg-slate-50/50 dark:bg-background-dark/30 overflow-hidden relative">
+            <section className="py-12 sm:py-16 lg:py-24 xl:py-32 bg-slate-50/50 dark:bg-background-dark/30 overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-[50%] h-full bg-linear-to-l from-primary/5 to-transparent pointer-events-none"></div>
-                <div className="max-w-7xl mx-auto px-6 relative">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
                     <div className="grid lg:grid-cols-2 gap-20 items-center">
                         <div className="order-2 lg:order-1 relative">
                             {/* Premium Dot-Grid Map Container */}
@@ -281,8 +281,8 @@ export default function Home() {
             </section>
 
             {/* Trust Indicators */}
-            <section className="border-y border-slate-200 dark:border-primary/10 py-12">
-<div className="max-w-7xl mx-auto px-6">
+            <section className="border-y border-slate-200 dark:border-primary/10 py-8 sm:py-12">
+<div className="max-w-7xl mx-auto px-4 sm:px-6">
 <p className="text-center text-sm font-bold text-slate-500 uppercase tracking-widest mb-8">Targeting markets across Africa</p>
 <div className="flex flex-wrap justify-center items-center gap-3 md:gap-6 lg:gap-10 grayscale opacity-60">
 <div className="text-xs md:text-sm lg:text-base font-black">ZIMBABWE</div>
@@ -297,12 +297,12 @@ export default function Home() {
 </div>
 </section>
 {/* CTA Section */}
-<section className="py-20">
-<div className="max-w-7xl mx-auto px-6">
+<section className="py-12 sm:py-16 lg:py-20">
+<div className="max-w-7xl mx-auto px-4 sm:px-6">
 <div className="rounded-3xl bg-primary p-6 md:p-8 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 text-background-dark overflow-hidden relative">
 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
 <div className="max-w-2xl relative z-10">
-<h2 className="text-2xl md:text-3xl lg:text-5xl font-black mb-4 md:mb-6">Ready to scale your business across Africa?</h2>
+<h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black mb-4 sm:mb-6">Ready to scale your business across Africa?</h2>
 <p className="text-lg font-medium opacity-90">
                                 Be among the first merchants and students to access WeduPay — built for faster, cheaper, and safer cross-border transactions across Africa.
                             </p>

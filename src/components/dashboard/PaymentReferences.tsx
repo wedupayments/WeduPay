@@ -13,9 +13,9 @@ interface PaymentReferenceCardProps {
 
 export function PaymentReferenceCard({ reference }: PaymentReferenceCardProps) {
   return (
-    <div className="bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/20 p-5 rounded-2xl flex items-center justify-between group hover:border-primary transition-colors cursor-pointer">
-      <div className="flex items-center gap-4">
-        <div className="size-12 rounded-xl bg-slate-100 dark:bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+    <div className="bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/20 p-4 sm:p-5 rounded-2xl flex items-center justify-between group hover:border-primary transition-colors cursor-pointer">
+      <div className="flex items-center gap-3 sm:gap-4">
+        <div className="size-10 sm:size-12 rounded-xl bg-slate-100 dark:bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
           <span className="material-symbols-outlined text-primary">{reference.icon}</span>
         </div>
         <div>

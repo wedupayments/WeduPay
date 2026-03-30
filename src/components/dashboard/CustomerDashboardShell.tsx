@@ -59,7 +59,7 @@ export function CustomerDashboardShell({ data, isDemo = false }: Props) {
         </div>
       )}
 
-      <div className="p-8 max-w-6xl mx-auto w-full space-y-8 mb-20 lg:mb-0">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full space-y-6 sm:space-y-8 mb-20 lg:mb-0">
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
@@ -118,7 +118,7 @@ export function CustomerDashboardShell({ data, isDemo = false }: Props) {
                 </div>
                 <div className="bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/10 rounded-2xl overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[600px]">
+                    <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-slate-50 dark:bg-primary/5 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest border-b border-slate-200 dark:border-primary/10">
                           <th className="px-6 py-5 font-bold">Merchant / Purpose</th>

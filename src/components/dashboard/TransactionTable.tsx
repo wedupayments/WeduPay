@@ -76,7 +76,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
       <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Recent Transactions</h3>
       <div className="bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/10 rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[600px]">
+          <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-primary/5 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
                 <th className="px-6 py-4 font-semibold">Merchant / Purpose</th>

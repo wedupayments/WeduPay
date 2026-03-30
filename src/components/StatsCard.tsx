@@ -11,7 +11,7 @@ export function StatsCard({ title, value, change, trend = "neutral", icon }: Sta
   const TrendIcon = trend === "up" ? "trending_up" : trend === "down" ? "trending_down" : "remove";
 
   return (
-    <div className="bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/10 p-4 rounded-2xl hover:border-primary/30 transition-all duration-300 group">
+    <div className="bg-white dark:bg-background-dark border border-slate-200 dark:border-primary/10 p-4 sm:p-6 rounded-2xl hover:border-primary/30 transition-all duration-300 group">
       <div className="flex items-center justify-between mb-3">
         <div className="size-10 rounded-xl bg-primary/10 dark:bg-primary/20 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
           <span className="material-symbols-outlined text-xl">{icon}</span>

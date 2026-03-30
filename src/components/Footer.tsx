@@ -2,8 +2,8 @@ import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className="bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/20 pt-10 md:pt-16 pb-8">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 md:gap-12 mb-10 md:mb-16">
+    <footer className="bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/20 pt-8 sm:pt-10 md:pt-16 pb-6 sm:pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 sm:gap-8 md:gap-12 mb-8 sm:mb-10 md:mb-16">
         <div className="col-span-2 lg:col-span-2">
           <div className="flex items-center gap-3 mb-6">
             <div className="text-primary flex items-center justify-center">
@@ -50,7 +50,7 @@ export function Footer() {
           </ul>
         </div>
       </div>
-      <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-slate-200 dark:border-primary/10 text-center text-slate-500 text-xs">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 border-t border-slate-200 dark:border-primary/10 text-center text-slate-500 text-xs">
         &copy; {new Date().getFullYear()} WeduPay Inc. All rights reserved. Committed to operating within applicable local regulations.
       </div>
     </footer>
