@@ -83,7 +83,7 @@ export function AuthForm({ type }: AuthFormProps) {
         </label>
         <div className="relative">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-            <span className="material-symbols-outlined text-lg">lock</span>
+            <span className="material-symbols-outlined text-lg">gps_fixed</span>
           </div>
           <input
             id="password"
