@@ -60,10 +60,6 @@ export default function WalletFundingPage() {
 
       setSuccess(`Successfully funded wallet with $${amount}`);
       setAmount("");
-
-      const walletRes = await fetch("/api/wallets");
-      const walletData = await walletRes.json();
-      setWallets(walletData.wallets || []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Funding failed");
     } finally {
@@ -92,9 +88,9 @@ export default function WalletFundingPage() {
   if (loading) {
     return (
       <CustomerLayout title="Fund Wallet">
-        <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
-            <span className="material-symbols-outlined text-6xl text-primary animate-spin">progress_activity</span>
+            <span className="material-symbols-outlined text-5xl text-primary animate-spin">progress_activity</span>
             <p className="text-slate-600 dark:text-slate-400 mt-4">Loading wallets...</p>
           </div>
         </div>
@@ -104,42 +100,41 @@ export default function WalletFundingPage() {
 
   return (
     <CustomerLayout title="Fund Wallet">
-      <div className="max-w-2xl mx-auto space-y-8 pb-20 lg:pb-0">
+      <div className="max-w-xl mx-auto space-y-6 pb-20 lg:pb-0">
         <div>
-          <h2 className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white">
             Fund Your Wallet
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 mt-2">
+          <p className="text-slate-600 dark:text-slate-400 mt-1 sm:mt-2 text-sm sm:text-base">
             Add funds to your connected mobile wallets instantly
           </p>
         </div>
 
         {error && (
-          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 flex items-center gap-3">
-            <span className="material-symbols-outlined">error</span>
+          <div className="p-3 sm:p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 flex items-center gap-2 sm:gap-3 text-sm">
+            <span className="material-symbols-outlined shrink-0">error</span>
             {error}
           </div>
         )}
 
         {success && (
-          <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center gap-3">
-            <span className="material-symbols-outlined">check_circle</span>
+          <div className="p-3 sm:p-4 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center gap-2 sm:gap-3 text-sm">
+            <span className="material-symbols-outlined shrink-0">check_circle</span>
             {success}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-white dark:bg-background-dark rounded-2xl border border-slate-200 dark:border-primary/10 p-6 space-y-6 shadow-sm">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+          <div className="bg-white dark:bg-background-dark rounded-xl sm:rounded-2xl border border-slate-200 dark:border-primary/10 p-4 sm:p-6 space-y-4 sm:space-y-6 shadow-sm">
             <div>
-              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">
+              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 sm:mb-3">
                 Select Wallet
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-3">
                 {wallets.length === 0 ? (
-                  <div className="col-span-2 text-center py-12">
-                    <span className="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-600">account_balance_wallet</span>
-                    <p className="text-slate-500 mt-3">No wallets found</p>
-                    <p className="text-sm text-slate-400">Create a wallet to get started</p>
+                  <div className="text-center py-8 sm:py-12">
+                    <span className="material-symbols-outlined text-4xl sm:text-5xl text-slate-300 dark:text-slate-600">account_balance_wallet</span>
+                    <p className="text-slate-500 mt-3 text-sm sm:text-base">No wallets found</p>
                   </div>
                 ) : (
                   wallets.map((wallet) => (
@@ -147,20 +142,20 @@ export default function WalletFundingPage() {
                       key={wallet.id}
                       type="button"
                       onClick={() => setSelectedWallet(wallet.id)}
-                      className={`p-4 rounded-xl border-2 text-left transition-all ${
+                      className={`p-3 sm:p-4 rounded-xl border-2 text-left transition-all ${
                         selectedWallet === wallet.id
                           ? "border-primary bg-primary/10"
                           : "border-slate-200 dark:border-slate-700 hover:border-primary/50"
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="size-12 rounded-xl bg-primary/20 flex items-center justify-center">
-                          <span className="material-symbols-outlined text-primary">
+                        <div className="size-10 sm:size-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                          <span className="material-symbols-outlined text-primary text-lg sm:text-xl">
                             {getWalletIcon(wallet.walletType)}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold text-slate-900 dark:text-white truncate">
+                          <p className="font-bold text-slate-900 dark:text-white truncate text-sm sm:text-base">
                             {wallet.walletType}
                           </p>
                           <p className="text-sm text-slate-500">
@@ -179,7 +174,7 @@ export default function WalletFundingPage() {
                 Amount to Fund
               </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-lg">
+                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-base sm:text-lg">
                   $
                 </span>
                 <input
@@ -189,7 +184,7 @@ export default function WalletFundingPage() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-background-dark text-slate-900 dark:text-white text-lg font-bold focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                  className="w-full pl-8 sm:pl-10 pr-4 py-2.5 sm:py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-background-dark text-slate-900 dark:text-white text-base sm:text-lg font-bold focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                 />
               </div>
               <div className="flex gap-2 mt-3">
@@ -198,7 +193,7 @@ export default function WalletFundingPage() {
                     key={preset}
                     type="button"
                     onClick={() => setAmount(preset.toString())}
-                    className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-primary/10 text-slate-700 dark:text-slate-300 text-sm font-bold hover:bg-primary/20 transition-colors"
+                    className="flex-1 px-3 sm:px-4 py-2 rounded-lg bg-slate-100 dark:bg-primary/10 text-slate-700 dark:text-slate-300 text-sm font-bold hover:bg-primary/20 transition-colors"
                   >
                     ${preset}
                   </button>
@@ -207,9 +202,9 @@ export default function WalletFundingPage() {
             </div>
           </div>
 
-          <div className="bg-slate-50 dark:bg-primary/5 rounded-xl p-4 flex items-start gap-3">
-            <span className="material-symbols-outlined text-primary shrink-0">info</span>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+          <div className="bg-slate-50 dark:bg-primary/5 rounded-xl p-3 sm:p-4 flex items-start gap-2 sm:gap-3">
+            <span className="material-symbols-outlined text-primary shrink-0 text-lg sm:text-xl">info</span>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
               Funds are transferred instantly via mobile money. Supported providers
               include EcoCash, M-Pesa, MTN Mobile Money, and Airtel Money.
             </p>
@@ -218,7 +213,7 @@ export default function WalletFundingPage() {
           <button
             type="submit"
             disabled={!selectedWallet || !amount || submitting}
-            className="w-full py-4 bg-primary hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed text-background-dark font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+            className="w-full py-3 sm:py-4 bg-primary hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed text-background-dark font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 text-sm sm:text-base"
           >
             <span className="material-symbols-outlined">payments</span>
             {submitting ? "Processing..." : "Fund Wallet"}

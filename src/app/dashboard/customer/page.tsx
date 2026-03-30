@@ -55,10 +55,10 @@ export default function CustomerDashboardPage() {
   if (loading) {
     return (
       <CustomerLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
-            <span className="material-symbols-outlined text-6xl text-primary animate-spin">progress_activity</span>
-            <p className="text-slate-600 dark:text-slate-400 mt-4">Loading dashboard...</p>
+            <span className="material-symbols-outlined text-5xl sm:text-6xl text-primary animate-spin">progress_activity</span>
+            <p className="text-slate-600 dark:text-slate-400 mt-4 text-sm sm:text-base">Loading dashboard...</p>
           </div>
         </div>
       </CustomerLayout>
@@ -70,22 +70,22 @@ export default function CustomerDashboardPage() {
       userName={data?.user?.name || "Student"} 
       userId={data?.user?.userId || "00000"}
     >
-      <div className="max-w-6xl mx-auto w-full space-y-8 pb-20 lg:pb-0">
+      <div className="max-w-6xl mx-auto w-full space-y-6 sm:space-y-8 pb-20 lg:pb-0">
         {/* Welcome Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
           <div>
-            <h2 className="text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
               Welcome back, {data?.user?.name || "Student"}
             </h2>
-            <p className="text-slate-600 dark:text-slate-400 mt-1">
+            <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm sm:text-base">
               Ready to manage your education payments?
             </p>
           </div>
           <Link 
             href="/dashboard/customer/funding"
-            className="flex items-center justify-center gap-2 bg-primary hover:brightness-110 text-background-dark px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 shrink-0"
+            className="flex items-center justify-center gap-2 bg-primary hover:brightness-110 text-background-dark px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 shrink-0 text-sm sm:text-base"
           >
-            <span className="material-symbols-outlined">add</span>
+            <span className="material-symbols-outlined text-lg sm:text-xl">add</span>
             Fund Wallet
           </Link>
         </div>
@@ -100,13 +100,13 @@ export default function CustomerDashboardPage() {
         <TransactionTable transactions={data?.transactions} />
 
         {/* Security Tip */}
-        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 flex items-start gap-4">
-          <div className="p-3 bg-primary/20 rounded-xl text-primary shrink-0">
-            <span className="material-symbols-outlined text-2xl">verified_user</span>
+        <div className="bg-primary/5 border border-primary/20 rounded-xl sm:rounded-2xl p-4 sm:p-6 flex items-start gap-3 sm:gap-4">
+          <div className="p-2 sm:p-3 bg-primary/20 rounded-lg sm:rounded-xl text-primary shrink-0">
+            <span className="material-symbols-outlined text-xl sm:text-2xl lg:text-3xl">verified_user</span>
           </div>
           <div>
-            <h4 className="font-bold text-primary">Secure Payment System</h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+            <h4 className="font-bold text-primary text-sm sm:text-base">Secure Payment System</h4>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
               WeduPay uses end-to-end encryption for all institutional transfers. 
               Your payments are verified directly with the institution within 24-48 business hours.
             </p>
