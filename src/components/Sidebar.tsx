@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 
 const navItems = [
   { label: "Dashboard", icon: "dashboard", href: "/dashboard/customer" },
@@ -40,13 +39,8 @@ export function Sidebar() {
 
       <div className="p-4 border-t border-slate-200 dark:border-primary/10">
         <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-100 dark:bg-primary/5 hover:bg-slate-200 dark:hover:bg-primary/10 transition-colors cursor-pointer group">
-          <div className="size-10 rounded-full bg-slate-300 dark:bg-primary/20 bg-cover bg-center overflow-hidden border-2 border-transparent group-hover:border-primary transition-all relative">
-            <Image 
-              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100" 
-              alt="User" 
-              fill
-              className="object-cover"
-            />
+          <div className="size-10 rounded-full bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center text-background-dark font-bold text-sm border-2 border-transparent group-hover:border-primary transition-all">
+            AJ
           </div>
           <div className="overflow-hidden">
             <p className="text-sm font-bold truncate">Alex Johnson</p>

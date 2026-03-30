@@ -11,19 +11,18 @@ export function Navbar() {
         <h2 className="text-lg md:text-xl font-bold tracking-tight">WeduPay</h2>
       </div>
       <nav className="hidden md:flex items-center gap-6 lg:gap-8">
-        <Link className="text-sm font-medium hover:text-primary transition-colors" href="#solutions">Solutions</Link>
         <Link className="text-sm font-medium hover:text-primary transition-colors" href="#benefits">Benefits</Link>
         <Link className="text-sm font-medium hover:text-primary transition-colors" href="#how-it-works">How it Works</Link>
-
+        <Link className="text-sm font-medium hover:text-primary transition-colors" href="#cta">Get Started</Link>
       </nav>
       <div className="flex gap-2 md:gap-3 items-center">
         <ThemeToggle />
-        <button className="hidden sm:flex items-center justify-center rounded-lg h-9 md:h-10 px-3 md:px-4 bg-primary/10 text-primary border border-primary/20 text-sm font-bold">
+        <Link href="/auth/login" className="hidden sm:flex items-center justify-center rounded-lg h-9 md:h-10 px-3 md:px-4 bg-primary/10 text-primary border border-primary/20 text-sm font-bold hover:bg-primary/20 transition-colors">
           Login
-        </button>
-        <button className="flex items-center justify-center rounded-lg h-9 md:h-10 px-3 md:px-4 bg-primary text-background-dark text-xs md:text-sm font-bold shadow-lg shadow-primary/20 hover:brightness-110 transition-all">
+        </Link>
+        <Link href="/auth/register" className="flex items-center justify-center rounded-lg h-9 md:h-10 px-3 md:px-4 bg-primary text-background-dark text-xs md:text-sm font-bold shadow-lg shadow-primary/20 hover:brightness-110 transition-all">
           Get Started
-        </button>
+        </Link>
         <button className="md:hidden flex items-center justify-center p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-primary/10 transition-colors" aria-label="Open menu">
           <span className="material-symbols-outlined">menu</span>
         </button>

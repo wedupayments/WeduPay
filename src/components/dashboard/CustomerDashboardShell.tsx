@@ -1,4 +1,4 @@
-import { DashboardHeader } from "@/components/DashboardHeader";
+import { DashboardHeader } from "@/components/dashboard/Header";
 import { StatsCard } from "@/components/StatsCard";
 import Link from "next/link";
 
@@ -76,9 +76,9 @@ export function CustomerDashboardShell({ data, isDemo = false }: Props) {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          <StatsCard label="Pending Approvals" value={empty(data.pendingApprovals)} icon="pending_actions" colorClass="text-primary bg-primary" />
-          <StatsCard label="Verified This Semester" value={empty(data.verifiedThisSemester)} icon="verified" colorClass="text-blue-500 bg-blue-500" />
-          <StatsCard label="Primary Merchant" value={empty(data.primaryMerchant)} icon="account_balance" colorClass="text-orange-500 bg-orange-500" />
+          <StatsCard title="Pending Approvals" value={empty(data.pendingApprovals)} icon="pending_actions" />
+          <StatsCard title="Verified This Semester" value={empty(data.verifiedThisSemester)} icon="verified" />
+          <StatsCard title="Primary Merchant" value={empty(data.primaryMerchant)} icon="account_balance" />
         </div>
 
         {/* Activity or Empty State */}

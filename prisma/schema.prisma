@@ -22,15 +22,17 @@ model Waitlist {
 }
 
 model User {
-  id          String   @id @default(uuid())
-  email       String   @unique
-  phoneNumber String
-  country     String
-  kycStatus   String
-  createdAt   DateTime @default(now())
+  id             String            @id @default(uuid())
+  email          String            @unique
+  phoneNumber    String
+  country        String
+  kycStatus      String
+  supabaseUserId String?           @unique
+  createdAt      DateTime          @default(now())
 
-  wallets     Wallet[]
-  transactions Transaction[]
+  wallets        Wallet[]
+  transactions   Transaction[]
+  references     PaymentReference[]
 
   @@map("users")
 }
@@ -73,4 +75,18 @@ model LedgerEntry {
   createdAt     DateTime @default(now())
 
   @@map("ledger_entries")
+}
+
+model PaymentReference {
+  id            String   @id @default(uuid())
+  title         String
+  institution   String
+  referenceCode String   @unique
+  userId        String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("payment_references")
 }
