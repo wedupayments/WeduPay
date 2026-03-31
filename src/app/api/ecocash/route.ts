@@ -45,14 +45,12 @@ export async function POST(request: Request) {
       },
     });
 
-    const ecocashResponse = await ecocashAPI.initiatePushPayment({
+    const ecocashResponse = await ecocashAPI.initPayment(
+      phoneNumber,
       amount,
-      currency: currency || "USD",
-      subscriberMsisdn: phoneNumber,
-      merchantMsisdn: process.env.ECOCASH_MERCHANT_MSISDN || "",
-      transactionReference,
-      description: description || "WeduPay Wallet Funding",
-    });
+      description || "WeduPay Wallet Funding",
+      transactionReference
+    );
 
     if (ecocashResponse.status === "FAILED") {
       await prisma.transaction.update({
@@ -62,7 +60,7 @@ export async function POST(request: Request) {
 
       const error = createErrorResponse(
         "PAYMENT_FAILED",
-        ecocashResponse.resultDesc || "EcoCash payment initiation failed",
+        ecocashResponse.message || "EcoCash payment initiation failed",
         undefined,
         400
       );
@@ -85,25 +83,27 @@ export async function POST(request: Request) {
         attributes: {
           amount: transaction.amount,
           currency: transaction.currency,
-          status: "PENDING",
+          status: ecocashResponse.status === "SUCCESS" ? "COMPLETED" : "PENDING",
           provider: "EcoCash",
           phoneNumber: phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, "$1 $2 $3"),
           reference: transaction.reference,
-          checkoutRequestId: ecocashResponse.checkoutRequestId,
+          sourceReference: ecocashResponse.sourceReference,
           createdAt: transaction.createdAt,
         },
         _links: {
           self: { href: `/api/payments/${transaction.id}` },
-          status: { href: `/api/ecocash/status/${ecocashResponse.checkoutRequestId}` },
+          status: { href: `/api/ecocash/status/${transactionReference}` },
         },
       },
       meta: {
-        message: "Payment initiated. Please check your phone and enter your PIN to confirm.",
-        instructions: [
-          "You will receive an STK push on your phone",
+        message: ecocashResponse.status === "SUCCESS" 
+          ? "Payment completed successfully." 
+          : "Payment initiated. Please check your phone and enter your PIN to confirm.",
+        instructions: ecocashResponse.status === "PENDING_VALIDATION" ? [
+          "Check your EcoCash phone for a payment prompt",
           "Enter your EcoCash PIN to confirm",
           "The payment will be processed automatically",
-        ],
+        ] : undefined,
       },
     };
 
