@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
-import { createApiResponse, createErrorResponse } from "@/lib/api-response";
+import { createApiResponse, createErrorResponse, getCacheHeaders } from "@/lib/api-response";
+import { getSecurityHeaders } from "@/lib/api-middleware";
 
 const MOBILE_MONEY_PROVIDERS = ["EcoCash", "M-Pesa", "MTN"] as const;
 
@@ -126,7 +127,17 @@ export async function POST(request: Request) {
       },
     };
 
-    return NextResponse.json(response, { status: 201 });
+    const location = buildResourceUrl(request, transaction.id);
+
+    return NextResponse.json(response, {
+      status: 201,
+      headers: {
+        ...getCacheHeaders(false, transaction.createdAt),
+        ...getSecurityHeaders(),
+        "Location": location,
+        "X-Request-Id": crypto.randomUUID(),
+      },
+    });
   } catch (error) {
     console.error("Failed to process payment:", error);
     const errorResp = createErrorResponse("INTERNAL_ERROR", "Failed to process payment", undefined, 500);

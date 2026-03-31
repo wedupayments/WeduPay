@@ -191,3 +191,129 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     return NextResponse.json(errorResp.body, { status: errorResp.status });
   }
 }
+
+type PatchOperation = {
+  op: "add" | "remove" | "replace" | "move" | "copy" | "test";
+  path: string;
+  value?: unknown;
+  from?: string;
+};
+
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("wedupay-user-id")?.value;
+
+    if (!userId) {
+      const error = createErrorResponse("UNAUTHORIZED", "Authentication required", undefined, 401);
+      return NextResponse.json(error.body, { status: error.status });
+    }
+
+    const { id } = await params;
+    const operations: PatchOperation[] = await request.json();
+
+    if (!Array.isArray(operations)) {
+      const error = createErrorResponse("INVALID_REQUEST", "PATCH body must be an array of operations", undefined, 400);
+      return NextResponse.json(error.body, { status: error.status });
+    }
+
+    const payment = await prisma.transaction.findFirst({
+      where: { id, userId, type: "PAYMENT" },
+    });
+
+    if (!payment) {
+      const error = createErrorResponse("NOT_FOUND", "Payment not found", undefined, 404);
+      return NextResponse.json(error.body, { status: error.status });
+    }
+
+    let currentData = {
+      status: payment.status,
+      reference: payment.reference,
+    };
+
+    for (const op of operations) {
+      switch (op.op) {
+        case "replace":
+          if (op.path === "/status") {
+            const validStatuses = ["PENDING", "COMPLETED", "FAILED", "CANCELLED"];
+            if (!op.value || !validStatuses.includes(op.value as string)) {
+              const error = createErrorResponse(
+                "INVALID_OPERATION",
+                `Invalid status value. Must be one of: ${validStatuses.join(", ")}`,
+                undefined,
+                400
+              );
+              return NextResponse.json(error.body, { status: error.status });
+            }
+            currentData.status = op.value as string;
+          } else if (op.path === "/reference") {
+            currentData.reference = op.value as string;
+          } else {
+            const error = createErrorResponse(
+              "INVALID_PATH",
+              `Cannot replace path: ${op.path}. Only /status and /reference are allowed.`,
+              undefined,
+              400
+            );
+            return NextResponse.json(error.body, { status: error.status });
+          }
+          break;
+
+        case "test":
+          if (op.path === "/status" && currentData.status !== op.value) {
+            const error = createErrorResponse("TEST_FAILED", "Test operation failed", undefined, 412);
+            return NextResponse.json(error.body, { status: error.status });
+          }
+          break;
+
+        default:
+          const error = createErrorResponse(
+            "UNSUPPORTED_OPERATION",
+            `Operation '${op.op}' is not supported. Use 'replace' or 'test'.`,
+            undefined,
+            400
+          );
+          return NextResponse.json(error.body, { status: error.status });
+      }
+    }
+
+    const updatedPayment = await prisma.transaction.update({
+      where: { id },
+      data: {
+        status: currentData.status,
+        reference: currentData.reference,
+      },
+    });
+
+    const response = {
+      data: {
+        id: updatedPayment.id,
+        type: "payment",
+        attributes: {
+          amount: updatedPayment.amount,
+          currency: updatedPayment.currency,
+          status: updatedPayment.status,
+          reference: updatedPayment.reference,
+          type: updatedPayment.type,
+          createdAt: updatedPayment.createdAt,
+        },
+        _links: {
+          self: { href: buildResourceUrl(request, updatedPayment.id) },
+          collection: { href: buildResourceUrl(request) },
+        },
+      },
+    };
+
+    return NextResponse.json(response, {
+      status: 200,
+      headers: {
+        ...getCacheHeaders(false, updatedPayment.createdAt),
+        ...getSecurityHeaders(),
+      },
+    });
+  } catch (error) {
+    console.error("Failed to patch payment:", error);
+    const errorResp = createErrorResponse("INTERNAL_ERROR", "Failed to patch payment", undefined, 500);
+    return NextResponse.json(errorResp.body, { status: errorResp.status });
+  }
+}
