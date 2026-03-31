@@ -90,3 +90,16 @@ model PaymentReference {
 
   @@map("payment_references")
 }
+
+model WebhookEvent {
+  id            String   @id @default(uuid())
+  provider      String
+  eventType     String
+  payload       String
+  status        String
+  errorMessage  String?
+  createdAt     DateTime @default(now())
+  processedAt   DateTime?
+
+  @@map("webhook_events")
+}
