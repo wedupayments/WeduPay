@@ -30,11 +30,12 @@ export class PaymentController {
 
       const reference = `PAY-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const formattedPhone = adapter.formatPhoneNumber(phoneNumber);
+      const currencyValue = currency || "USD";
 
       const transaction = await paymentService.createTransaction({
         userId: "system",
         amount,
-        currency,
+        currency: currencyValue,
         type: "PAYMENT",
         reference,
       });
@@ -158,7 +159,7 @@ export class PaymentController {
         );
       }
 
-      const { page, limit, status } = validation.data;
+      const { page = 1, limit = 20, status } = validation.data;
 
       const { transactions, total } = await paymentService.getUserTransactions("system", {
         page,
