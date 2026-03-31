@@ -31,6 +31,7 @@ export async function GET(request: Request) {
       self: { href: `${baseUrl}/api/v1` },
       documentation: { href: `${baseUrl}/api/docs` },
       schemas: { href: `${baseUrl}/api/docs.json` },
+      resourceSchemas: { href: `${baseUrl}/api/v1/schemas` },
     },
     collections: {
       health: {
