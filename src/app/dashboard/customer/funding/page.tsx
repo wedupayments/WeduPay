@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { MobileMoneyPayment, PaymentProvider } from "@/components/MobileMoneyPayment";
+import { useToast } from "@/components/ui/Toast";
 
 interface Wallet {
   id: string;
@@ -47,6 +48,7 @@ function PaymentModal({ isOpen, onClose, provider, amount, onSuccess }: PaymentM
 }
 
 export default function WalletFundingPage() {
+  const toast = useToast();
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
@@ -54,8 +56,6 @@ export default function WalletFundingPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const providers = [
     {
@@ -83,7 +83,10 @@ export default function WalletFundingPage() {
 
   useEffect(() => {
     fetch("/api/wallets")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load");
+        return res.json();
+      })
       .then((data) => {
         setWallets(data.wallets || []);
         if (data.wallets?.length > 0) {
@@ -91,11 +94,11 @@ export default function WalletFundingPage() {
         }
         setLoading(false);
       })
-      .catch(() => {
-        setError("Failed to load wallets");
+      .catch((err) => {
+        toast.error("Error", "Failed to load wallets");
         setLoading(false);
       });
-  }, []);
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,7 +106,12 @@ export default function WalletFundingPage() {
 
     const amountNum = parseFloat(amount);
     if (isNaN(amountNum) || amountNum <= 0) {
-      setError("Please enter a valid amount");
+      toast.error("Invalid Amount", "Please enter a valid amount greater than 0");
+      return;
+    }
+
+    if (amountNum > 100000) {
+      toast.error("Amount Too Large", "Maximum amount is $100,000");
       return;
     }
 
@@ -111,7 +119,7 @@ export default function WalletFundingPage() {
   };
 
   const handlePaymentSuccess = () => {
-    setSuccess(`Successfully funded wallet with $${amount}`);
+    toast.success("Payment Successful", `Successfully funded wallet with $${amount}`);
     setAmount("");
     setSelectedProvider(null);
     setShowPaymentModal(false);
@@ -157,20 +165,6 @@ export default function WalletFundingPage() {
           Add funds to your connected mobile wallets instantly
         </p>
       </div>
-
-      {error && (
-        <div className="p-3 sm:p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 flex items-center gap-2 sm:gap-3 text-sm">
-          <span className="material-symbols-outlined shrink-0">error</span>
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="p-3 sm:p-4 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center gap-2 sm:gap-3 text-sm">
-          <span className="material-symbols-outlined shrink-0">check_circle</span>
-          {success}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         <div className="bg-white dark:bg-background-dark rounded-xl sm:rounded-2xl border border-slate-200 dark:border-primary/10 p-4 sm:p-6 space-y-4 sm:space-y-6 shadow-sm">
@@ -263,6 +257,7 @@ export default function WalletFundingPage() {
               <input
                 type="number"
                 min="1"
+                max="100000"
                 step="0.01"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
