@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { EcoCashPayment } from "@/components/EcoCashPayment";
+import { MobileMoneyPayment, PaymentProvider } from "@/components/MobileMoneyPayment";
 
 interface Wallet {
   id: string;
@@ -13,7 +13,7 @@ interface Wallet {
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  provider: string;
+  provider: PaymentProvider;
   amount: number;
   onSuccess: () => void;
 }
@@ -31,29 +31,26 @@ function PaymentModal({ isOpen, onClose, provider, amount, onSuccess }: PaymentM
     console.error("Payment error:", error);
   };
 
-  if (provider === "EcoCash") {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-        <div className="w-full max-w-md">
-          <EcoCashPayment
-            amount={amount}
-            onSuccess={handleSuccess}
-            onError={handleError}
-            onCancel={onClose}
-          />
-        </div>
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="w-full max-w-md">
+        <MobileMoneyPayment
+          amount={amount}
+          provider={provider}
+          onSuccess={handleSuccess}
+          onError={handleError}
+          onCancel={onClose}
+        />
       </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 }
 
 export default function WalletFundingPage() {
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
-  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<PaymentProvider | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -62,21 +59,21 @@ export default function WalletFundingPage() {
 
   const providers = [
     {
-      id: "EcoCash",
+      id: "ecocash" as PaymentProvider,
       name: "EcoCash",
-      icon: "phone_android",
+      icon: "eco",
       color: "bg-green-500",
       description: "Instant payment via EcoCash",
     },
     {
-      id: "M-Pesa",
+      id: "mpesa" as PaymentProvider,
       name: "M-Pesa",
-      icon: "phone_android",
-      color: "bg-yellow-500",
+      icon: "payments",
+      color: "bg-yellow-600",
       description: "Safaricom M-Pesa",
     },
     {
-      id: "MTN",
+      id: "mtn" as PaymentProvider,
       name: "MTN Money",
       icon: "signal_cellular_alt",
       color: "bg-yellow-400",
@@ -129,8 +126,8 @@ export default function WalletFundingPage() {
 
   const getWalletIcon = (type: string) => {
     const icons: Record<string, string> = {
-      EcoCash: "phone_android",
-      "M-Pesa": "phone_android",
+      EcoCash: "eco",
+      "M-Pesa": "payments",
       MTN: "signal_cellular_alt",
       default: "account_balance_wallet",
     };
@@ -311,7 +308,7 @@ export default function WalletFundingPage() {
       <PaymentModal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
-        provider={selectedProvider || ""}
+        provider={selectedProvider || "ecocash"}
         amount={parseFloat(amount) || 0}
         onSuccess={handlePaymentSuccess}
       />
