@@ -28,7 +28,7 @@ function handleSignOut() {
   document.cookie = "sb-access-token=; path=/; max-age=0";
   document.cookie = "wedupay-user-id=; path=/; max-age=0";
   document.cookie = "wedupay-user-email=; path=/; max-age=0";
-  window.location.href = "/auth/login";
+  window.location.href = "/";
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
