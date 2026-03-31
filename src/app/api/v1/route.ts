@@ -33,6 +33,11 @@ export async function GET(request: Request) {
       schemas: { href: `${baseUrl}/api/docs.json` },
     },
     collections: {
+      health: {
+        href: `${baseUrl}/api/v1/health`,
+        methods: ["GET", "HEAD"],
+        description: "API health check endpoint",
+      },
       payments: {
         href: `${baseUrl}/api/v1/payments`,
         methods: ["GET", "POST"],
@@ -54,9 +59,14 @@ export async function GET(request: Request) {
         description: "User wallets",
       },
       users: {
+        href: `${baseUrl}/api/v1/users`,
+        methods: ["GET"],
+        description: "List users",
+      },
+      "users/{id}": {
         href: `${baseUrl}/api/v1/users/{id}`,
         methods: ["GET"],
-        description: "User resources",
+        description: "Get user by ID",
         templated: true,
         subResources: {
           wallets: {
