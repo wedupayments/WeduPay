@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { EcoCashPayment } from "@/components/EcoCashPayment";
 
 interface Wallet {
   id: string;
@@ -9,14 +10,79 @@ interface Wallet {
   balance: number;
 }
 
+interface PaymentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  provider: string;
+  amount: number;
+  onSuccess: () => void;
+}
+
+function PaymentModal({ isOpen, onClose, provider, amount, onSuccess }: PaymentModalProps) {
+  if (!isOpen) return null;
+
+  const handleSuccess = (transactionId: string) => {
+    console.log("Payment successful:", transactionId);
+    onSuccess();
+    onClose();
+  };
+
+  const handleError = (error: string) => {
+    console.error("Payment error:", error);
+  };
+
+  if (provider === "EcoCash") {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+        <div className="w-full max-w-md">
+          <EcoCashPayment
+            amount={amount}
+            onSuccess={handleSuccess}
+            onError={handleError}
+            onCancel={onClose}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 export default function WalletFundingPage() {
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const providers = [
+    {
+      id: "EcoCash",
+      name: "EcoCash",
+      icon: "phone_android",
+      color: "bg-green-500",
+      description: "Instant payment via EcoCash",
+    },
+    {
+      id: "M-Pesa",
+      name: "M-Pesa",
+      icon: "phone_android",
+      color: "bg-yellow-500",
+      description: "Safaricom M-Pesa",
+    },
+    {
+      id: "MTN",
+      name: "MTN Money",
+      icon: "signal_cellular_alt",
+      color: "bg-yellow-400",
+      description: "MTN Mobile Money",
+    },
+  ];
 
   useEffect(() => {
     fetch("/api/wallets")
@@ -36,34 +102,22 @@ export default function WalletFundingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedWallet || !amount) return;
+    if (!selectedProvider || !amount) return;
 
-    setSubmitting(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const res = await fetch("/api/wallets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: "current-user",
-          walletType: selectedWallet,
-          amount: parseFloat(amount),
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error);
-
-      setSuccess(`Successfully funded wallet with $${amount}`);
-      setAmount("");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Funding failed");
-    } finally {
-      setSubmitting(false);
+    const amountNum = parseFloat(amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      setError("Please enter a valid amount");
+      return;
     }
+
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    setSuccess(`Successfully funded wallet with $${amount}`);
+    setAmount("");
+    setSelectedProvider(null);
+    setShowPaymentModal(false);
   };
 
   const formatCurrency = (amount: number, currency: string) => {
@@ -75,11 +129,10 @@ export default function WalletFundingPage() {
 
   const getWalletIcon = (type: string) => {
     const icons: Record<string, string> = {
-      "EcoCash": "phone_android",
+      EcoCash: "phone_android",
       "M-Pesa": "phone_android",
-      "MTN": "signal_cellular_alt",
-      "Airtel": "signal_cellular_alt",
-      "default": "account_balance_wallet"
+      MTN: "signal_cellular_alt",
+      default: "account_balance_wallet",
     };
     return icons[type] || icons.default;
   };
@@ -88,7 +141,9 @@ export default function WalletFundingPage() {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
-          <span className="material-symbols-outlined text-5xl text-primary animate-spin">progress_activity</span>
+          <span className="material-symbols-outlined text-5xl text-primary animate-spin">
+            progress_activity
+          </span>
           <p className="text-slate-600 dark:text-slate-400 mt-4">Loading wallets...</p>
         </div>
       </div>
@@ -124,13 +179,48 @@ export default function WalletFundingPage() {
         <div className="bg-white dark:bg-background-dark rounded-xl sm:rounded-2xl border border-slate-200 dark:border-primary/10 p-4 sm:p-6 space-y-4 sm:space-y-6 shadow-sm">
           <div>
             <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 sm:mb-3">
-              Select Wallet
+              Select Payment Provider
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {providers.map((provider) => (
+                <button
+                  key={provider.id}
+                  type="button"
+                  onClick={() => setSelectedProvider(provider.id)}
+                  className={`p-3 sm:p-4 rounded-xl border-2 text-center transition-all ${
+                    selectedProvider === provider.id
+                      ? "border-primary bg-primary/10"
+                      : "border-slate-200 dark:border-slate-700 hover:border-primary/50"
+                  }`}
+                >
+                  <div
+                    className={`size-10 sm:size-12 mx-auto rounded-xl ${provider.color} flex items-center justify-center mb-2`}
+                  >
+                    <span className="material-symbols-outlined text-white text-lg sm:text-xl">
+                      {provider.icon}
+                    </span>
+                  </div>
+                  <p className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
+                    {provider.name}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 sm:mb-3">
+              Select Wallet (Optional)
             </label>
             <div className="grid grid-cols-1 gap-3">
               {wallets.length === 0 ? (
                 <div className="text-center py-8 sm:py-12">
-                  <span className="material-symbols-outlined text-4xl sm:text-5xl text-slate-300 dark:text-slate-600">account_balance_wallet</span>
-                  <p className="text-slate-500 mt-3 text-sm sm:text-base">No wallets found</p>
+                  <span className="material-symbols-outlined text-4xl sm:text-5xl text-slate-300 dark:text-slate-600">
+                    account_balance_wallet
+                  </span>
+                  <p className="text-slate-500 mt-3 text-sm sm:text-base">
+                    No wallets found
+                  </p>
                 </div>
               ) : (
                 wallets.map((wallet) => (
@@ -199,22 +289,32 @@ export default function WalletFundingPage() {
         </div>
 
         <div className="bg-slate-50 dark:bg-primary/5 rounded-xl p-3 sm:p-4 flex items-start gap-2 sm:gap-3">
-          <span className="material-symbols-outlined text-primary shrink-0 text-lg sm:text-xl">info</span>
+          <span className="material-symbols-outlined text-primary shrink-0 text-lg sm:text-xl">
+            info
+          </span>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-            Funds are transferred instantly via mobile money. Supported providers
-            include EcoCash, M-Pesa, MTN Mobile Money, and Airtel Money.
+            Funds are transferred instantly via mobile money. Select a provider above and enter
+            the amount to initiate payment.
           </p>
         </div>
 
         <button
           type="submit"
-          disabled={!selectedWallet || !amount || submitting}
+          disabled={!selectedProvider || !amount || submitting}
           className="w-full py-3 sm:py-4 bg-primary hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed text-background-dark font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 text-sm sm:text-base"
         >
           <span className="material-symbols-outlined">payments</span>
-          {submitting ? "Processing..." : "Fund Wallet"}
+          {submitting ? "Processing..." : "Continue to Payment"}
         </button>
       </form>
+
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        provider={selectedProvider || ""}
+        amount={parseFloat(amount) || 0}
+        onSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 }
