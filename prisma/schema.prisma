@@ -27,12 +27,14 @@ model User {
   phoneNumber    String
   country        String
   kycStatus      String
+  role           String            @default("USER")
   supabaseUserId String?           @unique
   createdAt      DateTime          @default(now())
 
   wallets        Wallet[]
   transactions   Transaction[]
   references     PaymentReference[]
+  cards          VirtualCard[]
 
   @@map("users")
 }
@@ -166,4 +168,29 @@ model AsyncTask {
 
   @@index([status, scheduledAt])
   @@map("async_tasks")
+}
+
+model VirtualCard {
+  id              String   @id @default(uuid())
+  userId          String
+  provider        String
+  cardNumber      String   @unique
+  cardToken       String   @unique
+  lastFourDigits  String
+  expiryMonth     String
+  expiryYear      String
+  cvv             String
+  status          String   @default("ACTIVE")
+  currency        String   @default("USD")
+  balance         Float    @default(0)
+  limit           Float?
+  isVirtual       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@map("virtual_cards")
 }
