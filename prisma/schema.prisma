@@ -103,3 +103,67 @@ model WebhookEvent {
 
   @@map("webhook_events")
 }
+
+model IdempotencyRecord {
+  id             String   @id @default(uuid())
+  idempotencyKey String  @unique
+  method         String
+  path           String
+  statusCode     Int
+  responseBody   String
+  createdAt      DateTime @default(now())
+  expiresAt      DateTime
+
+  @@unique([idempotencyKey, method, path])
+  @@map("idempotency_records")
+}
+
+model ApiKey {
+  id           String   @id @default(uuid())
+  key          String   @unique
+  name         String
+  userId       String?
+  permissions  String[]
+  isActive     Boolean  @default(true)
+  lastUsedAt   DateTime?
+  expiresAt    DateTime?
+  createdAt    DateTime @default(now())
+
+  @@map("api_keys")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId     String?
+  action      String
+  resource    String
+  resourceId  String?
+  details     String?
+  ipAddress   String?
+  userAgent   String?
+  requestId   String
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model AsyncTask {
+  id           String   @id @default(uuid())
+  type         String
+  status       String   @default("PENDING")
+  payload      String
+  result       String?
+  error        String?
+  attempts     Int      @default(0)
+  maxAttempts  Int      @default(3)
+  scheduledAt  DateTime @default(now())
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([status, scheduledAt])
+  @@map("async_tasks")
+}
