@@ -1,44 +1,25 @@
 import { NextResponse } from "next/server";
 import { paymentService, walletService } from "@/services";
-import { WalletAdapterFactory, WalletProvider } from "@/services/wallets";
+import { WalletAdapterFactory } from "@/services/wallets";
 import { createErrorResponse } from "@/lib/api-response";
-
-export interface PaymentRequest {
-  walletType: WalletProvider;
-  phoneNumber: string;
-  amount: number;
-  currency?: string;
-  description?: string;
-}
+import { paymentSchema, paginationSchema, validateRequest } from "@/lib/validation";
+import type { WalletProvider } from "@/lib/validation";
 
 export class PaymentController {
   async createPayment(request: Request) {
     try {
-      const body: PaymentRequest = await request.json();
-      const { walletType, phoneNumber, amount, currency = "USD", description } = body;
+      const body = await request.json();
+      const validation = validateRequest(paymentSchema, body);
 
-      if (!walletType || !phoneNumber || !amount) {
+      if (!validation.success || !validation.data) {
         return NextResponse.json(
-          createErrorResponse("INVALID_REQUEST", "Missing required fields", undefined, 400).body,
+          createErrorResponse("VALIDATION_ERROR", "Invalid request data", validation.errors!, 400).body,
           { status: 400 }
         );
       }
 
-      if (!WalletAdapterFactory.isProviderSupported(walletType)) {
-        return NextResponse.json(
-          createErrorResponse("UNSUPPORTED_PROVIDER", `Provider ${walletType} is not supported`, undefined, 400).body,
-          { status: 400 }
-        );
-      }
-
-      if (amount <= 0 || amount > 100000) {
-        return NextResponse.json(
-          createErrorResponse("INVALID_AMOUNT", "Amount must be between 0.01 and 100000", undefined, 400).body,
-          { status: 400 }
-        );
-      }
-
-      const adapter = WalletAdapterFactory.getAdapter(walletType);
+      const { walletType, phoneNumber, amount, currency, description } = validation.data;
+      const adapter = WalletAdapterFactory.getAdapter(walletType as WalletProvider);
 
       if (!adapter.validatePhoneNumber(phoneNumber)) {
         return NextResponse.json(
@@ -160,9 +141,24 @@ export class PaymentController {
   async listPayments(request: Request) {
     try {
       const { searchParams } = new URL(request.url);
-      const page = parseInt(searchParams.get("page") || "1");
-      const limit = parseInt(searchParams.get("limit") || "20");
-      const status = searchParams.get("status") || undefined;
+      const pagination = {
+        page: searchParams.get("page") || "1",
+        limit: searchParams.get("limit") || "20",
+        sortBy: searchParams.get("sortBy") || "createdAt",
+        sortOrder: searchParams.get("sortOrder") || "desc",
+        status: searchParams.get("status") || undefined,
+      };
+
+      const validation = validateRequest(paginationSchema, pagination);
+
+      if (!validation.success || !validation.data) {
+        return NextResponse.json(
+          createErrorResponse("VALIDATION_ERROR", "Invalid query parameters", validation.errors!, 400).body,
+          { status: 400 }
+        );
+      }
+
+      const { page, limit, status } = validation.data;
 
       const { transactions, total } = await paymentService.getUserTransactions("system", {
         page,
