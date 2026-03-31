@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
-import { createErrorResponse } from "@/lib/api-response";
+import { createErrorResponse, getCacheHeaders } from "@/lib/api-response";
+import { getSecurityHeaders } from "@/lib/api-middleware";
 
 function buildResourceUrl(request: Request, id?: string): string {
   const url = new URL(request.url);
@@ -42,17 +43,151 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           type: payment.type,
           createdAt: payment.createdAt,
         },
-      },
-      links: {
-        self: buildResourceUrl(request, payment.id),
-        collection: buildResourceUrl(request),
+        _links: {
+          self: { href: buildResourceUrl(request, payment.id) },
+          cancel: { href: `${buildResourceUrl(request, payment.id)}/cancel` },
+          collection: { href: buildResourceUrl(request) },
+        },
       },
     };
 
-    return NextResponse.json(response, { status: 200 });
+    return NextResponse.json(response, {
+      status: 200,
+      headers: {
+        ...getCacheHeaders(false, payment.createdAt),
+        ...getSecurityHeaders(),
+        "Last-Modified": payment.createdAt.toUTCString(),
+      },
+    });
   } catch (error) {
     console.error("Failed to fetch payment:", error);
     const errorResp = createErrorResponse("INTERNAL_ERROR", "Failed to fetch payment", undefined, 500);
+    return NextResponse.json(errorResp.body, { status: errorResp.status });
+  }
+}
+
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("wedupay-user-id")?.value;
+
+    if (!userId) {
+      const error = createErrorResponse("UNAUTHORIZED", "Authentication required", undefined, 401);
+      return NextResponse.json(error.body, { status: error.status });
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+    const { status, description } = body;
+
+    const payment = await prisma.transaction.findFirst({
+      where: { id, userId, type: "PAYMENT" },
+    });
+
+    if (!payment) {
+      const error = createErrorResponse("NOT_FOUND", "Payment not found", undefined, 404);
+      return NextResponse.json(error.body, { status: error.status });
+    }
+
+    const validStatuses = ["PENDING", "COMPLETED", "FAILED", "CANCELLED"];
+    if (status && !validStatuses.includes(status)) {
+      const error = createErrorResponse(
+        "INVALID_STATUS",
+        `Status must be one of: ${validStatuses.join(", ")}`,
+        undefined,
+        400
+      );
+      return NextResponse.json(error.body, { status: error.status });
+    }
+
+    const updatedPayment = await prisma.transaction.update({
+      where: { id },
+      data: {
+        ...(status && { status }),
+        ...(description !== undefined && { reference: description }),
+      },
+    });
+
+    const response = {
+      data: {
+        id: updatedPayment.id,
+        type: "payment",
+        attributes: {
+          amount: updatedPayment.amount,
+          currency: updatedPayment.currency,
+          status: updatedPayment.status,
+          reference: updatedPayment.reference,
+          type: updatedPayment.type,
+          createdAt: updatedPayment.createdAt,
+          updatedAt: updatedPayment.createdAt,
+        },
+        _links: {
+          self: { href: buildResourceUrl(request, updatedPayment.id) },
+          collection: { href: buildResourceUrl(request) },
+        },
+      },
+    };
+
+    return NextResponse.json(response, {
+      status: 200,
+      headers: {
+        ...getCacheHeaders(false, updatedPayment.createdAt),
+        ...getSecurityHeaders(),
+      },
+    });
+  } catch (error) {
+    console.error("Failed to update payment:", error);
+    const errorResp = createErrorResponse("INTERNAL_ERROR", "Failed to update payment", undefined, 500);
+    return NextResponse.json(errorResp.body, { status: errorResp.status });
+  }
+}
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("wedupay-user-id")?.value;
+
+    if (!userId) {
+      const error = createErrorResponse("UNAUTHORIZED", "Authentication required", undefined, 401);
+      return NextResponse.json(error.body, { status: error.status });
+    }
+
+    const { id } = await params;
+
+    const payment = await prisma.transaction.findFirst({
+      where: { id, userId, type: "PAYMENT" },
+    });
+
+    if (!payment) {
+      const error = createErrorResponse("NOT_FOUND", "Payment not found", undefined, 404);
+      return NextResponse.json(error.body, { status: error.status });
+    }
+
+    if (payment.status === "COMPLETED") {
+      const error = createErrorResponse(
+        "CANNOT_DELETE",
+        "Cannot delete a completed payment",
+        undefined,
+        409
+      );
+      return NextResponse.json(error.body, { status: error.status });
+    }
+
+    await prisma.transaction.update({
+      where: { id },
+      data: { status: "CANCELLED" },
+    });
+
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        ...getSecurityHeaders(),
+        "X-Request-Id": crypto.randomUUID(),
+      },
+    });
+  } catch (error) {
+    console.error("Failed to delete payment:", error);
+    const errorResp = createErrorResponse("INTERNAL_ERROR", "Failed to delete payment", undefined, 500);
     return NextResponse.json(errorResp.body, { status: errorResp.status });
   }
 }

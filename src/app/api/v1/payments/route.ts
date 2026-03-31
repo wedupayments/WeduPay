@@ -66,13 +66,13 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { amount, currency, provider, phoneNumber, reference, description } = body;
 
-    const errors: Record<string, string[]> = {};
-    if (!amount) errors.amount = ["Amount is required"];
-    if (!currency) errors.currency = ["Currency is required"];
-    if (!provider) errors.provider = ["Provider is required"];
-    if (!phoneNumber) errors.phoneNumber = ["Phone number is required"];
+    const errors: Array<{ code: string; target: string; message: string }> = [];
+    if (!amount) errors.push({ code: "REQUIRED", target: "amount", message: "Amount is required" });
+    if (!currency) errors.push({ code: "REQUIRED", target: "currency", message: "Currency is required" });
+    if (!provider) errors.push({ code: "REQUIRED", target: "provider", message: "Provider is required" });
+    if (!phoneNumber) errors.push({ code: "REQUIRED", target: "phoneNumber", message: "Phone number is required" });
 
-    if (Object.keys(errors).length > 0) {
+    if (errors.length > 0) {
       const error = createErrorResponse("VALIDATION_ERROR", "Invalid request data", errors, 400);
       return NextResponse.json(error.body, { status: error.status });
     }

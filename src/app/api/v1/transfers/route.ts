@@ -60,13 +60,13 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { toUserId, amount, currency, walletType, description } = body;
 
-    const errors: Record<string, string[]> = {};
-    if (!toUserId) errors.toUserId = ["Recipient user ID is required"];
-    if (!amount) errors.amount = ["Amount is required"];
-    if (!currency) errors.currency = ["Currency is required"];
-    if (!walletType) errors.walletType = ["Wallet type is required"];
+    const errors: Array<{ code: string; target: string; message: string }> = [];
+    if (!toUserId) errors.push({ code: "REQUIRED", target: "toUserId", message: "Recipient user ID is required" });
+    if (!amount) errors.push({ code: "REQUIRED", target: "amount", message: "Amount is required" });
+    if (!currency) errors.push({ code: "REQUIRED", target: "currency", message: "Currency is required" });
+    if (!walletType) errors.push({ code: "REQUIRED", target: "walletType", message: "Wallet type is required" });
 
-    if (Object.keys(errors).length > 0) {
+    if (errors.length > 0) {
       const error = createErrorResponse("VALIDATION_ERROR", "Invalid request data", errors, 400);
       return NextResponse.json(error.body, { status: error.status });
     }
