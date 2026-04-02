@@ -1,0 +1,57 @@
+# ============================================
+# WeduPay - Vercel Environment Variables
+# Copy these to Vercel Dashboard
+# ============================================
+
+# Run this command to add variables to Vercel:
+# vercel env add VARIABLE_NAME
+
+# ============================================
+# DATABASE (Required)
+# ============================================
+DATABASE_URL="postgres://postgres.uuhdjltiwmeitjzqcvlj:dKrgKvsoGyFbJ3JA@aws-1-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true"
+DIRECT_URL="postgres://postgres.uuhdjltiwmeitjzqcvlj:dKrgKvsoGyFbJ3JA@aws-1-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require"
+
+# ============================================
+# SUPABASE (Required)
+# ============================================
+NEXT_PUBLIC_SUPABASE_URL="https://uuhdjltiwmeitjzqcvlj.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1aGRqbHRpd21laXRqenFjdmxqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4Mjc2MTgsImV4cCI6MjA4OTQwMzYxOH0.emzBLi-P4OnLTtvC13fLi1AF-USpcQ5XvI76lR33_4Y"
+SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1aGRqbHRpd21laXRqenFjdmxqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzgyNzYxOCwiZXhwIjoyMDg5NDAzNjE4fQ.4ZiIK260kPrj-gYn82ksoqxNCsEzh2uIME6LqnANcFs"
+SUPABASE_JWT_SECRET="yJShGAwdkXF93eif2GwkjokUibbEMYDh4WCPUT7e6UzJIJj47BxUmmBMkdw+8jFwX6UZHHsUr1h732m9VOhLfw=="
+
+# ============================================
+# APPLICATION
+# ============================================
+NEXT_PUBLIC_APP_URL="https://your-app.vercel.app"
+NODE_ENV="production"
+
+# ============================================
+# ANALYTICS (Optional)
+# ============================================
+NEXT_PUBLIC_GA_ID=""
+NEXT_PUBLIC_VERCEL_ANALYTICS_ID=""
+
+# ============================================
+# PAYMENT PROVIDERS (Add your production keys)
+# ============================================
+
+# M-Pesa Kenya
+MPESA_CONSUMER_KEY=""
+MPESA_CONSUMER_SECRET=""
+MPESA_SHORT_CODE="600000"
+MPESA_PASSKEY=""
+
+# Flutterwave
+FLUTTERWAVE_PUBLIC_KEY=""
+FLUTTERWAVE_SECRET_KEY=""
+
+# Paystack
+PAYSTACK_PUBLIC_KEY=""
+PAYSTACK_SECRET_KEY=""
+
+# ============================================
+# NOTIFICATIONS (Optional)
+# ============================================
+EMAIL_PROVIDER="console"
+SMS_PROVIDER="console"
