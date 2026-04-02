@@ -1,95 +1,88 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { createErrorResponse } from "@/lib/api-response";
+/**
+ * EcoCash Webhook Endpoint
+ * 
+ * Receives payment callbacks from EcoCash Zimbabwe.
+ * Processes payment confirmations and updates transaction status.
+ * 
+ * @endpoint POST /api/v1/webhooks/ecocash
+ * 
+ * @body {Object} payload - EcoCash callback payload
+ * @body {string} payload.transactionId - EcoCash transaction ID
+ * @body {string} payload.reference - Merchant reference
+ * @body {string} payload.status - Transaction status
+ * @body {number} payload.amount - Transaction amount
+ * @body {string} payload.currency - Currency code
+ * @body {string} payload.customerMsisdn - Customer phone number
+ * 
+ * @returns {Object} response
+ * @returns {boolean} received - Whether webhook was received
+ * 
+ * @example
+ * // EcoCash Callback Payload
+ * POST /api/v1/webhooks/ecocash
+ * {
+ *   "transactionId": "ECW123456789",
+ *   "reference": "PAY-123456",
+ *   "status": "SUCCESS",
+ *   "amount": 50.00,
+ *   "currency": "USD",
+ *   "customerMsisdn": "263771234567",
+ *   "timestamp": "2024-01-15T10:30:45Z"
+ * }
+ * 
+ * // Response
+ * { "received": true }
+ */
 
-function buildResourceUrl(request: Request): string {
-  const url = new URL(request.url);
-  return `${url.protocol}//${url.host}/api/v1/webhooks/ecocash`;
-}
+import { NextRequest, NextResponse } from 'next/server';
+import { processWebhook } from '@/services/webhook/webhook.processor';
 
-export async function GET(request: Request) {
-  return NextResponse.json(
-    {
-      data: {
-        type: "webhook",
-        id: "ecocash",
-        attributes: {
-          provider: "EcoCash",
-          status: "active",
-          supportedEvents: ["PUSH_PAYMENT", "PULL_PAYMENT", "REFUND"],
-        },
-      },
-      links: {
-        self: buildResourceUrl(request),
-      },
-    },
-    { status: 200 }
-  );
-}
+export async function POST(request: NextRequest) {
+  const requestId = `WH-ECOCASH-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  console.log(`[EcoCashWebhook] ${requestId} - Received webhook`);
 
-export async function POST(request: Request) {
   try {
-    const callback = await request.json();
-    console.log("EcoCash webhook received:", JSON.stringify(callback));
+    // Parse request body
+    const body = await request.json();
 
-    const webhookEvent = await prisma.webhookEvent.create({
-      data: {
-        provider: "ECOCASH",
-        eventType: "PUSH_PAYMENT",
-        payload: JSON.stringify(callback),
-        status: "RECEIVED",
-      },
-    });
-
-    const { status, transactionId } = callback;
-
-    if (status === "SUCCESS" && transactionId) {
-      await prisma.webhookEvent.update({
-        where: { id: webhookEvent.id },
-        data: { status: "PROCESSED", processedAt: new Date() },
-      });
-
-      const pendingTransaction = await prisma.transaction.findFirst({
-        where: { reference: { contains: transactionId }, status: "PENDING" },
-      });
-
-      if (pendingTransaction) {
-        await prisma.transaction.update({
-          where: { id: pendingTransaction.id },
-          data: { status: "COMPLETED", reference: transactionId },
-        });
-      }
-
+    if (!body || !body.transactionId) {
+      console.error(`[EcoCashWebhook] ${requestId} - Invalid payload structure`);
       return NextResponse.json(
-        {
-          data: {
-            type: "webhook-response",
-            id: webhookEvent.id,
-            attributes: { status: "SUCCESS", message: "Payment processed successfully" },
-          },
-        },
-        { status: 200 }
+        { received: false, error: 'Invalid payload' },
+        { status: 400 }
       );
-    } else {
-      await prisma.webhookEvent.update({
-        where: { id: webhookEvent.id },
-        data: { status: "FAILED", errorMessage: status, processedAt: new Date() },
-      });
+    }
 
+    // Process webhook
+    const result = await processWebhook('ecocash', body);
+
+    if (result.success) {
+      console.log(`[EcoCashWebhook] ${requestId} - Processed successfully:`, result);
+      return NextResponse.json({ received: true });
+    } else {
+      console.error(`[EcoCashWebhook] ${requestId} - Processing failed:`, result.error);
       return NextResponse.json(
-        {
-          data: {
-            type: "webhook-response",
-            id: webhookEvent.id,
-            attributes: { status: "FAILED", message: status || "Payment failed" },
-          },
-        },
-        { status: 200 }
+        { received: false, error: result.error },
+        { status: 400 }
       );
     }
   } catch (error) {
-    console.error("EcoCash webhook error:", error);
-    const errorResp = createErrorResponse("WEBHOOK_ERROR", "Webhook processing failed", undefined, 500);
-    return NextResponse.json(errorResp.body, { status: errorResp.status });
+    console.error(`[EcoCashWebhook] ${requestId} - Error:`, error);
+
+    return NextResponse.json(
+      { received: false, error: 'Internal server error' },
+      { status: 500 }
+    );
   }
+}
+
+/**
+ * GET endpoint for testing webhook connectivity
+ */
+export async function GET() {
+  return NextResponse.json({
+    status: 'ok',
+    provider: 'ecocash',
+    timestamp: new Date().toISOString(),
+  });
 }
