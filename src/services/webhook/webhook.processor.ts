@@ -669,11 +669,42 @@ async function triggerNotifications(
 
     if (!user) return;
 
-    // Notification would be sent here via email/SMS service
-    // For now, just log
-    console.log(`Notification for user ${user.email}: Transaction ${transaction.transferRef} ${status}`);
+    // Import notification service
+    const { sendTransferCompleted, sendEmail } = await import('@/services/notifications/notification.service');
+
+    // Send appropriate notification based on status
+    if (status === 'SUCCESS' && transaction.completedAt) {
+      // Send transfer completion notification
+      await sendTransferCompleted(userId, {
+        transferRef: transaction.transferRef,
+        sendAmount: transaction.sendAmount,
+        sendCurrency: transaction.sendCurrency,
+        receiveAmount: transaction.receiveAmount,
+        receiveCurrency: transaction.receiveCurrency,
+        recipientPhone: transaction.recipientPhone,
+        completedAt: transaction.completedAt,
+      });
+    } else if (status === 'FAILED') {
+      // Send failure notification
+      await sendEmail({
+        to: user.email,
+        subject: '',
+        template: 'transfer_failed',
+        data: {
+          name: user.email.split('@')[0],
+          transferRef: transaction.transferRef,
+          amount: transaction.sendAmount,
+          currency: transaction.sendCurrency,
+          reason: transaction.failureReason || 'Unknown error',
+          retryUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/customer/transfers`,
+        },
+      });
+    }
+
+    console.log(`[Notification] Sent ${status} notification to ${user.email}`);
   } catch (error) {
     console.error('Trigger notifications error:', error);
+    // Don't throw - notification failure shouldn't fail webhook processing
   }
 }
 
