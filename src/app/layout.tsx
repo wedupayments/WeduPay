@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { VercelAnalytics } from "@/components/VercelAnalytics";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -42,6 +43,7 @@ export default function RootLayout({
             <ToastProvider>
               {children}
             </ToastProvider>
+            <VercelAnalytics />
           </AuthProvider>
         </ThemeProvider>
       </body>
