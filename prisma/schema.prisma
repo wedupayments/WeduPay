@@ -425,3 +425,141 @@ model ExchangeRate {
   @@index([targetCurrency])
   @@map("exchange_rates")
 }
+
+// ============================================
+// P2P CROSS-BORDER TRANSFER MODELS
+// ============================================
+
+model P2PTransfer {
+  id                  String   @id @default(uuid())
+  transferRef         String   @unique
+  userId              String   // Sender user ID
+  
+  // Sender details
+  senderPhone         String
+  senderCountry       String
+  senderWalletType    String
+  
+  // Recipient details
+  recipientPhone      String
+  recipientName       String?
+  recipientCountry    String
+  recipientWalletType String
+  
+  // Amount details
+  sendAmount          Float
+  sendCurrency        String
+  receiveAmount       Float
+  receiveCurrency     String
+  exchangeRate        Float
+  
+  // Fees
+  transferFee         Float
+  fxFee               Float
+  totalFees           Float
+  totalDebit          Float   // sendAmount + fees
+  
+  // Routing
+  routingProvider     String
+  routingProviderId   String
+  providerReference   String?
+  providerTransactionId String?
+  
+  // Status
+  status              String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED, REFUNDED
+  failureReason       String?
+  
+  // Compliance
+  kycRequired         Boolean  @default(false)
+  kycStatus           String?  // PENDING, VERIFIED, REJECTED
+  complianceCheck     String?  // JSON compliance data
+  
+  // Timing
+  createdAt           DateTime @default(now())
+  processedAt         DateTime?
+  completedAt         DateTime?
+  expiresAt           DateTime?
+  
+  // Metadata
+  description         String?
+  metadata            String?  // JSON additional data
+
+  @@index([userId])
+  @@index([transferRef])
+  @@index([senderPhone])
+  @@index([recipientPhone])
+  @@index([status])
+  @@index([createdAt])
+  @@map("p2p_transfers")
+}
+
+model TransferRecipient {
+  id                  String   @id @default(uuid())
+  userId              String   // User who saved this recipient
+  name                String
+  phoneNumber         String
+  country             String
+  walletType          String
+  isVerified          Boolean  @default(false)
+  lastUsedAt          DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([userId])
+  @@index([phoneNumber, country])
+  @@map("transfer_recipients")
+}
+
+model TransferLimit {
+  id                  String   @id @default(uuid())
+  country             String
+  currency            String
+  walletType          String
+  
+  // Daily limits
+  dailyMin            Float    @default(0)
+  dailyMax            Float    @default(10000)
+  
+  // Per transaction limits
+  transactionMin      Float    @default(0)
+  transactionMax      Float    @default(5000)
+  
+  // Monthly limits
+  monthlyMax          Float?
+  
+  // KYC tiers
+  kycRequired         Boolean  @default(false)
+  kycTier             String?  // basic, enhanced, premium
+  
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([country, currency, walletType])
+  @@map("transfer_limits")
+}
+
+model ComplianceCheck {
+  id                  String   @id @default(uuid())
+  transferId          String?
+  userId              String?
+  checkType           String   // sanctions, pep, fraud, amount_threshold
+  
+  // Result
+  status              String   // PASS, FAIL, REVIEW
+  riskScore           Float    @default(0)
+  riskLevel           String   // LOW, MEDIUM, HIGH
+  details             String?  // JSON check details
+  
+  // Action taken
+  action              String?  // approved, rejected, manual_review
+  reviewedBy          String?
+  reviewedAt          DateTime?
+  
+  createdAt           DateTime @default(now())
+
+  @@index([transferId])
+  @@index([userId])
+  @@index([status])
+  @@map("compliance_checks")
+}

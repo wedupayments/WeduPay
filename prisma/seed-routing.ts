@@ -444,6 +444,61 @@ async function seed() {
   console.log(`  - Payment Providers: ${paymentProviders.length}`);
   console.log(`  - Routing Rules: ${routingRules.length}`);
   console.log(`  - Exchange Rates: ${exchangeRates.length}`);
+
+  // Seed Transfer Limits
+  console.log('\n💰 Seeding Transfer Limits...');
+  await seedTransferLimits();
+}
+
+// ============================================
+// TRANSFER LIMITS
+// ============================================
+
+async function seedTransferLimits() {
+  const transferLimits = [
+    // East Africa
+    { country: 'KE', currency: 'KES', walletType: 'mobile_wallet', dailyMin: 10, dailyMax: 150000, transactionMin: 10, transactionMax: 50000, monthlyMax: 300000 },
+    { country: 'TZ', currency: 'TZS', walletType: 'mobile_wallet', dailyMin: 1000, dailyMax: 5000000, transactionMin: 1000, transactionMax: 1500000, monthlyMax: 15000000 },
+    { country: 'UG', currency: 'UGX', walletType: 'mobile_wallet', dailyMin: 1000, dailyMax: 5000000, transactionMin: 1000, transactionMax: 1500000, monthlyMax: 15000000 },
+    
+    // West Africa
+    { country: 'NG', currency: 'NGN', walletType: 'mobile_wallet', dailyMin: 100, dailyMax: 1000000, transactionMin: 100, transactionMax: 500000, monthlyMax: 5000000 },
+    { country: 'GH', currency: 'GHS', walletType: 'mobile_wallet', dailyMin: 1, dailyMax: 10000, transactionMin: 1, transactionMax: 5000, monthlyMax: 50000 },
+    { country: 'SN', currency: 'XOF', walletType: 'mobile_wallet', dailyMin: 100, dailyMax: 1000000, transactionMin: 100, transactionMax: 500000, monthlyMax: 5000000 },
+    { country: 'CI', currency: 'XOF', walletType: 'mobile_wallet', dailyMin: 100, dailyMax: 1000000, transactionMin: 100, transactionMax: 500000, monthlyMax: 5000000 },
+    { country: 'ML', currency: 'XOF', walletType: 'mobile_wallet', dailyMin: 100, dailyMax: 1000000, transactionMin: 100, transactionMax: 500000, monthlyMax: 5000000 },
+    { country: 'BF', currency: 'XOF', walletType: 'mobile_wallet', dailyMin: 100, dailyMax: 1000000, transactionMin: 100, transactionMax: 500000, monthlyMax: 5000000 },
+    
+    // Southern Africa
+    { country: 'ZW', currency: 'USD', walletType: 'mobile_wallet', dailyMin: 1, dailyMax: 10000, transactionMin: 1, transactionMax: 5000, monthlyMax: 50000 },
+    { country: 'ZM', currency: 'ZMW', walletType: 'mobile_wallet', dailyMin: 10, dailyMax: 100000, transactionMin: 10, transactionMax: 50000, monthlyMax: 500000 },
+    { country: 'MZ', currency: 'MZN', walletType: 'mobile_wallet', dailyMin: 100, dailyMax: 100000, transactionMin: 100, transactionMax: 50000, monthlyMax: 500000 },
+    
+    // Central Africa
+    { country: 'CM', currency: 'XAF', walletType: 'mobile_wallet', dailyMin: 500, dailyMax: 5000000, transactionMin: 500, transactionMax: 2000000, monthlyMax: 20000000 },
+    
+    // USD limits (for cross-border)
+    { country: 'KE', currency: 'USD', walletType: 'mobile_wallet', dailyMin: 1, dailyMax: 1000, transactionMin: 1, transactionMax: 500, monthlyMax: 5000 },
+    { country: 'NG', currency: 'USD', walletType: 'mobile_wallet', dailyMin: 1, dailyMax: 1000, transactionMin: 1, transactionMax: 500, monthlyMax: 5000 },
+    { country: 'GH', currency: 'USD', walletType: 'mobile_wallet', dailyMin: 1, dailyMax: 1000, transactionMin: 1, transactionMax: 500, monthlyMax: 5000 },
+    { country: 'ZA', currency: 'USD', walletType: 'mobile_wallet', dailyMin: 1, dailyMax: 2000, transactionMin: 1, transactionMax: 1000, monthlyMax: 10000 },
+  ];
+
+  for (const limitData of transferLimits) {
+    await prisma.transferLimit.upsert({
+      where: {
+        country_currency_walletType: {
+          country: limitData.country,
+          currency: limitData.currency,
+          walletType: limitData.walletType,
+        },
+      },
+      update: limitData,
+      create: limitData,
+    });
+  }
+
+  console.log(`  ✓ Transfer Limits: ${transferLimits.length}`);
 }
 
 // ============================================
