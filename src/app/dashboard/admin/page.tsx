@@ -1,153 +1,228 @@
-"use client";
+/**
+ * Admin Dashboard Page
+ * 
+ * Main admin dashboard showing platform statistics,
+ * recent transfers, and provider health.
+ */
 
-import { useState, useEffect } from "react";
+'use client';
 
-interface WaitlistEntry {
-  id: string;
-  email: string;
-  name: string | null;
-  type: "MERCHANT" | "STUDENT";
-  createdAt: string;
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+
+interface AdminStats {
+  totalUsers: number;
+  totalTransfers: number;
+  pendingTransfers: number;
+  failedTransfers: number;
+  totalVolume: number;
+  todayVolume: number;
+  providerHealth: Array<{ provider: string; status: string; uptime: number }>;
 }
 
-interface WaitlistStats {
-  total: number;
-  merchants: number;
-  students: number;
-}
-
-export default function AdminDashboardPage() {
-  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
-  const [stats, setStats] = useState<WaitlistStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "MERCHANT" | "STUDENT">("all");
+export default function AdminDashboard() {
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    fetch("/api/waitlist/list")
-      .then((res) => res.json())
-      .then((data) => {
-        setWaitlist(data.waitlist);
-        setStats(data.stats);
-        setLoading(false);
-      })
-      .catch(console.error);
+    loadStats();
   }, []);
 
-  const filteredWaitlist = filter === "all" ? waitlist : waitlist.filter((w) => w.type === filter);
+  const loadStats = async () => {
+    try {
+      const response = await fetch('/api/v1/admin/stats', {
+        headers: {
+          'x-user-id': 'admin-1',
+          'x-user-role': 'ADMIN',
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setStats(data.stats);
+      } else {
+        setError(data.error || 'Failed to load stats');
+      }
+    } catch (err) {
+      console.error('Load stats error:', err);
+      setError('Network error. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800">{error}</p>
+          <button onClick={loadStats} className="mt-2 text-red-600 hover:underline">
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="max-w-7xl mx-auto p-6">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Platform overview and management
+        </p>
+      </div>
+
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-background-dark rounded-2xl border border-slate-200 dark:border-primary/10 p-4 sm:p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="size-10 rounded-xl bg-blue-100 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
-              <span className="material-symbols-outlined text-xl">people</span>
-            </div>
-          </div>
-          <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Total Signups</p>
-          <h3 className="text-xl sm:text-2xl font-black mt-1 text-slate-900 dark:text-white">{stats?.total || 0}</h3>
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard
+          title="Total Users"
+          value={stats?.totalUsers || 0}
+          icon="👥"
+          color="blue"
+        />
+        <StatCard
+          title="Total Transfers"
+          value={stats?.totalTransfers || 0}
+          icon="💸"
+          color="green"
+        />
+        <StatCard
+          title="Pending Review"
+          value={stats?.pendingTransfers || 0}
+          icon="⏳"
+          color="yellow"
+          link="/dashboard/admin/compliance"
+        />
+        <StatCard
+          title="Failed Transfers"
+          value={stats?.failedTransfers || 0}
+          icon="❌"
+          color="red"
+        />
+      </div>
+
+      {/* Volume Stats */}
+      <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+          <h3 className="text-lg font-semibold mb-4">Today's Volume</h3>
+          <p className="text-3xl font-bold text-green-600">
+            ${stats?.todayVolume.toLocaleString() || 0}
+          </p>
+          <p className="text-sm text-gray-500 mt-2">
+            Total: ${stats?.totalVolume.toLocaleString() || 0}
+          </p>
         </div>
-        <div className="bg-white dark:bg-background-dark rounded-2xl border border-slate-200 dark:border-primary/10 p-4 sm:p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="size-10 rounded-xl bg-primary/10 dark:bg-primary/20 text-primary flex items-center justify-center">
-              <span className="material-symbols-outlined text-xl">storefront</span>
-            </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+          <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+          <div className="space-y-3">
+            <Link
+              href="/dashboard/admin/transfers"
+              className="block p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition"
+            >
+              📋 View All Transfers
+            </Link>
+            <Link
+              href="/dashboard/admin/compliance"
+              className="block p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition"
+            >
+              ⚠️ Compliance Review ({stats?.pendingTransfers || 0})
+            </Link>
+            <Link
+              href="/dashboard/admin/users"
+              className="block p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition"
+            >
+              👥 Manage Users
+            </Link>
           </div>
-          <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Merchants</p>
-          <h3 className="text-xl sm:text-2xl font-black mt-1 text-slate-900 dark:text-white">{stats?.merchants || 0}</h3>
-        </div>
-        <div className="bg-white dark:bg-background-dark rounded-2xl border border-slate-200 dark:border-primary/10 p-4 sm:p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="size-10 rounded-xl bg-purple-100 dark:bg-purple-900/20 text-purple-600 flex items-center justify-center">
-              <span className="material-symbols-outlined text-xl">school</span>
-            </div>
-          </div>
-          <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Students</p>
-          <h3 className="text-xl sm:text-2xl font-black mt-1 text-slate-900 dark:text-white">{stats?.students || 0}</h3>
         </div>
       </div>
 
-      {/* Waitlist Table */}
-      <div className="bg-white dark:bg-background-dark rounded-2xl border border-slate-200 dark:border-primary/10 overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-primary/10 overflow-x-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">Waitlist Entries</h3>
-            <div className="flex gap-2">
-              {(["all", "MERCHANT", "STUDENT"] as const).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all min-h-[36px] ${
-                    filter === f
-                      ? "bg-primary text-background-dark"
-                      : "bg-slate-100 dark:bg-primary/5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-primary/10"
+      {/* Provider Health */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+        <h3 className="text-lg font-semibold mb-4">Provider Health Status</h3>
+        <div className="grid md:grid-cols-3 gap-4">
+          {stats?.providerHealth.map((provider) => (
+            <div
+              key={provider.provider}
+              className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium capitalize">{provider.provider}</span>
+                <span
+                  className={`px-2 py-1 rounded-full text-xs ${
+                    provider.status === 'HEALTHY'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-yellow-100 text-yellow-800'
                   }`}
                 >
-                  {f}
-                </button>
-              ))}
+                  {provider.status}
+                </span>
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Uptime: {provider.uptime.toFixed(1)}%
+              </p>
             </div>
-          </div>
+          ))}
         </div>
-
-        {loading ? (
-          <div className="p-8 sm:p-12 text-center">
-            <span className="material-symbols-outlined text-4xl text-slate-400 animate-spin">progress_activity</span>
-            <p className="text-slate-500 dark:text-slate-400 mt-4">Loading waitlist...</p>
-          </div>
-        ) : filteredWaitlist.length === 0 ? (
-          <div className="p-8 sm:p-12 text-center">
-            <span className="material-symbols-outlined text-4xl text-slate-400">inbox</span>
-            <p className="text-slate-500 dark:text-slate-400 mt-4">No waitlist entries found</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[600px]">
-              <thead className="bg-slate-50 dark:bg-primary/5">
-                <tr>
-                  <th className="text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-4 sm:px-5 py-3">Email</th>
-                  <th className="text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-4 sm:px-5 py-3">Name</th>
-                  <th className="text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-4 sm:px-5 py-3">Type</th>
-                  <th className="text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-4 sm:px-5 py-3">Joined</th>
-                  <th className="text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-4 sm:px-5 py-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-primary/10">
-                {filteredWaitlist.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-slate-50 dark:hover:bg-primary/5 transition-colors">
-                    <td className="px-4 sm:px-5 py-4">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[150px] sm:max-w-none">{entry.email}</p>
-                    </td>
-                    <td className="px-4 sm:px-5 py-4">
-                      <p className="text-sm text-slate-600 dark:text-slate-400">{entry.name || "-"}</p>
-                    </td>
-                    <td className="px-4 sm:px-5 py-4">
-                      <span className={`inline-block px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                        entry.type === "MERCHANT"
-                          ? "bg-primary/10 text-primary"
-                          : "bg-purple-100 dark:bg-purple-900/20 text-purple-600"
-                      }`}>
-                        {entry.type}
-                      </span>
-                    </td>
-                    <td className="px-4 sm:px-5 py-4">
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
-                        {new Date(entry.createdAt).toLocaleDateString()}
-                      </p>
-                    </td>
-                    <td className="px-4 sm:px-5 py-4">
-                      <button className="text-sm font-semibold text-primary hover:underline min-h-[36px]">
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
     </div>
+  );
+}
+
+/**
+ * Stat card component
+ */
+function StatCard({
+  title,
+  value,
+  icon,
+  color,
+  link,
+}: {
+  title: string;
+  value: number;
+  icon: string;
+  color: string;
+  link?: string;
+}) {
+  const colors: Record<string, string> = {
+    blue: 'bg-blue-50 dark:bg-blue-900/20',
+    green: 'bg-green-50 dark:bg-green-900/20',
+    yellow: 'bg-yellow-50 dark:bg-yellow-900/20',
+    red: 'bg-red-50 dark:bg-red-900/20',
+  };
+
+  const content = (
+    <div className={`${colors[color]} rounded-xl shadow p-6`}>
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-3xl">{icon}</span>
+        {link && (
+          <Link href={link} className="text-blue-600 hover:underline text-sm">
+            View →
+          </Link>
+        )}
+      </div>
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{title}</p>
+      <p className="text-3xl font-bold text-gray-900 dark:text-white">{value.toLocaleString()}</p>
+    </div>
+  );
+
+  return link ? (
+    <Link href={link}>{content}</Link>
+  ) : (
+    content
   );
 }
