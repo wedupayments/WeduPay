@@ -3,11 +3,13 @@
 import Link from "next/link";
 
 const navItems = [
-  { label: "Dashboard", icon: "dashboard", href: "/dashboard/customer", active: true },
-  { label: "Payments", icon: "receipt_long", href: "/dashboard/customer/payments" },
-  { label: "History", icon: "history", href: "/dashboard/customer/history" },
-  { label: "Funding", icon: "account_balance_wallet", href: "/dashboard/customer/funding" },
-  { label: "Settings", icon: "settings", href: "/dashboard/customer/settings" },
+  { label: "Dashboard", icon: "dashboard", href: "/dashboard/customer", active: false },
+  { label: "Send Money", icon: "send", href: "/dashboard/customer/transfers/send", active: false },
+  { label: "Transfers", icon: "swap_horiz", href: "/dashboard/customer/transfers", active: false },
+  { label: "Payments", icon: "receipt_long", href: "/dashboard/customer/payments", active: false },
+  { label: "History", icon: "history", href: "/dashboard/customer/history", active: false },
+  { label: "Funding", icon: "account_balance_wallet", href: "/dashboard/customer/funding", active: false },
+  { label: "Settings", icon: "settings", href: "/dashboard/customer/settings", active: false },
 ];
 
 interface CustomerSidebarProps {
