@@ -128,7 +128,7 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
   return (
     <div
       className={`
-        pointer-events-auto p-4 rounded-xl border shadow-lg backdrop-blur-sm
+        pointer-events-auto p-4 rounded-xl border shadow-lg
         transform transition-all duration-300 ease-out
         animate-slide-in
         ${colors[toast.type]}
