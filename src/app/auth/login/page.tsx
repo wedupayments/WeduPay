@@ -20,6 +20,9 @@ const TEST_ACCOUNTS = [
   { label: 'Merchant', email: 'merchant@wedupay.test', password: 'password123' },
   { label: 'Admin', email: 'admin@wedupay.test', password: 'password123' },
 ];
+const showDemoAccounts =
+  process.env.NEXT_PUBLIC_ENABLE_DEMO_ACCOUNTS === 'true' ||
+  process.env.NODE_ENV !== 'production';
 
 /**
  * Login form component with search params access
@@ -240,34 +243,38 @@ function LoginForm() {
             </div>
           </form>
 
-          {/* Demo Login (for testing) */}
-          <div className="mt-6">
-            <p className="mb-3 text-center text-sm text-slate-600 dark:text-slate-400">
-              Test accounts
-            </p>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              {TEST_ACCOUNTS.map((account) => (
-                <button
-                  key={account.email}
-                  type="button"
-                  onClick={() => handleDemoLogin(account)}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 transition hover:border-primary hover:text-primary dark:border-slate-600 dark:text-slate-300 dark:hover:border-primary dark:hover:text-primary"
-                >
-                  {account.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          {showDemoAccounts ? (
+            <>
+              {/* Demo Login (for testing) */}
+              <div className="mt-6">
+                <p className="mb-3 text-center text-sm text-slate-600 dark:text-slate-400">
+                  Test accounts
+                </p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  {TEST_ACCOUNTS.map((account) => (
+                    <button
+                      key={account.email}
+                      type="button"
+                      onClick={() => handleDemoLogin(account)}
+                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 transition hover:border-primary hover:text-primary dark:border-slate-600 dark:text-slate-300 dark:hover:border-primary dark:hover:text-primary"
+                    >
+                      {account.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          {/* Divider */}
-          <div className="mt-6 relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-300 dark:border-slate-600" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-background-dark text-slate-500">Or</span>
-            </div>
-          </div>
+              {/* Divider */}
+              <div className="mt-6 relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-300 dark:border-slate-600" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white dark:bg-background-dark text-slate-500">Or</span>
+                </div>
+              </div>
+            </>
+          ) : null}
 
           {/* Register Link */}
           <div className="mt-6 text-center">

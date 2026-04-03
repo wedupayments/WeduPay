@@ -140,8 +140,10 @@ export async function registerUser({
   country: string;
 }): Promise<AuthResult> {
   try {
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Validate input
-    if (!email || !password || !phoneNumber || !country) {
+    if (!normalizedEmail || !password || !phoneNumber || !country) {
       return {
         success: false,
         error: 'All fields are required',
@@ -150,7 +152,7 @@ export async function registerUser({
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(normalizedEmail)) {
       return {
         success: false,
         error: 'Invalid email format',
@@ -177,7 +179,7 @@ export async function registerUser({
 
     // Create user in Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
+      email: normalizedEmail,
       password,
       options: {
         data: {
@@ -202,12 +204,12 @@ export async function registerUser({
     }
 
     // Check if email confirmation is required
-    const requiresConfirmation = !!authData.user.identities?.length;
+    const requiresConfirmation = !authData.session;
 
     // Create user profile in database via API
     const profileResult = await createUserProfile({
       supabaseUserId: authData.user.id,
-      email,
+      email: normalizedEmail,
       phoneNumber: cleanPhone,
       country,
     });
@@ -266,10 +268,9 @@ export async function signInUser({
 }): Promise<AuthResult> {
   try {
     const normalizedEmail = email.trim().toLowerCase();
-    const normalizedPassword = password.trim();
 
     // Validate input
-    if (!normalizedEmail || !normalizedPassword) {
+    if (!normalizedEmail || !password) {
       return {
         success: false,
         error: 'Email and password are required',
@@ -287,7 +288,7 @@ export async function signInUser({
     // Authenticate with Supabase
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: normalizedEmail,
-      password: normalizedPassword,
+      password,
     });
 
     if (authError) {
