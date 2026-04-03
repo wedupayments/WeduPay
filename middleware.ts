@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const publicPaths = ["/", "/auth/login", "/auth/register", "/api/waitlist", "/demo"];
+const publicPaths = [
+  "/",
+  "/auth/login",
+  "/auth/register",
+  "/auth/callback",
+  "/api/auth/create-user",
+  "/api/waitlist",
+  "/demo",
+];
 const isPublicPath = (path: string) => 
   publicPaths.some(p => path === p || path.startsWith(`${p}/`));
 
@@ -13,8 +21,9 @@ export function middleware(request: NextRequest) {
   }
 
   const accessToken = request.cookies.get("sb-access-token")?.value;
+  const appUserId = request.cookies.get("wedupay-user-id")?.value;
 
-  if (!accessToken) {
+  if (!accessToken && !appUserId) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
