@@ -104,21 +104,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for duplicate email
-    const { data: duplicateEmail } = await supabaseAdmin
+    // If the email already exists in the app DB, attach the Supabase user id
+    // so seeded/demo accounts can be claimed by their verified Supabase login.
+    const { data: duplicateEmail, error: duplicateEmailError } = await supabaseAdmin
       .from('users')
-      .select('id')
+      .select('*')
       .eq('email', email)
       .single();
 
+    if (duplicateEmailError && duplicateEmailError.code !== 'PGRST116') {
+      throw duplicateEmailError;
+    }
+
     if (duplicateEmail) {
-      console.error(`[CreateUserAPI] ${requestId} - Duplicate email: ${email}`);
+      const { data: updatedUser, error: updateError } = await supabaseAdmin
+        .from('users')
+        .update({ supabaseUserId })
+        .eq('id', duplicateEmail.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error(`[CreateUserAPI] ${requestId} - Failed linking existing email ${email}:`, updateError);
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Failed to link existing user profile',
+          },
+          { status: 409 }
+        );
+      }
+
       return NextResponse.json(
         {
-          success: false,
-          error: 'Email already registered',
+          success: true,
+          user: {
+            id: updatedUser.id,
+            email: updatedUser.email,
+            phoneNumber: updatedUser.phoneNumber,
+            country: updatedUser.country,
+            kycStatus: updatedUser.kycStatus,
+            role: updatedUser.role,
+            createdAt: updatedUser.createdAt,
+          },
+          message: 'Existing user linked successfully',
         },
-        { status: 409 }
+        { status: 200 }
       );
     }
 

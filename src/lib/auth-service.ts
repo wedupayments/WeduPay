@@ -253,18 +253,29 @@ export async function signInUser({
   password: string;
 }): Promise<AuthResult> {
   try {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+
     // Validate input
-    if (!email || !password) {
+    if (!normalizedEmail || !normalizedPassword) {
       return {
         success: false,
         error: 'Email and password are required',
       };
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      return {
+        success: false,
+        error: 'Enter a valid email address',
+      };
+    }
+
     // Authenticate with Supabase
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+      email: normalizedEmail,
+      password: normalizedPassword,
     });
 
     if (authError) {
@@ -280,6 +291,18 @@ export async function signInUser({
           success: false,
           error: 'Please verify your email address',
           requiresConfirmation: true,
+        };
+      }
+      if (authError.message.includes('Email logins are disabled')) {
+        return {
+          success: false,
+          error: 'Email/password sign-in is disabled in Supabase for this project.',
+        };
+      }
+      if (authError.message.includes('Password should be at least')) {
+        return {
+          success: false,
+          error: 'Your password format was rejected. Please re-enter it and try again.',
         };
       }
       return {
@@ -585,7 +608,16 @@ export async function updateUserProfile(
  */
 export async function sendPasswordReset(email: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      return {
+        success: false,
+        error: 'Email address is required',
+      };
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
       redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
     });
 

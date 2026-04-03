@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/ThemeProvider";
 import { VercelAnalytics } from "@/components/VercelAnalytics";
+import { Providers } from "@/app/providers";
 
 // Force dynamic rendering to avoid static generation issues with context
 export const dynamic = 'force-dynamic';
@@ -35,15 +35,10 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
       </head>
       <body className={`${inter.variable} bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <Providers>
           {children}
           <VercelAnalytics />
-        </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );

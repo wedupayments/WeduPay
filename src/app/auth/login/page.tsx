@@ -14,6 +14,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { signInUser, getCurrentSession } from '@/lib/auth-service';
 
+const TEST_ACCOUNTS = [
+  { label: 'Customer', email: 'customer@wedupay.test', password: 'password123' },
+  { label: 'Merchant', email: 'merchant@wedupay.test', password: 'password123' },
+  { label: 'Admin', email: 'admin@wedupay.test', password: 'password123' },
+];
+
 /**
  * Login form component with search params access
  * Wrapped in Suspense boundary in parent component
@@ -94,9 +100,9 @@ function LoginForm() {
    * Handle demo login (for testing)
    * Fills form with test credentials
    */
-  const handleDemoLogin = () => {
-    setEmail('demo@wedupay.com');
-    setPassword('demo123456');
+  const handleDemoLogin = (account: typeof TEST_ACCOUNTS[number]) => {
+    setEmail(account.email);
+    setPassword(account.password);
   };
 
   // Show loading while checking auth status
@@ -240,12 +246,21 @@ function LoginForm() {
 
           {/* Demo Login (for testing) */}
           <div className="mt-6">
-            <button
-              onClick={handleDemoLogin}
-              className="w-full text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 underline"
-            >
-              Use demo credentials
-            </button>
+            <p className="mb-3 text-center text-sm text-gray-600 dark:text-gray-400">
+              Test accounts
+            </p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {TEST_ACCOUNTS.map((account) => (
+                <button
+                  key={account.email}
+                  type="button"
+                  onClick={() => handleDemoLogin(account)}
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 transition hover:border-blue-500 hover:text-blue-600 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-400 dark:hover:text-blue-400"
+                >
+                  {account.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Divider */}
