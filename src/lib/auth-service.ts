@@ -83,6 +83,40 @@ export interface SessionData {
   expiresAt: number;
 }
 
+function getDemoProfileDefaults(email: string): { phoneNumber: string; country: string } | null {
+  const demoProfiles: Record<string, { phoneNumber: string; country: string }> = {
+    'customer@wedupay.test': { phoneNumber: '+263771234567', country: 'ZW' },
+    'merchant@wedupay.test': { phoneNumber: '+2348012345678', country: 'NG' },
+    'admin@wedupay.test': { phoneNumber: '+263772000000', country: 'ZW' },
+  };
+
+  return demoProfiles[email] ?? null;
+}
+
+function getProfileSeedData(user: {
+  email?: string;
+  user_metadata?: Record<string, unknown>;
+}): { email: string; phoneNumber?: string; country?: string } | null {
+  const email = user.email?.trim().toLowerCase();
+
+  if (!email) {
+    return null;
+  }
+
+  const metadata = user.user_metadata ?? {};
+  const demoDefaults = getDemoProfileDefaults(email);
+  const phoneNumber =
+    typeof metadata.phone_number === 'string' && metadata.phone_number.trim()
+      ? metadata.phone_number
+      : demoDefaults?.phoneNumber;
+  const country =
+    typeof metadata.country === 'string' && metadata.country.trim()
+      ? metadata.country
+      : demoDefaults?.country;
+
+  return { email, phoneNumber, country };
+}
+
 export function getDashboardPathForUser(user: Pick<UserProfile, 'role' | 'email'>): string {
   if (user.role === 'ADMIN') {
     return '/dashboard/admin';
@@ -337,29 +371,15 @@ export async function signInUser({
       };
     }
 
-    // Get user profile from database
-    const profile = await getUserProfile(authData.user.id);
+    // Get or backfill user profile from database
+    const profile = await ensureUserProfile(authData.user);
 
     if (!profile) {
-      // User exists in auth but not in database - create profile
-      const profileResult = await createUserProfile({
-        supabaseUserId: authData.user.id,
-        email: authData.user.email!,
-        phoneNumber: authData.user.user_metadata?.phone_number || '',
-        country: authData.user.user_metadata?.country || 'KE',
-      });
-
-      if (!profileResult.success) {
-        await supabase.auth.signOut();
-        return {
-          success: false,
-          error: 'Failed to load user profile',
-        };
-      }
-
+      await supabase.auth.signOut();
       return {
-        success: true,
-        user: profileResult.user,
+        success: false,
+        error:
+          'Your sign-in succeeded, but WeduPay could not load or create your app profile. Complete registration first, or contact support if this account should already exist.',
       };
     }
 
@@ -449,7 +469,7 @@ export async function getCurrentSession(): Promise<{
       };
     }
 
-    const user = await getUserProfile(session.user.id);
+    const user = await ensureUserProfile(session.user);
 
     if (!user) {
       return {
@@ -498,8 +518,8 @@ export async function getCurrentSession(): Promise<{
 async function createUserProfile(data: {
   supabaseUserId: string;
   email: string;
-  phoneNumber: string;
-  country: string;
+  phoneNumber?: string;
+  country?: string;
 }): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
   try {
     const response = await fetch('/api/auth/create-user', {
@@ -552,6 +572,52 @@ async function getUserProfile(supabaseUserId: string): Promise<UserProfile | nul
     console.error('Get profile error:', error);
     return null;
   }
+}
+
+async function getUserProfileByEmail(email: string): Promise<UserProfile | null> {
+  try {
+    const response = await fetch(`/api/auth/user?email=${encodeURIComponent(email)}`);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const result = await response.json();
+    return result.user;
+  } catch (error) {
+    console.error('Get profile by email error:', error);
+    return null;
+  }
+}
+
+async function ensureUserProfile(user: {
+  id: string;
+  email?: string;
+  user_metadata?: Record<string, unknown>;
+}): Promise<UserProfile | null> {
+  const existingProfile = await getUserProfile(user.id);
+  if (existingProfile) {
+    return existingProfile;
+  }
+
+  const seedData = getProfileSeedData(user);
+  if (!seedData) {
+    return null;
+  }
+
+  const emailProfile = await getUserProfileByEmail(seedData.email);
+  if (!emailProfile && (!seedData.phoneNumber || !seedData.country)) {
+    return null;
+  }
+
+  const profileResult = await createUserProfile({
+    supabaseUserId: user.id,
+    email: seedData.email,
+    phoneNumber: seedData.phoneNumber,
+    country: seedData.country,
+  });
+
+  return profileResult.success ? profileResult.user ?? null : null;
 }
 
 /**

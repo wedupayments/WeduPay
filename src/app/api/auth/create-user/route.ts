@@ -58,9 +58,40 @@ const supabaseAdmin = createClient(
 const createUserSchema = z.object({
   supabaseUserId: z.string().uuid('Invalid Supabase user ID'),
   email: z.string().email('Invalid email address'),
-  phoneNumber: z.string().min(10, 'Phone number too short'),
-  country: z.string().length(2, 'Country code must be 2 characters'),
+  phoneNumber: z.string().optional(),
+  country: z.string().optional(),
 });
+
+function normalizePhoneNumber(phoneNumber?: string): string | null {
+  if (!phoneNumber) {
+    return null;
+  }
+
+  const normalizedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
+  return /^\+?[1-9]\d{8,14}$/.test(normalizedPhone) ? normalizedPhone : null;
+}
+
+function normalizeCountry(country?: string): string | null {
+  if (!country) {
+    return null;
+  }
+
+  const normalizedCountry = country.trim().toUpperCase();
+  const countryMap: Record<string, string> = {
+    ZIMBABWE: 'ZW',
+    KENYA: 'KE',
+    NIGERIA: 'NG',
+    GHANA: 'GH',
+    UGANDA: 'UG',
+    TANZANIA: 'TZ',
+  };
+
+  if (countryMap[normalizedCountry]) {
+    return countryMap[normalizedCountry];
+  }
+
+  return /^[A-Z]{2}$/.test(normalizedCountry) ? normalizedCountry : null;
+}
 
 function inferRoleFromEmail(email: string): 'USER' | 'MERCHANT' | 'ADMIN' {
   if (email === 'admin@wedupay.test') {
@@ -104,6 +135,8 @@ export async function POST(request: NextRequest) {
     }
 
     const { supabaseUserId, email, phoneNumber, country } = validation.data;
+    const normalizedPhone = normalizePhoneNumber(phoneNumber);
+    const normalizedCountry = normalizeCountry(country);
 
     // Check if user already exists
     const { data: existingUser } = await supabaseAdmin
@@ -176,14 +209,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!normalizedPhone || !normalizedCountry) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Phone number and 2-letter country code are required to create a new profile',
+        },
+        { status: 400 }
+      );
+    }
+
     // Create user in database
     const { data: newUser, error: createError } = await supabaseAdmin
       .from('users')
       .insert({
         supabaseUserId,
         email,
-        phoneNumber,
-        country,
+        phoneNumber: normalizedPhone,
+        country: normalizedCountry,
         kycStatus: 'pending',
         role: inferRoleFromEmail(email),
       })
