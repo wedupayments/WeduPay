@@ -1,10 +1,12 @@
 /**
  * Admin Compliance Review Page
- * 
+ *
  * Review and approve/reject transfers requiring compliance check.
  */
 
 'use client';
+
+export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';

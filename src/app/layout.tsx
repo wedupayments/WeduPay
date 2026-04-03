@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { ToastProvider } from "@/components/ui/Toast";
-import { AuthProvider } from "@/contexts/AuthContext";
 import { VercelAnalytics } from "@/components/VercelAnalytics";
+
+// Force dynamic rendering to avoid static generation issues with context
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -39,12 +41,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <ToastProvider>
-              {children}
-            </ToastProvider>
-            <VercelAnalytics />
-          </AuthProvider>
+          {children}
+          <VercelAnalytics />
         </ThemeProvider>
       </body>
     </html>

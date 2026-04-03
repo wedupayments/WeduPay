@@ -13,21 +13,40 @@ import { createClient } from '@supabase/supabase-js';
  * Supabase client instance
  * Initialized with environment variables for URL and anon key
  */
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+// Use environment variables with fallback to empty strings for build time
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+// Validate configuration
+const isValidConfig = supabaseUrl && supabaseAnonKey && 
+  supabaseUrl.includes("supabase.co");
 
 /**
  * Client-side Supabase instance (for browser)
  * Uses anon key with RLS policies enforced
  */
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = isValidConfig
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : createClient("https://placeholder.supabase.co", "placeholder-key", {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
 
 /**
  * Server-side Supabase instance (for API routes)
  * Uses service role key - bypasses RLS (use with caution!)
  */
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+export const supabaseAdmin = isValidConfig && supabaseServiceKey
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : createClient("https://placeholder.supabase.co", "placeholder-key", {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
 
 /**
  * User profile data structure

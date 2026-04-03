@@ -1,22 +1,22 @@
 /**
  * Authentication Context Provider
- * 
+ *
  * Provides authentication state and methods throughout the React component tree.
  * Wraps the app to make auth state accessible via useAuth hook.
- * 
+ *
  * Features:
  * - Session management with automatic refresh
  * - Loading states during auth operations
  * - Protected route handling
  * - User profile caching
- * 
+ *
  * @module contexts/AuthContext
  */
 
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   supabase,
   getCurrentSession,
@@ -36,16 +36,16 @@ interface AuthContextData {
   session: SessionData | null;
   user: UserProfile | null;
   supabaseUser: SupabaseUser | null;
-  
+
   // Loading and error states
   isLoading: boolean;
   isInitialized: boolean;
   error: string | null;
-  
+
   // Auth methods
   refreshSession: () => Promise<void>;
   logout: () => Promise<void>;
-  
+
   // Utility methods
   hasRole: (roles: string[]) => boolean;
   isSessionExpiringSoon: () => boolean;
@@ -55,18 +55,7 @@ interface AuthContextData {
  * Auth context with default values
  * Used when context is accessed outside provider
  */
-const AuthContext = createContext<AuthContextData>({
-  session: null,
-  user: null,
-  supabaseUser: null,
-  isLoading: true,
-  isInitialized: false,
-  error: null,
-  refreshSession: async () => {},
-  logout: async () => {},
-  hasRole: () => false,
-  isSessionExpiringSoon: () => false,
-});
+export const AuthContext = createContext<AuthContextData | null>(null);
 
 /**
  * Authentication Provider Props
@@ -83,43 +72,16 @@ const SESSION_REFRESH_INTERVAL = 5 * 60 * 1000;
 
 /**
  * Authentication Provider Component
- * 
+ *
  * Wraps the app and provides auth state to all child components.
  * Manages session lifecycle, auto-refresh, and auth state synchronization.
- * 
+ *
  * @param props - Component props
  * @param props.children - Child components
- * 
- * @example
- * ```tsx
- * // In root layout
- * export default function RootLayout({ children }) {
- *   return (
- *     <html>
- *       <body>
- *         <AuthProvider>
- *           {children}
- *         </AuthProvider>
- *       </body>
- *     </html>
- *   );
- * }
- * 
- * // In a component
- * function MyComponent() {
- *   const { user, isLoading, logout } = useAuth();
- *   
- *   if (isLoading) return <LoadingSpinner />;
- *   if (!user) return <LoginPrompt />;
- *   
- *   return <div>Welcome, {user.email}!</div>;
- * }
- * ```
  */
 export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter();
-  const pathname = usePathname();
-  
+
   // Auth state
   const [session, setSession] = useState<SessionData | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -127,12 +89,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   /**
    * Initialize auth state on mount
    * Loads existing session and sets up auth listener
    */
   useEffect(() => {
+    // Mark as client-side
+    setIsClient(true);
+
     let sessionRefreshInterval: NodeJS.Timeout;
 
     /**
@@ -151,7 +117,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           console.log('[AuthContext] Session loaded for user:', currentUser.email);
           setSession(currentSession);
           setUser(currentUser);
-          
+
           // Get Supabase user details
           const { data: { user: sbUser } } = await supabase.auth.getUser();
           setSupabaseUser(sbUser);
@@ -347,6 +313,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isSessionExpiringSoon,
   };
 
+  // During SSR, render nothing to avoid context issues
+  if (!isClient) {
+    return <>{children}</>;
+  }
+
   return (
     <AuthContext.Provider value={contextValue}>
       {children}
@@ -396,7 +367,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 export function useAuth(): AuthContextData {
   const context = useContext(AuthContext);
 
-  if (!context) {
+  if (context === undefined || context === null) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
 

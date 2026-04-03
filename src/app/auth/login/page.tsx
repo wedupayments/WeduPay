@@ -1,17 +1,18 @@
 /**
  * Login Page
- * 
+ *
  * User authentication page with email/password login.
  * Supports redirect after successful login and password reset flow.
  */
 
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { signInUser } from '@/lib/auth-service';
-import { useAuth } from '@/contexts/AuthContext';
+import { signInUser, getCurrentSession } from '@/lib/auth-service';
 
 /**
  * Login form component with search params access
@@ -20,24 +21,36 @@ import { useAuth } from '@/contexts/AuthContext';
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, isLoading: authLoading } = useAuth();
-  
+
   // Form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [authLoading, setAuthLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Get redirect URL from query params
   const redirectTo = searchParams.get('redirect') || '/dashboard/customer';
 
-  // Redirect if already logged in
+  // Check if user is already logged in
   useEffect(() => {
-    if (user && !authLoading) {
-      router.push(redirectTo);
-    }
-  }, [user, authLoading, router, redirectTo]);
+    const checkSession = async () => {
+      try {
+        const { session, user } = await getCurrentSession();
+        if (session && user) {
+          setIsLoggedIn(true);
+          router.push(redirectTo);
+        }
+      } catch (err) {
+        console.error('Session check error:', err);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+    checkSession();
+  }, [router, redirectTo]);
 
   /**
    * Handle form submission
