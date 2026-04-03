@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { PasswordField } from "@/components/auth/PasswordField";
 import { registerUser } from "@/lib/auth-service";
 
 const COUNTRY_OPTIONS = [
@@ -123,21 +124,16 @@ export default function RegisterPage() {
           </select>
         </div>
 
-        <div>
-          <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            required
-            autoComplete="new-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="block w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-            placeholder="At least 8 characters and 1 number"
-          />
-        </div>
+        <PasswordField
+          id="password"
+          label="Password"
+          required
+          autoComplete="new-password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          className="block w-full rounded-lg border border-slate-300 px-4 py-3 pr-36 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+          placeholder="At least 8 characters and 1 number"
+        />
 
         <button
           type="submit"

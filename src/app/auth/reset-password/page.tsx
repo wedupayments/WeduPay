@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { updatePassword } from "@/lib/auth-service";
 import { supabase } from "@/lib/supabase";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { PasswordField } from "@/components/auth/PasswordField";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -95,35 +96,25 @@ export default function ResetPasswordPage() {
         ) : null}
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-          <div>
-            <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-              New password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              autoComplete="new-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="block w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-            />
-          </div>
+          <PasswordField
+            id="password"
+            label="New password"
+            required
+            autoComplete="new-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="block w-full rounded-lg border border-slate-300 px-4 py-3 pr-36 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+          />
 
-          <div>
-            <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-              Confirm new password
-            </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              required
-              autoComplete="new-password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              className="block w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-            />
-          </div>
+          <PasswordField
+            id="confirmPassword"
+            label="Confirm new password"
+            required
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            className="block w-full rounded-lg border border-slate-300 px-4 py-3 pr-36 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+          />
 
           <button
             type="submit"
