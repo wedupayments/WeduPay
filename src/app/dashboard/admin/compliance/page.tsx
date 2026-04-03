@@ -135,7 +135,7 @@ export default function AdminCompliancePage() {
         </div>
         <Link
           href="/dashboard/admin"
-          className="text-blue-600 hover:underline"
+          className="text-primary hover:underline"
         >
           ← Back to Dashboard
         </Link>
@@ -160,7 +160,7 @@ export default function AdminCompliancePage() {
       <div className="space-y-4">
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
           </div>
         ) : queue.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-12 text-center">
@@ -223,7 +223,7 @@ export default function AdminCompliancePage() {
                 <button
                   onClick={() => handleApprove(item.transferRef)}
                   disabled={processing === item.transferRef}
-                  className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  className="flex-1 px-4 py-3 bg-primary text-background-dark rounded-lg font-semibold hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition"
                 >
                   {processing === item.transferRef ? 'Processing...' : '✓ Approve'}
                 </button>

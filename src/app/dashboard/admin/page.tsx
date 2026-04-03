@@ -56,7 +56,7 @@ export default function AdminDashboard() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
   }
@@ -66,7 +66,7 @@ export default function AdminDashboard() {
       <div className="max-w-6xl mx-auto p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800">{error}</p>
-          <button onClick={loadStats} className="mt-2 text-red-600 hover:underline">
+          <button onClick={loadStats} className="mt-2 text-primary hover:underline">
             Try Again
           </button>
         </div>
@@ -90,13 +90,13 @@ export default function AdminDashboard() {
           title="Total Users"
           value={stats?.totalUsers || 0}
           icon="👥"
-          color="blue"
+          color="primary"
         />
         <StatCard
           title="Total Transfers"
           value={stats?.totalTransfers || 0}
           icon="💸"
-          color="green"
+          color="primary"
         />
         <StatCard
           title="Pending Review"
@@ -117,7 +117,7 @@ export default function AdminDashboard() {
       <div className="grid md:grid-cols-2 gap-6 mb-8">
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
           <h3 className="text-lg font-semibold mb-4">Today's Volume</h3>
-          <p className="text-3xl font-bold text-green-600">
+          <p className="text-3xl font-bold text-primary">
             ${stats?.todayVolume.toLocaleString() || 0}
           </p>
           <p className="text-sm text-gray-500 mt-2">
@@ -130,7 +130,7 @@ export default function AdminDashboard() {
           <div className="space-y-3">
             <Link
               href="/dashboard/admin/transfers"
-              className="block p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition"
+              className="block p-3 bg-primary/10 text-primary rounded-lg hover:bg-primary/15 transition"
             >
               📋 View All Transfers
             </Link>
@@ -199,8 +199,8 @@ function StatCard({
   link?: string;
 }) {
   const colors: Record<string, string> = {
-    blue: 'bg-blue-50 dark:bg-blue-900/20',
-    green: 'bg-green-50 dark:bg-green-900/20',
+    primary: 'bg-primary/10',
+    green: 'bg-primary/10',
     yellow: 'bg-yellow-50 dark:bg-yellow-900/20',
     red: 'bg-red-50 dark:bg-red-900/20',
   };
@@ -210,7 +210,7 @@ function StatCard({
       <div className="flex items-center justify-between mb-4">
         <span className="text-3xl">{icon}</span>
         {link && (
-          <Link href={link} className="text-blue-600 hover:underline text-sm">
+          <Link href={link} className="text-primary hover:underline text-sm">
             View →
           </Link>
         )}

@@ -66,8 +66,8 @@ export default function AdminTransfersPage() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      COMPLETED: 'bg-green-100 text-green-800',
-      PROCESSING: 'bg-blue-100 text-blue-800',
+      COMPLETED: 'bg-primary/15 text-primary',
+      PROCESSING: 'bg-primary/10 text-primary',
       PENDING: 'bg-yellow-100 text-yellow-800',
       FAILED: 'bg-red-100 text-red-800',
     };
@@ -86,19 +86,19 @@ export default function AdminTransfersPage() {
         </div>
         <Link
           href="/dashboard/admin"
-          className="text-blue-600 hover:underline"
+          className="text-primary hover:underline"
         >
           ← Back to Dashboard
         </Link>
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 mb-6">
+      <div className="bg-white dark:bg-background-dark rounded-xl border border-slate-200 dark:border-primary/10 shadow p-4 mb-6">
         <div className="flex gap-4 flex-wrap">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700"
+            className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-slate-800"
           >
             <option value="">All Statuses</option>
             <option value="COMPLETED">Completed</option>
@@ -112,12 +112,12 @@ export default function AdminTransfersPage() {
             placeholder="Search by reference or phone..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700"
+            className="flex-1 min-w-[200px] px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-slate-800"
           />
 
           <button
             onClick={loadTransfers}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            className="px-6 py-2 bg-primary text-background-dark rounded-lg hover:brightness-110 transition"
           >
             Search
           </button>
@@ -125,10 +125,10 @@ export default function AdminTransfersPage() {
       </div>
 
       {/* Transfer List */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
+      <div className="bg-white dark:bg-background-dark rounded-xl border border-slate-200 dark:border-primary/10 shadow overflow-hidden">
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
           </div>
         ) : (
           <>

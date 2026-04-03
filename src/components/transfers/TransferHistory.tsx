@@ -54,8 +54,8 @@ export default function TransferHistory() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      COMPLETED: 'bg-green-100 text-green-800',
-      PROCESSING: 'bg-blue-100 text-blue-800',
+      COMPLETED: 'bg-primary/15 text-primary',
+      PROCESSING: 'bg-primary/10 text-primary',
       PENDING: 'bg-yellow-100 text-yellow-800',
       PENDING_REVIEW: 'bg-orange-100 text-orange-800',
       FAILED: 'bg-red-100 text-red-800',
@@ -92,19 +92,19 @@ export default function TransferHistory() {
         </div>
         <Link
           href="/dashboard/customer/transfers/send"
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+          className="bg-primary text-background-dark px-6 py-3 rounded-lg font-semibold hover:brightness-110 transition"
         >
           + New Transfer
         </Link>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
+      <div className="bg-white dark:bg-background-dark rounded-lg border border-slate-200 dark:border-primary/10 shadow p-4 mb-6">
         <div className="flex gap-4">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:border-slate-600 dark:bg-slate-800"
           >
             <option value="">All Statuses</option>
             <option value="COMPLETED">Completed</option>
@@ -117,11 +117,11 @@ export default function TransferHistory() {
       </div>
 
       {/* Transfer List */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white dark:bg-background-dark rounded-lg border border-slate-200 dark:border-primary/10 shadow overflow-hidden">
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
-            <p className="mt-4 text-gray-600">Loading transfers...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+            <p className="mt-4 text-slate-600 dark:text-slate-400">Loading transfers...</p>
           </div>
         ) : transfers.length === 0 ? (
           <div className="text-center py-12">
@@ -130,7 +130,7 @@ export default function TransferHistory() {
             <p className="text-gray-600 mb-6">Start by sending money to your loved ones</p>
             <Link
               href="/dashboard/customer/transfers/send"
-              className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+              className="inline-block bg-primary text-background-dark px-6 py-3 rounded-lg font-semibold hover:brightness-110 transition"
             >
               Send Money
             </Link>
@@ -140,7 +140,7 @@ export default function TransferHistory() {
             {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-slate-50 dark:bg-primary/5">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Reference
@@ -162,9 +162,9 @@ export default function TransferHistory() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-slate-200 dark:divide-primary/10">
                   {transfers.map((transfer) => (
-                    <tr key={transfer.transferRef} className="hover:bg-gray-50">
+                    <tr key={transfer.transferRef} className="hover:bg-slate-50 dark:hover:bg-primary/5">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-sm font-mono text-gray-600">
                           {transfer.transferRef}
@@ -199,7 +199,7 @@ export default function TransferHistory() {
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <Link
                           href={`/dashboard/customer/transfers/${transfer.transferRef}`}
-                          className="text-blue-600 hover:text-blue-800 font-medium"
+                          className="text-primary hover:brightness-110 font-medium"
                         >
                           View Details
                         </Link>
@@ -211,9 +211,9 @@ export default function TransferHistory() {
             </div>
 
             {/* Mobile Cards */}
-            <div className="md:hidden divide-y divide-gray-200">
+            <div className="md:hidden divide-y divide-slate-200 dark:divide-primary/10">
               {transfers.map((transfer) => (
-                <div key={transfer.transferRef} className="p-4 hover:bg-gray-50">
+                <div key={transfer.transferRef} className="p-4 hover:bg-slate-50 dark:hover:bg-primary/5">
                   <div className="flex items-center justify-between mb-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(transfer.status)}`}>
                       {transfer.status.replace('_', ' ')}
@@ -232,7 +232,7 @@ export default function TransferHistory() {
                     </p>
                     <Link
                       href={`/dashboard/customer/transfers/${transfer.transferRef}`}
-                      className="text-blue-600 font-medium"
+                      className="text-primary font-medium"
                     >
                       View →
                     </Link>

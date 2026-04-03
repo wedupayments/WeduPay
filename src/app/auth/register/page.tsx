@@ -1,45 +1,161 @@
 "use client";
 
-import { AuthForm } from "@/components/AuthForm";
 import Link from "next/link";
-import { Suspense } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { AuthShell } from "@/components/auth/AuthShell";
+import { registerUser } from "@/lib/auth-service";
 
-function AuthFormWrapper() {
-  return <AuthForm type="register" />;
-}
+const COUNTRY_OPTIONS = [
+  { code: "ZW", label: "Zimbabwe" },
+  { code: "KE", label: "Kenya" },
+  { code: "NG", label: "Nigeria" },
+  { code: "GH", label: "Ghana" },
+  { code: "UG", label: "Uganda" },
+  { code: "TZ", label: "Tanzania" },
+];
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [country, setCountry] = useState("ZW");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+    setSuccess("");
+    setIsSubmitting(true);
+
+    const result = await registerUser({
+      email,
+      password,
+      phoneNumber,
+      country,
+    });
+
+    if (result.success) {
+      setSuccess(
+        result.requiresConfirmation
+          ? "Account created. Check your email to verify the account before signing in."
+          : "Account created successfully. Redirecting to sign in..."
+      );
+
+      setTimeout(() => router.push("/auth/login"), 1200);
+    } else {
+      setError(result.error || "We couldn't create your account.");
+    }
+
+    setIsSubmitting(false);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-background-dark dark:to-slate-900 px-4 py-8">
-      <div className="w-full max-w-sm sm:max-w-md">
-        <div className="text-center mb-6 sm:mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-4 sm:mb-6">
-            <div className="relative">
-              <div className="absolute -inset-2 bg-primary/20 rounded-full animate-ping"></div>
-              <div className="relative size-12 sm:size-14 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30">
-                <span className="material-symbols-outlined font-bold text-2xl sm:text-3xl text-background-dark">gps_fixed</span>
-              </div>
-            </div>
+    <AuthShell
+      title="Create your account"
+      description="Join WeduPay with one consistent sign-up flow."
+      backHref="/auth/login"
+      backLabel="Back to sign in"
+    >
+      {error ? (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+          {error}
+        </div>
+      ) : null}
+
+      {success ? (
+        <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900 dark:bg-green-950/40 dark:text-green-300">
+          {success}
+        </div>
+      ) : null}
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Email address
+          </label>
+          <input
+            id="email"
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className="block w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+            placeholder="you@example.com"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="phoneNumber" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Phone number
+          </label>
+          <input
+            id="phoneNumber"
+            type="tel"
+            required
+            autoComplete="tel"
+            value={phoneNumber}
+            onChange={(event) => setPhoneNumber(event.target.value)}
+            className="block w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+            placeholder="+263771234567"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="country" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Country
+          </label>
+          <select
+            id="country"
+            value={country}
+            onChange={(event) => setCountry(event.target.value)}
+            className="block w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+          >
+            {COUNTRY_OPTIONS.map((option) => (
+              <option key={option.code} value={option.code}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            required
+            autoComplete="new-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="block w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+            placeholder="At least 8 characters and 1 number"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-background-dark transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isSubmitting ? "Creating account..." : "Create account"}
+        </button>
+      </form>
+
+      <div className="mt-6 text-center">
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          Already have an account?{" "}
+          <Link href="/auth/login" className="text-primary hover:underline font-semibold">
+            Sign in
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-2">Create Account</h1>
-          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">Join WeduPay today</p>
-        </div>
-
-        <div className="bg-white dark:bg-[#1a1a2e] rounded-2xl border border-slate-200 dark:border-primary/10 p-4 sm:p-6 shadow-lg shadow-primary/5">
-          <Suspense fallback={<div className="animate-pulse h-48 bg-slate-100 rounded-lg" />}>
-            <AuthFormWrapper />
-          </Suspense>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Already have an account?{" "}
-              <Link href="/auth/login" className="text-primary hover:underline font-semibold">
-                Sign in
-              </Link>
-            </p>
-          </div>
-        </div>
+        </p>
       </div>
-    </div>
+    </AuthShell>
   );
 }

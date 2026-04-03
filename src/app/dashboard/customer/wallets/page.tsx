@@ -20,7 +20,7 @@ export default function WalletsPage() {
         </div>
         <Link
           href="/dashboard/customer/wallets/fund"
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+          className="bg-primary text-background-dark px-6 py-3 rounded-lg font-semibold hover:brightness-110 transition"
         >
           + Fund Wallet
         </Link>
@@ -39,7 +39,7 @@ export default function WalletsPage() {
       <div className="grid md:grid-cols-3 gap-4 mb-8">
         <Link
           href="/dashboard/customer/wallets/fund"
-          className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow hover:shadow-lg transition"
+          className="p-6 bg-white dark:bg-background-dark rounded-xl border border-slate-200 dark:border-primary/10 shadow hover:shadow-lg transition"
         >
           <div className="text-3xl mb-3">💰</div>
           <h3 className="font-semibold text-lg mb-2">Fund Wallet</h3>
@@ -50,7 +50,7 @@ export default function WalletsPage() {
 
         <Link
           href="/dashboard/customer/wallets/withdraw"
-          className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow hover:shadow-lg transition"
+          className="p-6 bg-white dark:bg-background-dark rounded-xl border border-slate-200 dark:border-primary/10 shadow hover:shadow-lg transition"
         >
           <div className="text-3xl mb-3">💸</div>
           <h3 className="font-semibold text-lg mb-2">Withdraw</h3>
@@ -61,7 +61,7 @@ export default function WalletsPage() {
 
         <Link
           href="/dashboard/customer/wallets/history"
-          className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow hover:shadow-lg transition"
+          className="p-6 bg-white dark:bg-background-dark rounded-xl border border-slate-200 dark:border-primary/10 shadow hover:shadow-lg transition"
         >
           <div className="text-3xl mb-3">📊</div>
           <h3 className="font-semibold text-lg mb-2">Transaction History</h3>

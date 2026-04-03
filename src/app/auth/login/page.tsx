@@ -13,6 +13,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { signInUser, getCurrentSession, getDashboardPathForUser } from '@/lib/auth-service';
+import { AuthShell } from '@/components/auth/AuthShell';
 
 const TEST_ACCOUNTS = [
   { label: 'Customer', email: 'customer@wedupay.test', password: 'password123' },
@@ -112,38 +113,29 @@ function LoginForm() {
   // Show loading while checking auth status
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <p className="mt-4 text-slate-600 dark:text-slate-400">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-12">
-      <div className="max-w-md w-full">
-        {/* Logo and Title */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-block">
-            <div className="flex items-center justify-center gap-2">
-              <div className="size-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="material-symbols-outlined text-white">payments</span>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">WeduPay</h1>
-            </div>
-          </Link>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
-            Sign in to your account
-          </h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Send money across Africa securely
-          </p>
-        </div>
-
-        {/* Login Form */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+    <AuthShell
+      title="Sign in to your account"
+      description="Send money across Africa securely"
+      backHref="/"
+      backLabel="Back to home"
+      footer={
+        <>
+          <Link href="/terms" className="hover:underline">Terms of Service</Link>
+          {' | '}
+          <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
+        </>
+      }
+    >
           {/* Error Message */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
@@ -171,7 +163,7 @@ function LoginForm() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Email address
               </label>
               <input
@@ -182,14 +174,14 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                className="appearance-none block w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-slate-800 dark:text-white"
                 placeholder="you@example.com"
               />
             </div>
 
             {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Password
               </label>
               <input
@@ -200,7 +192,7 @@ function LoginForm() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                className="appearance-none block w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-slate-800 dark:text-white"
                 placeholder="••••••••"
               />
             </div>
@@ -212,9 +204,9 @@ function LoginForm() {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-primary focus:ring-primary border-slate-300 rounded"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-700 dark:text-slate-300">
                   Remember me
                 </label>
               </div>
@@ -222,7 +214,7 @@ function LoginForm() {
               <div className="text-sm">
                 <Link
                   href="/auth/forgot-password"
-                  className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+                  className="font-medium text-primary hover:brightness-110"
                 >
                   Forgot password?
                 </Link>
@@ -234,7 +226,7 @@ function LoginForm() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-background-dark bg-primary hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
                 {isLoading ? (
                   <>
@@ -250,7 +242,7 @@ function LoginForm() {
 
           {/* Demo Login (for testing) */}
           <div className="mt-6">
-            <p className="mb-3 text-center text-sm text-gray-600 dark:text-gray-400">
+            <p className="mb-3 text-center text-sm text-slate-600 dark:text-slate-400">
               Test accounts
             </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -259,7 +251,7 @@ function LoginForm() {
                   key={account.email}
                   type="button"
                   onClick={() => handleDemoLogin(account)}
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 transition hover:border-blue-500 hover:text-blue-600 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-400 dark:hover:text-blue-400"
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 transition hover:border-primary hover:text-primary dark:border-slate-600 dark:text-slate-300 dark:hover:border-primary dark:hover:text-primary"
                 >
                   {account.label}
                 </button>
@@ -270,39 +262,26 @@ function LoginForm() {
           {/* Divider */}
           <div className="mt-6 relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-600" />
+              <div className="w-full border-t border-slate-300 dark:border-slate-600" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">Or</span>
+              <span className="px-2 bg-white dark:bg-background-dark text-slate-500">Or</span>
             </div>
           </div>
 
           {/* Register Link */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               Don't have an account?{' '}
               <Link
                 href="/auth/register"
-                className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+                className="font-medium text-primary hover:brightness-110"
               >
                 Create one now
               </Link>
             </p>
           </div>
-        </div>
-
-        {/* Footer Links */}
-        <div className="mt-8 text-center text-xs text-gray-500 dark:text-gray-400">
-          <Link href="/terms" className="hover:underline">
-            Terms of Service
-          </Link>
-          {' | '}
-          <Link href="/privacy" className="hover:underline">
-            Privacy Policy
-          </Link>
-        </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 }
 
@@ -312,8 +291,8 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     }>
       <LoginForm />
