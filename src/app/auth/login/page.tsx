@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { signInUser, getCurrentSession } from '@/lib/auth-service';
+import { signInUser, getCurrentSession, getDashboardPathForUser } from '@/lib/auth-service';
 
 const TEST_ACCOUNTS = [
   { label: 'Customer', email: 'customer@wedupay.test', password: 'password123' },
@@ -38,7 +38,7 @@ function LoginForm() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Get redirect URL from query params
-  const redirectTo = searchParams.get('redirect') || '/dashboard/customer';
+  const redirectTo = searchParams.get('redirect');
 
   // Check if user is already logged in
   useEffect(() => {
@@ -47,7 +47,7 @@ function LoginForm() {
         const { session, user } = await getCurrentSession();
         if (session && user) {
           setIsLoggedIn(true);
-          router.push(redirectTo);
+          router.push(redirectTo || getDashboardPathForUser(user));
         }
       } catch (err) {
         console.error('Session check error:', err);
@@ -74,12 +74,16 @@ function LoginForm() {
 
       if (result.success) {
         setSuccessMessage('Login successful! Redirecting...');
+
+        document.cookie = `wedupay-user-id=${encodeURIComponent(result.user!.id)}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax; SameSite=Lax`;
+        document.cookie = `wedupay-user-email=${encodeURIComponent(result.user!.email)}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax; SameSite=Lax`;
+        document.cookie = `wedupay-user-role=${encodeURIComponent(result.user!.role)}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax; SameSite=Lax`;
         
         // Small delay for UX
         await new Promise(resolve => setTimeout(resolve, 500));
         
         // Redirect to intended page
-        router.push(redirectTo);
+        router.push(redirectTo || getDashboardPathForUser(result.user!));
       } else {
         // Handle specific error cases
         if (result.requiresConfirmation) {

@@ -62,6 +62,26 @@ const createUserSchema = z.object({
   country: z.string().length(2, 'Country code must be 2 characters'),
 });
 
+function inferRoleFromEmail(email: string): 'USER' | 'MERCHANT' | 'ADMIN' {
+  if (email === 'admin@wedupay.test') {
+    return 'ADMIN';
+  }
+
+  if (email === 'merchant@wedupay.test') {
+    return 'MERCHANT';
+  }
+
+  return 'USER';
+}
+
+function resolveExistingUserRole(email: string, currentRole?: string | null): 'USER' | 'MERCHANT' | 'ADMIN' {
+  if (currentRole === 'ADMIN' || currentRole === 'MERCHANT') {
+    return currentRole;
+  }
+
+  return inferRoleFromEmail(email);
+}
+
 export async function POST(request: NextRequest) {
   const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   console.log(`[CreateUserAPI] ${requestId} - Creating user profile`);
@@ -119,7 +139,10 @@ export async function POST(request: NextRequest) {
     if (duplicateEmail) {
       const { data: updatedUser, error: updateError } = await supabaseAdmin
         .from('users')
-        .update({ supabaseUserId })
+        .update({
+          supabaseUserId,
+          role: resolveExistingUserRole(email, duplicateEmail.role),
+        })
         .eq('id', duplicateEmail.id)
         .select()
         .single();
@@ -162,7 +185,7 @@ export async function POST(request: NextRequest) {
         phoneNumber,
         country,
         kycStatus: 'pending',
-        role: 'USER',
+        role: inferRoleFromEmail(email),
       })
       .select()
       .single();

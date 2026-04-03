@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data.session) {
-      const response = NextResponse.redirect(new URL("/dashboard/customer", requestUrl.origin));
+      const response = NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
       
       response.cookies.set("sb-access-token", data.session.access_token, {
         httpOnly: true,

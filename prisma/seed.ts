@@ -35,6 +35,7 @@ async function main() {
       phoneNumber: "+263771234567",
       country: "Zimbabwe",
       kycStatus: "VERIFIED",
+      role: "USER",
       supabaseUserId: null,
       wallets: {
         create: [
@@ -108,6 +109,7 @@ async function main() {
       phoneNumber: "+2348012345678",
       country: "Nigeria",
       kycStatus: "VERIFIED",
+      role: "MERCHANT",
       supabaseUserId: null,
       wallets: {
         create: [
@@ -151,6 +153,7 @@ async function main() {
       phoneNumber: "+263772000000",
       country: "Zimbabwe",
       kycStatus: "VERIFIED",
+      role: "ADMIN",
       supabaseUserId: null,
       wallets: {
         create: {

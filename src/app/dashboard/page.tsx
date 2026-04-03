@@ -2,13 +2,18 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { getCurrentSession, getDashboardPathForUser } from "@/lib/auth-service";
 
 export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to customer dashboard by default
-    router.push("/dashboard/customer");
+    const redirectToDashboard = async () => {
+      const { user } = await getCurrentSession();
+      router.push(user ? getDashboardPathForUser(user) : "/auth/login?redirect=/dashboard");
+    };
+
+    redirectToDashboard();
   }, [router]);
 
   return (

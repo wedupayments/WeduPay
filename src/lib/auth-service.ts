@@ -83,6 +83,18 @@ export interface SessionData {
   expiresAt: number;
 }
 
+export function getDashboardPathForUser(user: Pick<UserProfile, 'role' | 'email'>): string {
+  if (user.role === 'ADMIN') {
+    return '/dashboard/admin';
+  }
+
+  if (user.role === 'MERCHANT' || user.email === 'merchant@wedupay.test') {
+    return '/dashboard/merchant';
+  }
+
+  return '/dashboard/customer';
+}
+
 /**
  * ============================
  * AUTHENTICATION FUNCTIONS
