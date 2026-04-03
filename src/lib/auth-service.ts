@@ -292,6 +292,14 @@ export async function signInUser({
     if (authError) {
       // Map common auth errors to user-friendly messages
       if (authError.message.includes('Invalid login credentials')) {
+        if (normalizedEmail.endsWith('@wedupay.test')) {
+          return {
+            success: false,
+            error:
+              'This demo account exists in the app seed data, but no matching Supabase login was found. Register the demo email first or disable demo account buttons.',
+          };
+        }
+
         return {
           success: false,
           error: 'Invalid email or password',

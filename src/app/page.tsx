@@ -35,13 +35,13 @@ export default function Home() {
 <div className="flex items-center gap-4 pt-4">
 <div className="flex -space-x-3">
 <div className="relative w-10 h-10 rounded-full border-2 border-background-dark overflow-hidden">
-  <Image src="/images/avatar_1.png" alt="User 1" fill className="object-cover" />
+  <Image src="/images/avatar_1.png" alt="User 1" fill sizes="40px" className="object-cover" />
 </div>
 <div className="relative w-10 h-10 rounded-full border-2 border-background-dark overflow-hidden">
-  <Image src="/images/avatar_2.png" alt="User 2" fill className="object-cover" />
+  <Image src="/images/avatar_2.png" alt="User 2" fill sizes="40px" className="object-cover" />
 </div>
 <div className="relative w-10 h-10 rounded-full border-2 border-background-dark overflow-hidden">
-  <Image src="/images/avatar_3.png" alt="User 3" fill className="object-cover" />
+  <Image src="/images/avatar_3.png" alt="User 3" fill sizes="40px" className="object-cover" />
 </div>
 </div>
 <p className="text-sm font-medium text-slate-500">Be among the first to experience WeduPay</p>

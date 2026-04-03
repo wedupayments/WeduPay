@@ -21,9 +21,7 @@ const TEST_ACCOUNTS = [
   { label: 'Merchant', email: 'merchant@wedupay.test', password: 'password123' },
   { label: 'Admin', email: 'admin@wedupay.test', password: 'password123' },
 ];
-const showDemoAccounts =
-  process.env.NEXT_PUBLIC_ENABLE_DEMO_ACCOUNTS === 'true' ||
-  process.env.NODE_ENV !== 'production';
+const showDemoAccounts = process.env.NEXT_PUBLIC_ENABLE_DEMO_ACCOUNTS === 'true';
 
 /**
  * Login form component with search params access
@@ -40,7 +38,6 @@ function LoginForm() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [authLoading, setAuthLoading] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Get redirect URL from query params
   const redirectTo = searchParams.get('redirect');
@@ -51,7 +48,6 @@ function LoginForm() {
       try {
         const { session, user } = await getCurrentSession();
         if (session && user) {
-          setIsLoggedIn(true);
           router.push(redirectTo || getDashboardPathForUser(user));
         }
       } catch (err) {
@@ -245,6 +241,9 @@ function LoginForm() {
           <div className="mt-6">
             <p className="mb-3 text-center text-sm text-slate-600 dark:text-slate-400">
               Test accounts
+            </p>
+            <p className="mb-3 text-center text-xs text-slate-500 dark:text-slate-400">
+              These only work after matching Supabase auth users have been created for the seeded demo emails.
             </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {TEST_ACCOUNTS.map((account) => (
