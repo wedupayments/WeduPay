@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { createErrorResponse } from "@/lib/api-response";
 import { cookies } from "next/headers";
 import { getSession } from "@/lib/supabase-server";
+import { ensureTenantMembership, resolveTenantContext } from "@/lib/tenant";
 
 export interface AuthResult {
   userId: string | null;
@@ -12,6 +13,10 @@ export interface AuthResult {
   email: string | null;
   role: string | null;
   supabaseUserId: string | null;
+  tenantId: string | null;
+  tenantSlug: string | null;
+  tenantName: string | null;
+  tenantRole: string | null;
 }
 
 const UNAUTHENTICATED_RESULT: AuthResult = {
@@ -22,6 +27,10 @@ const UNAUTHENTICATED_RESULT: AuthResult = {
   email: null,
   role: null,
   supabaseUserId: null,
+  tenantId: null,
+  tenantSlug: null,
+  tenantName: null,
+  tenantRole: null,
 };
 
 function getPermissionsForRole(role: string | null): string[] {
@@ -36,7 +45,20 @@ function getPermissionsForRole(role: string | null): string[] {
   return ["read", "write"];
 }
 
-async function authenticateSupabaseToken(token: string): Promise<AuthResult> {
+async function backfillTenantOwnership(userId: string, tenantId: string) {
+  await Promise.all([
+    prisma.wallet.updateMany({ where: { userId, tenantId: null }, data: { tenantId } }),
+    prisma.transaction.updateMany({ where: { userId, tenantId: null }, data: { tenantId } }),
+    prisma.paymentReference.updateMany({ where: { userId, tenantId: null }, data: { tenantId } }),
+    prisma.virtualCard.updateMany({ where: { userId, tenantId: null }, data: { tenantId } }),
+    prisma.apiKey.updateMany({ where: { userId, tenantId: null }, data: { tenantId } }),
+    prisma.p2PTransfer.updateMany({ where: { userId, tenantId: null }, data: { tenantId } }),
+    prisma.transferRecipient.updateMany({ where: { userId, tenantId: null }, data: { tenantId } }),
+    prisma.complianceCheck.updateMany({ where: { userId, tenantId: null }, data: { tenantId } }),
+  ]);
+}
+
+async function authenticateSupabaseToken(token: string, request: Request): Promise<AuthResult> {
   const supabaseUser = await getSession(token);
   if (!supabaseUser) {
     return UNAUTHENTICATED_RESULT;
@@ -52,6 +74,14 @@ async function authenticateSupabaseToken(token: string): Promise<AuthResult> {
     },
   });
 
+  const cookieStore = await cookies();
+  const tenantContext = await resolveTenantContext({
+    pathname: new URL(request.url).pathname,
+    hostname: new URL(request.url).hostname,
+    searchParams: new URL(request.url).searchParams,
+    tenantCookie: cookieStore.get("wedupay-tenant")?.value ?? null,
+  });
+
   if (appUser && !appUser.supabaseUserId) {
     await prisma.user.update({
       where: { id: appUser.id },
@@ -59,14 +89,43 @@ async function authenticateSupabaseToken(token: string): Promise<AuthResult> {
     });
   }
 
+  let membership = null;
+
+  if (appUser && tenantContext.tenantId) {
+    membership = await prisma.tenantMembership.findUnique({
+      where: {
+        tenantId_userId: {
+          tenantId: tenantContext.tenantId,
+          userId: appUser.id,
+        },
+      },
+    });
+
+    if (!membership) {
+      membership = await ensureTenantMembership({
+        tenantId: tenantContext.tenantId,
+        userId: appUser.id,
+        role: appUser.role,
+      });
+    }
+
+    await backfillTenantOwnership(appUser.id, tenantContext.tenantId);
+  }
+
+  const effectiveRole = membership?.role || appUser?.role || null;
+
   return {
     userId: appUser?.id ?? null,
     apiKeyId: null,
     authenticated: true,
-    permissions: getPermissionsForRole(appUser?.role ?? null),
+    permissions: getPermissionsForRole(effectiveRole),
     email: normalizedEmail,
-    role: appUser?.role ?? null,
+    role: effectiveRole,
     supabaseUserId: supabaseUser.id,
+    tenantId: tenantContext.tenantId,
+    tenantSlug: tenantContext.tenantSlug,
+    tenantName: tenantContext.tenantName,
+    tenantRole: membership?.role || null,
   };
 }
 
@@ -77,7 +136,7 @@ export async function authenticateRequest(request: Request): Promise<AuthResult>
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7).trim();
     if (token) {
-      return authenticateSupabaseToken(token);
+      return authenticateSupabaseToken(token, request);
     }
   }
 
@@ -112,6 +171,10 @@ export async function authenticateRequest(request: Request): Promise<AuthResult>
         email: null,
         role: null,
         supabaseUserId: null,
+        tenantId: apiKey.tenantId,
+        tenantSlug: null,
+        tenantName: null,
+        tenantRole: null,
       };
     } catch {
       return UNAUTHENTICATED_RESULT;
@@ -122,7 +185,7 @@ export async function authenticateRequest(request: Request): Promise<AuthResult>
   const accessToken = cookieStore.get("sb-access-token")?.value;
 
   if (accessToken) {
-    return authenticateSupabaseToken(accessToken);
+    return authenticateSupabaseToken(accessToken, request);
   }
 
   return UNAUTHENTICATED_RESULT;
@@ -163,6 +226,24 @@ export function requirePermission(auth: AuthResult, permission: string): NextRes
     const error = createErrorResponse(
       "FORBIDDEN",
       `Permission '${permission}' required`,
+      undefined,
+      403
+    );
+    return NextResponse.json(error.body, { status: error.status });
+  }
+
+  return null;
+}
+
+export function requireTenantAccess(auth: AuthResult): NextResponse | null {
+  if (!auth.authenticated) {
+    return requireAuth(auth);
+  }
+
+  if (!auth.tenantId) {
+    const error = createErrorResponse(
+      "TENANT_REQUIRED",
+      "A tenant context is required for this action",
       undefined,
       403
     );

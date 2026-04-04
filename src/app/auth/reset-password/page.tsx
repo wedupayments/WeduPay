@@ -2,14 +2,29 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { updatePassword } from "@/lib/auth-service";
 import { supabase } from "@/lib/supabase";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { PasswordField } from "@/components/auth/PasswordField";
+import { buildTenantPath } from "@/lib/tenant";
 
-export default function ResetPasswordPage() {
+function ResetPasswordSkeleton() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+    </div>
+  );
+}
+
+function ResetPasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tenantSlug = searchParams.get("tenant") ?? null;
+
+  const loginHref = tenantSlug ? buildTenantPath("/auth/login", tenantSlug) : "/auth/login";
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isReady, setIsReady] = useState(false);
@@ -63,7 +78,7 @@ export default function ResetPasswordPage() {
 
     if (result.success) {
       setSuccess("Password updated successfully. Redirecting to sign in...");
-      setTimeout(() => router.push("/auth/login"), 1200);
+      setTimeout(() => router.push(loginHref), 1200);
     } else {
       setError(result.error || "Unable to update your password.");
     }
@@ -75,55 +90,71 @@ export default function ResetPasswordPage() {
     <AuthShell
       title="Choose a new password"
       description="Use at least 8 characters and include one number."
-      backHref="/auth/login"
-      backLabel="Back to sign in"
+      backHref={loginHref}
+      backLabel={tenantSlug ? `Back to ${tenantSlug} sign in` : "Back to sign in"}
     >
+      {!isReady ? (
+        <p className="mt-6 text-sm text-slate-600 dark:text-slate-400">Preparing secure reset session...</p>
+      ) : null}
 
-        {!isReady ? (
-          <p className="mt-6 text-sm text-slate-600 dark:text-slate-400">Preparing secure reset session...</p>
-        ) : null}
+      {error ? (
+        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+          {error}
+        </div>
+      ) : null}
 
-        {error ? (
-          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
-            {error}
-          </div>
-        ) : null}
+      {success ? (
+        <div className="mt-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900 dark:bg-green-950/40 dark:text-green-300">
+          {success}
+        </div>
+      ) : null}
 
-        {success ? (
-          <div className="mt-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900 dark:bg-green-950/40 dark:text-green-300">
-            {success}
-          </div>
-        ) : null}
+      <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+        <PasswordField
+          id="password"
+          label="New password"
+          required
+          autoComplete="new-password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          className="block w-full rounded-lg border border-slate-300 px-4 py-3 pr-36 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+        />
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-          <PasswordField
-            id="password"
-            label="New password"
-            required
-            autoComplete="new-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="block w-full rounded-lg border border-slate-300 px-4 py-3 pr-36 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-          />
+        <PasswordField
+          id="confirmPassword"
+          label="Confirm new password"
+          required
+          autoComplete="new-password"
+          value={confirmPassword}
+          onChange={(event) => setConfirmPassword(event.target.value)}
+          className="block w-full rounded-lg border border-slate-300 px-4 py-3 pr-36 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+        />
 
-          <PasswordField
-            id="confirmPassword"
-            label="Confirm new password"
-            required
-            autoComplete="new-password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            className="block w-full rounded-lg border border-slate-300 px-4 py-3 pr-36 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-          />
+        <button
+          type="submit"
+          disabled={!isReady || isSubmitting}
+          className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-background-dark transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isSubmitting ? "Updating password..." : "Update password"}
+        </button>
+      </form>
 
-          <button
-            type="submit"
-            disabled={!isReady || isSubmitting}
-            className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-background-dark transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSubmitting ? "Updating password..." : "Update password"}
-          </button>
-        </form>
+      <div className="mt-6 text-center">
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          Remember your password?{" "}
+          <Link href={loginHref} className="text-primary hover:underline font-semibold">
+            Sign in
+          </Link>
+        </p>
+      </div>
     </AuthShell>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<ResetPasswordSkeleton />}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

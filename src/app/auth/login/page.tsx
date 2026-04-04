@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { signInUser, getCurrentSession, getDashboardPathForUser } from '@/lib/auth-service';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { PasswordField } from '@/components/auth/PasswordField';
+import { buildTenantPath } from '@/lib/tenant';
 
 const TEST_ACCOUNTS = [
   { label: 'Customer', email: 'customer@wedupay.test', password: 'password123' },
@@ -24,11 +25,16 @@ const TEST_ACCOUNTS = [
 const showDemoAccounts = process.env.NEXT_PUBLIC_ENABLE_DEMO_ACCOUNTS === 'true';
 
 /**
- * Login form component with search params access
+ * Login form component with tenant-aware search params access
  * Wrapped in Suspense boundary in parent component
  */
 function LoginForm() {
   const searchParams = useSearchParams();
+  const tenantSlug = searchParams.get('tenant') ?? null;
+
+  const backHref = tenantSlug ? buildTenantPath('/', tenantSlug) : '/';
+  const registerHref = tenantSlug ? buildTenantPath('/auth/register', tenantSlug) : '/auth/register';
+  const forgotHref = tenantSlug ? buildTenantPath('/auth/forgot-password', tenantSlug) : '/auth/forgot-password';
 
   // Form state
   const [email, setEmail] = useState('');
@@ -47,7 +53,9 @@ function LoginForm() {
       try {
         const { session, user } = await getCurrentSession();
         if (session && user) {
-          window.location.replace(redirectTo || getDashboardPathForUser(user));
+          const target = redirectTo || getDashboardPathForUser(user);
+          const redirectUrl = tenantSlug ? buildTenantPath(target, tenantSlug) : target;
+          window.location.replace(redirectUrl);
         }
       } catch (err) {
         console.error('Session check error:', err);
@@ -56,7 +64,7 @@ function LoginForm() {
       }
     };
     checkSession();
-  }, [redirectTo]);
+  }, [redirectTo, tenantSlug]);
 
   /**
    * Handle form submission
@@ -79,7 +87,9 @@ function LoginForm() {
         await new Promise((resolve) => setTimeout(resolve, 500));
 
         // Redirect to intended page
-        window.location.assign(redirectTo || getDashboardPathForUser(result.user!));
+        const target = redirectTo || getDashboardPathForUser(result.user!);
+        const redirectUrl = tenantSlug ? buildTenantPath(target, tenantSlug) : target;
+        window.location.assign(redirectUrl);
       } else {
         // Handle specific error cases
         if (result.requiresConfirmation) {
@@ -120,14 +130,14 @@ function LoginForm() {
   return (
     <AuthShell
       title="Sign in to your account"
-      description="Send money across Africa securely"
-      backHref="/"
-      backLabel="Back to home"
+      description={tenantSlug ? `Access ${tenantSlug}'s workspace` : 'Send money across Africa securely'}
+      backHref={backHref}
+      backLabel={tenantSlug ? `Back to ${tenantSlug}` : 'Back to home'}
       footer={
         <>
-          <Link href="/terms" className="hover:underline">Terms of Service</Link>
+          <Link href={tenantSlug ? buildTenantPath('/terms', tenantSlug) : '/terms'} className="hover:underline">Terms of Service</Link>
           {' | '}
-          <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
+          <Link href={tenantSlug ? buildTenantPath('/privacy', tenantSlug) : '/privacy'} className="hover:underline">Privacy Policy</Link>
         </>
       }
     >
@@ -203,7 +213,7 @@ function LoginForm() {
 
           <div className="text-sm">
             <Link
-              href="/auth/forgot-password"
+              href={forgotHref}
               className="font-medium text-primary hover:brightness-110"
             >
               Forgot password?
@@ -271,7 +281,7 @@ function LoginForm() {
         <p className="text-sm text-slate-600 dark:text-slate-400">
           Don&apos;t have an account?{' '}
           <Link
-            href="/auth/register"
+            href={registerHref}
             className="font-medium text-primary hover:brightness-110"
           >
             Create one now

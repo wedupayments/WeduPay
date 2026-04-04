@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { buildTenantPath, extractTenantSlugFromHost, extractTenantSlugFromPathname, normalizeTenantSlug, stripTenantPrefix } from "@/lib/tenant";
 
 const publicPaths = [
   "/",
@@ -17,10 +18,37 @@ const isPublicPath = (path: string) =>
   publicPaths.some(p => path === p || path.startsWith(`${p}/`));
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const tenantFromPath = extractTenantSlugFromPathname(request.nextUrl.pathname);
+  const tenantFromHost = extractTenantSlugFromHost(request.nextUrl.hostname);
+  const tenantFromQuery = normalizeTenantSlug(request.nextUrl.searchParams.get("tenant"));
+  const tenantSlug = tenantFromPath || tenantFromHost || tenantFromQuery || request.cookies.get("wedupay-tenant")?.value || null;
+  const strippedPathname = stripTenantPrefix(request.nextUrl.pathname);
+  const isTenantPath = strippedPathname !== request.nextUrl.pathname;
 
-  if (isPublicPath(pathname)) {
-    return NextResponse.next();
+  const applyTenantCookie = (response: NextResponse) => {
+    if (tenantSlug) {
+      response.cookies.set("wedupay-tenant", tenantSlug, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30,
+      });
+    }
+
+    return response;
+  };
+
+  if (isTenantPath) {
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = strippedPathname;
+    if (tenantSlug && !rewriteUrl.searchParams.get("tenant")) {
+      rewriteUrl.searchParams.set("tenant", tenantSlug);
+    }
+
+    if (isPublicPath(strippedPathname)) {
+      return applyTenantCookie(NextResponse.rewrite(rewriteUrl));
+    }
   }
 
   const accessToken = request.cookies.get("sb-access-token")?.value;
@@ -28,16 +56,33 @@ export function middleware(request: NextRequest) {
   const bearerToken = request.headers.get("authorization");
   const apiKey = request.headers.get("x-api-key");
 
-  if (!accessToken && !refreshToken && !bearerToken?.startsWith("Bearer ") && !apiKey) {
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const loginUrl = new URL("/auth/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
+  if (isPublicPath(strippedPathname)) {
+    return applyTenantCookie(NextResponse.next());
   }
 
-  return NextResponse.next();
+  if (!accessToken && !refreshToken && !bearerToken?.startsWith("Bearer ") && !apiKey) {
+    if (strippedPathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const redirectTarget = tenantSlug ? buildTenantPath(strippedPathname, tenantSlug) : strippedPathname;
+    const loginUrl = new URL(tenantSlug ? buildTenantPath("/auth/login", tenantSlug) : "/auth/login", request.url);
+    loginUrl.searchParams.set("redirect", redirectTarget);
+    if (tenantSlug) {
+      loginUrl.searchParams.set("tenant", tenantSlug);
+    }
+    return applyTenantCookie(NextResponse.redirect(loginUrl));
+  }
+
+  if (isTenantPath) {
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = strippedPathname;
+    if (tenantSlug && !rewriteUrl.searchParams.get("tenant")) {
+      rewriteUrl.searchParams.set("tenant", tenantSlug);
+    }
+    return applyTenantCookie(NextResponse.rewrite(rewriteUrl));
+  }
+
+  return applyTenantCookie(NextResponse.next());
 }
 
 export const config = {

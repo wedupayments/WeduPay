@@ -784,7 +784,7 @@ export async function updateUserProfile(
  * }
  * ```
  */
-export async function sendPasswordReset(email: string): Promise<{ success: boolean; error?: string }> {
+export async function sendPasswordReset(email: string, tenantSlug?: string | null): Promise<{ success: boolean; error?: string }> {
   try {
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -795,8 +795,12 @@ export async function sendPasswordReset(email: string): Promise<{ success: boole
       };
     }
 
+    const resetPath = tenantSlug
+      ? `/t/${tenantSlug}/auth/reset-password?tenant=${tenantSlug}`
+      : '/auth/reset-password';
+
     const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}${resetPath}`,
     });
 
     if (error) {

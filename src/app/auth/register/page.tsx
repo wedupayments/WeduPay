@@ -1,11 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { PasswordField } from "@/components/auth/PasswordField";
 import { registerUser } from "@/lib/auth-service";
+import { buildTenantPath } from "@/lib/tenant";
+
+function RegisterSkeleton() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+    </div>
+  );
+}
 
 const COUNTRY_OPTIONS = [
   { code: "ZW", label: "Zimbabwe" },
@@ -17,7 +26,21 @@ const COUNTRY_OPTIONS = [
 ];
 
 export default function RegisterPage() {
+  return (
+    <Suspense fallback={<RegisterSkeleton />}>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tenantSlug = searchParams.get("tenant") ?? null;
+
+  const backHref = tenantSlug ? buildTenantPath("/auth/login", tenantSlug) : "/auth/login";
+  const loginHref = tenantSlug ? buildTenantPath("/auth/login", tenantSlug) : "/auth/login";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -46,7 +69,7 @@ export default function RegisterPage() {
           : "Account created successfully. Redirecting to sign in..."
       );
 
-      setTimeout(() => router.push("/auth/login"), 1200);
+      setTimeout(() => router.push(loginHref), 1200);
     } else {
       setError(result.error || "We couldn't create your account.");
     }
@@ -57,9 +80,9 @@ export default function RegisterPage() {
   return (
     <AuthShell
       title="Create your account"
-      description="Join WeduPay with one consistent sign-up flow."
-      backHref="/auth/login"
-      backLabel="Back to sign in"
+      description={tenantSlug ? `Join ${tenantSlug}'s workspace on WeduPay` : "Join WeduPay with one consistent sign-up flow."}
+      backHref={backHref}
+      backLabel={tenantSlug ? `Back to ${tenantSlug} sign in` : "Back to sign in"}
     >
       {error ? (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
@@ -147,7 +170,7 @@ export default function RegisterPage() {
       <div className="mt-6 text-center">
         <p className="text-sm text-slate-600 dark:text-slate-400">
           Already have an account?{" "}
-          <Link href="/auth/login" className="text-primary hover:underline font-semibold">
+          <Link href={loginHref} className="text-primary hover:underline font-semibold">
             Sign in
           </Link>
         </p>

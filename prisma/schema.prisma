@@ -27,6 +27,7 @@ model User {
   phoneNumber    String
   supabaseUserId String?            @unique
   role           String             @default("USER")
+  memberships    TenantMembership[]
   references     PaymentReference[]
   transactions   Transaction[]
   cards          VirtualCard[]
@@ -35,15 +36,62 @@ model User {
   @@map("users")
 }
 
+model Tenant {
+  id          String             @id @default(uuid())
+  name        String
+  slug        String             @unique
+  status      String             @default("ACTIVE")
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  memberships TenantMembership[]
+  domains     TenantDomain[]
+
+  @@index([slug])
+  @@map("tenants")
+}
+
+model TenantMembership {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String
+  role      String   @default("USER")
+  status    String   @default("ACTIVE")
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+  @@index([tenantId])
+  @@map("tenant_memberships")
+}
+
+model TenantDomain {
+  id        String   @id @default(uuid())
+  tenantId  String
+  domain    String   @unique
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@map("tenant_domains")
+}
+
 model Wallet {
   id         String   @id @default(uuid())
   currency   String
   balance    Float
   createdAt  DateTime @default(now())
+  tenantId   String?
   userId     String
   walletType String
   user       User     @relation(fields: [userId], references: [id])
 
+  @@index([tenantId])
   @@map("wallets")
 }
 
@@ -55,9 +103,11 @@ model Transaction {
   type      String
   reference String
   createdAt DateTime @default(now())
+  tenantId  String?
   userId    String
   user      User     @relation(fields: [userId], references: [id])
 
+  @@index([tenantId])
   @@map("transactions")
 }
 
@@ -78,11 +128,13 @@ model PaymentReference {
   title         String
   institution   String
   referenceCode String   @unique
+  tenantId      String?
   userId        String
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   user          User     @relation(fields: [userId], references: [id])
 
+  @@index([tenantId])
   @@map("payment_references")
 }
 
@@ -117,6 +169,7 @@ model ApiKey {
   id          String    @id @default(uuid())
   key         String    @unique
   name        String
+  tenantId    String?
   userId      String?
   permissions String[]
   isActive    Boolean   @default(true)
@@ -124,11 +177,13 @@ model ApiKey {
   expiresAt   DateTime?
   createdAt   DateTime  @default(now())
 
+  @@index([tenantId])
   @@map("api_keys")
 }
 
 model AuditLog {
   id         String   @id @default(uuid())
+  tenantId   String?
   userId     String?
   action     String
   resource   String
@@ -139,6 +194,7 @@ model AuditLog {
   requestId  String
   createdAt  DateTime @default(now())
 
+  @@index([tenantId])
   @@index([userId])
   @@index([resource, resourceId])
   @@index([createdAt])
@@ -165,6 +221,7 @@ model AsyncTask {
 
 model VirtualCard {
   id             String   @id @default(uuid())
+  tenantId        String?
   userId         String
   provider       String
   cardNumber     String   @unique
@@ -182,6 +239,7 @@ model VirtualCard {
   updatedAt      DateTime @updatedAt
   user           User     @relation(fields: [userId], references: [id])
 
+  @@index([tenantId])
   @@index([userId])
   @@index([status])
   @@map("virtual_cards")
@@ -254,6 +312,7 @@ model RoutingRule {
 model RoutedTransaction {
   id                    String          @id @default(uuid())
   transactionId         String
+  tenantId              String?
   userId                String
   selectedProvider      String
   selectedProviderId    String
@@ -282,6 +341,7 @@ model RoutedTransaction {
   updatedAt             DateTime        @updatedAt
   provider              PaymentProvider @relation(fields: [selectedProviderId], references: [id])
 
+  @@index([tenantId])
   @@index([transactionId])
   @@index([userId])
   @@index([status])
@@ -361,6 +421,7 @@ model ExchangeRate {
 model P2PTransfer {
   id                    String    @id @default(uuid())
   transferRef           String    @unique
+  tenantId              String?
   userId                String
   senderPhone           String
   senderCountry         String
@@ -394,6 +455,7 @@ model P2PTransfer {
   description           String?
   metadata              String?
 
+  @@index([tenantId])
   @@index([userId])
   @@index([transferRef])
   @@index([senderPhone])
@@ -405,6 +467,7 @@ model P2PTransfer {
 
 model TransferRecipient {
   id          String    @id @default(uuid())
+  tenantId     String?
   userId      String
   name        String
   phoneNumber String
@@ -415,6 +478,7 @@ model TransferRecipient {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  @@index([tenantId])
   @@index([userId])
   @@index([phoneNumber, country])
   @@map("transfer_recipients")
@@ -443,6 +507,7 @@ model TransferLimit {
 model ComplianceCheck {
   id         String    @id @default(uuid())
   transferId String?
+  tenantId   String?
   userId     String?
   checkType  String
   status     String
@@ -454,6 +519,7 @@ model ComplianceCheck {
   reviewedAt DateTime?
   createdAt  DateTime  @default(now())
 
+  @@index([tenantId])
   @@index([transferId])
   @@index([userId])
   @@index([status])
