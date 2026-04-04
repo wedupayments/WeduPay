@@ -10,7 +10,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { signInUser, getCurrentSession, getDashboardPathForUser } from '@/lib/auth-service';
 import { AuthShell } from '@/components/auth/AuthShell';
@@ -28,7 +28,6 @@ const showDemoAccounts = process.env.NEXT_PUBLIC_ENABLE_DEMO_ACCOUNTS === 'true'
  * Wrapped in Suspense boundary in parent component
  */
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   // Form state
@@ -48,7 +47,7 @@ function LoginForm() {
       try {
         const { session, user } = await getCurrentSession();
         if (session && user) {
-          router.push(redirectTo || getDashboardPathForUser(user));
+          window.location.replace(redirectTo || getDashboardPathForUser(user));
         }
       } catch (err) {
         console.error('Session check error:', err);
@@ -57,7 +56,7 @@ function LoginForm() {
       }
     };
     checkSession();
-  }, [router, redirectTo]);
+  }, [redirectTo]);
 
   /**
    * Handle form submission
@@ -80,7 +79,7 @@ function LoginForm() {
         await new Promise((resolve) => setTimeout(resolve, 500));
 
         // Redirect to intended page
-        router.push(redirectTo || getDashboardPathForUser(result.user!));
+        window.location.assign(redirectTo || getDashboardPathForUser(result.user!));
       } else {
         // Handle specific error cases
         if (result.requiresConfirmation) {
