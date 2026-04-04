@@ -21,6 +21,13 @@ export interface CardResponse {
   createdAt: Date;
 }
 
+export interface FundCardFromWalletInput {
+  cardId: string;
+  userId: string;
+  amount: number;
+  currency: string;
+}
+
 export class CardService {
   async createCard(input: CreateCardInput): Promise<CardResponse> {
     const cardNumber = this.generateCardNumber();
@@ -107,12 +114,16 @@ export class CardService {
   }
 
   async updateCardStatus(cardId: string, userId: string, status: string): Promise<CardResponse | null> {
+    const existingCard = await prisma.virtualCard.findFirst({
+      where: { id: cardId, userId },
+    });
+
+    if (!existingCard) return null;
+
     const card = await prisma.virtualCard.update({
       where: { id: cardId },
       data: { status },
     });
-
-    if (!card || card.userId !== userId) return null;
 
     return {
       id: card.id,
@@ -140,6 +151,75 @@ export class CardService {
       where: { id: cardId },
       data: { balance: { increment: amount } },
     });
+
+    return {
+      id: updatedCard.id,
+      provider: updatedCard.provider,
+      lastFourDigits: updatedCard.lastFourDigits,
+      expiryMonth: updatedCard.expiryMonth,
+      expiryYear: updatedCard.expiryYear,
+      status: updatedCard.status,
+      currency: updatedCard.currency,
+      balance: updatedCard.balance,
+      limit: updatedCard.limit || undefined,
+      isVirtual: updatedCard.isVirtual,
+      createdAt: updatedCard.createdAt,
+    };
+  }
+
+  async fundCardFromWallet(input: FundCardFromWalletInput): Promise<CardResponse | null> {
+    const card = await prisma.virtualCard.findFirst({
+      where: {
+        id: input.cardId,
+        userId: input.userId,
+      },
+    });
+
+    if (!card || input.amount <= 0) {
+      return null;
+    }
+
+    const wallet = await prisma.wallet.findFirst({
+      where: {
+        userId: input.userId,
+        currency: input.currency,
+      },
+    });
+
+    if (!wallet || wallet.balance < input.amount) {
+      return null;
+    }
+
+    const fundingReference = `CARD-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+
+    const [, updatedCard] = await prisma.$transaction([
+      prisma.wallet.update({
+        where: { id: wallet.id },
+        data: {
+          balance: {
+            decrement: input.amount,
+          },
+        },
+      }),
+      prisma.virtualCard.update({
+        where: { id: card.id },
+        data: {
+          balance: {
+            increment: input.amount,
+          },
+        },
+      }),
+      prisma.transaction.create({
+        data: {
+          userId: input.userId,
+          amount: input.amount,
+          currency: input.currency,
+          status: "COMPLETED",
+          type: "CARD_FUNDING",
+          reference: fundingReference,
+        },
+      }),
+    ]);
 
     return {
       id: updatedCard.id,

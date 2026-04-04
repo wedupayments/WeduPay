@@ -53,6 +53,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withdrawFromWallet } from '@/services/wallet-balance.service';
+import { authenticateRequest, requireAuth } from '@/lib/auth';
 
 /**
  * Request validation schema
@@ -106,18 +107,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user ID from auth (would be from session in real implementation)
-    const userId = request.headers.get('x-user-id') || 'user-123';
-
-    if (!userId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Authentication required',
-        },
-        { status: 401 }
-      );
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
     }
+
+    const userId = auth.userId!;
 
     // Process withdrawal
     const result = await withdrawFromWallet({

@@ -53,6 +53,7 @@ import {
   getAllWalletBalances,
   getTotalBalanceInUSD,
 } from '@/services/wallet-balance.service';
+import { authenticateRequest, requireAuth } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -63,18 +64,13 @@ export async function GET(request: NextRequest) {
     const currency = searchParams.get('currency');
     const all = searchParams.get('all') === 'true';
     
-    // Get user ID from auth (would be from session in real implementation)
-    const userId = request.headers.get('x-user-id') || 'user-123';
-
-    if (!userId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Authentication required',
-        },
-        { status: 401 }
-      );
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
     }
+
+    const userId = auth.userId!;
 
     // Return all wallet balances
     if (all) {

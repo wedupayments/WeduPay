@@ -1,53 +1,24 @@
-/**
- * Notification Preferences API
- * 
- * Manage user notification preferences (email, SMS, push).
- * Users can opt-in/out of different notification types.
- * 
- * @endpoint GET /api/v1/notifications/preferences
- * @endpoint PUT /api/v1/notifications/preferences
- * 
- * @returns {Object} response
- * @returns {Object} preferences - User notification preferences
- * @returns {boolean} preferences.emailEnabled - Email notifications enabled
- * @returns {boolean} preferences.smsEnabled - SMS notifications enabled
- * @returns {Object} preferences.types - Notification type preferences
- * 
- * @example
- * // Request
- * PUT /api/v1/notifications/preferences
- * {
- *   "emailEnabled": true,
- *   "smsEnabled": false,
- *   "types": {
- *     "transferConfirmation": true,
- *     "transferCompleted": true,
- *     "transferFailed": true,
- *     "securityAlert": true,
- *     "marketing": false
- *   }
- * }
- * 
- * // Response
- * {
- *   "success": true,
- *   "preferences": {
- *     "emailEnabled": true,
- *     "smsEnabled": false,
- *     "types": { ... }
- *   }
- * }
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
+import { createClient } from '@supabase/supabase-js';
+import { authenticateRequest, requireAuth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-/**
- * Preferences validation schema
- */
+const defaultPreferenceTypes = {
+  transferConfirmation: true,
+  transferCompleted: true,
+  transferFailed: true,
+  securityAlert: true,
+  marketing: false,
+  lowBalanceAlert: true,
+};
+
 const preferencesSchema = z.object({
   emailEnabled: z.boolean().optional(),
   smsEnabled: z.boolean().optional(),
@@ -61,37 +32,51 @@ const preferencesSchema = z.object({
   }).optional(),
 });
 
-/**
- * GET user notification preferences
- */
+async function getUserWithSupabaseId(userId: string) {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      phoneNumber: true,
+      supabaseUserId: true,
+    },
+  });
+}
+
+async function getStoredPreferences(supabaseUserId?: string | null) {
+  if (!supabaseUserId) {
+    return null;
+  }
+
+  const { data, error } = await supabaseAdmin.auth.admin.getUserById(supabaseUserId);
+  if (error || !data.user) {
+    return null;
+  }
+
+  return (data.user.user_metadata?.notificationPreferences ?? null) as
+    | {
+        emailEnabled?: boolean;
+        smsEnabled?: boolean;
+        types?: Partial<typeof defaultPreferenceTypes>;
+      }
+    | null;
+}
+
 export async function GET(request: NextRequest) {
   const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   console.log(`[NotificationPrefsAPI] ${requestId} - Getting preferences`);
 
   try {
-    // Get user ID from auth (would be from session in real implementation)
-    const userId = request.headers.get('x-user-id') || 'user-123';
-
-    if (!userId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Authentication required',
-        },
-        { status: 401 }
-      );
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
     }
 
-    // Get or create user preferences
-    let preferences = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        email: true,
-        phoneNumber: true,
-      },
-    });
+    const user = await getUserWithSupabaseId(auth.userId!);
 
-    if (!preferences) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -101,21 +86,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Return default preferences (in production, store in database)
+    const storedPreferences = await getStoredPreferences(user.supabaseUserId);
+
     return NextResponse.json({
       success: true,
       preferences: {
-        emailEnabled: true,
-        smsEnabled: true,
-        email: preferences.email,
-        phoneNumber: preferences.phoneNumber,
+        emailEnabled: storedPreferences?.emailEnabled ?? true,
+        smsEnabled: storedPreferences?.smsEnabled ?? true,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
         types: {
-          transferConfirmation: true,
-          transferCompleted: true,
-          transferFailed: true,
-          securityAlert: true,
-          marketing: false,
-          lowBalanceAlert: true,
+          ...defaultPreferenceTypes,
+          ...(storedPreferences?.types ?? {}),
         },
       },
     });
@@ -132,15 +114,17 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/**
- * UPDATE user notification preferences
- */
 export async function PUT(request: NextRequest) {
   const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   console.log(`[NotificationPrefsAPI] ${requestId} - Updating preferences`);
 
   try {
-    // Parse and validate request
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
+    }
+
     const body = await request.json();
     const validation = preferencesSchema.safeParse(body);
 
@@ -155,34 +139,47 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Get user ID from auth
-    const userId = request.headers.get('x-user-id') || 'user-123';
+    const user = await getUserWithSupabaseId(auth.userId!);
 
-    if (!userId) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Authentication required',
+          error: 'User not found',
         },
-        { status: 401 }
+        { status: 404 }
       );
     }
 
-    // In production, update user preferences in database
-    // For now, just return the updated preferences
+    const existingPreferences = await getStoredPreferences(user.supabaseUserId);
+    const mergedPreferences = {
+      emailEnabled: validation.data.emailEnabled ?? existingPreferences?.emailEnabled ?? true,
+      smsEnabled: validation.data.smsEnabled ?? existingPreferences?.smsEnabled ?? true,
+      types: {
+        ...defaultPreferenceTypes,
+        ...(existingPreferences?.types ?? {}),
+        ...(validation.data.types ?? {}),
+      },
+    };
+
+    if (user.supabaseUserId) {
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(user.supabaseUserId, {
+        user_metadata: {
+          notificationPreferences: mergedPreferences,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+    }
+
     return NextResponse.json({
       success: true,
       preferences: {
-        emailEnabled: validation.data.emailEnabled ?? true,
-        smsEnabled: validation.data.smsEnabled ?? true,
-        types: validation.data.types ?? {
-          transferConfirmation: true,
-          transferCompleted: true,
-          transferFailed: true,
-          securityAlert: true,
-          marketing: false,
-          lowBalanceAlert: true,
-        },
+        ...mergedPreferences,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
       },
       message: 'Preferences updated successfully',
     });

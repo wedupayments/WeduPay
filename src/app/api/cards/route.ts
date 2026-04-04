@@ -3,10 +3,17 @@ import { cardService } from "@/services/card.service";
 import { createErrorResponse } from "@/lib/api-response";
 import { cookies } from "next/headers";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("wedupay-user-id")?.value || "system";
+    const userId = cookieStore.get("wedupay-user-id")?.value;
+
+    if (!userId) {
+      return NextResponse.json(
+        createErrorResponse("UNAUTHORIZED", "Authentication required", undefined, 401).body,
+        { status: 401 }
+      );
+    }
 
     const cards = await cardService.getUserCards(userId);
 
@@ -40,7 +47,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("wedupay-user-id")?.value || "system";
+    const userId = cookieStore.get("wedupay-user-id")?.value;
+
+    if (!userId) {
+      return NextResponse.json(
+        createErrorResponse("UNAUTHORIZED", "Authentication required", undefined, 401).body,
+        { status: 401 }
+      );
+    }
 
     const body = await request.json();
     const { provider, currency, limit } = body;

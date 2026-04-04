@@ -48,8 +48,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getWalletHistory } from '@/services/wallet-balance.service';
 import { PrismaClient } from '@prisma/client';
+import { authenticateRequest, requireAuth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
@@ -57,7 +57,7 @@ const prisma = new PrismaClient();
  * Query validation schema
  */
 const historyQuerySchema = z.object({
-  type: z.enum(['DEPOSIT', 'WITHDRAWAL', 'TRANSFER', 'PAYMENT']).optional(),
+  type: z.enum(['DEPOSIT', 'WITHDRAWAL', 'TRANSFER', 'PAYMENT', 'CARD_FUNDING']).optional(),
   page: z.string().optional().default('1'),
   limit: z.string().optional().default('20'),
 });
@@ -85,18 +85,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get user ID from auth (would be from session in real implementation)
-    const userId = request.headers.get('x-user-id') || 'user-123';
-
-    if (!userId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Authentication required',
-        },
-        { status: 401 }
-      );
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
     }
+
+    const userId = auth.userId!;
 
     // Get user's wallets
     const wallets = await prisma.wallet.findMany({
@@ -123,7 +118,10 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = { userId };
+    const where: {
+      userId: string;
+      type?: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER' | 'PAYMENT' | 'CARD_FUNDING';
+    } = { userId };
     if (validation.data.type) {
       where.type = validation.data.type;
     }

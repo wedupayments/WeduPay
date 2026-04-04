@@ -13,17 +13,20 @@ interface CustomerLayoutProps {
 
 const navItems = [
   { label: "Dashboard", icon: "dashboard", href: "/dashboard/customer" },
+  { label: "Wallets", icon: "account_balance_wallet", href: "/dashboard/customer/wallets" },
+  { label: "Cards", icon: "credit_card", href: "/dashboard/customer/cards" },
+  { label: "Transfers", icon: "swap_horiz", href: "/dashboard/customer/transfers" },
   { label: "Payments", icon: "receipt_long", href: "/dashboard/customer/payments" },
   { label: "History", icon: "history", href: "/dashboard/customer/history" },
-  { label: "Funding", icon: "account_balance_wallet", href: "/dashboard/customer/funding" },
+  { label: "KYC", icon: "verified_user", href: "/dashboard/customer/kyc" },
   { label: "Settings", icon: "settings", href: "/dashboard/customer/settings" },
 ];
 
 const bottomNavItems = [
   { label: "Dashboard", icon: "dashboard", href: "/dashboard/customer" },
-  { label: "Payments", icon: "receipt_long", href: "/dashboard/customer/payments" },
-  { label: "History", icon: "history", href: "/dashboard/customer/history" },
-  { label: "Funding", icon: "account_balance_wallet", href: "/dashboard/customer/funding" },
+  { label: "Wallets", icon: "account_balance_wallet", href: "/dashboard/customer/wallets" },
+  { label: "Transfers", icon: "swap_horiz", href: "/dashboard/customer/transfers" },
+  { label: "Cards", icon: "credit_card", href: "/dashboard/customer/cards" },
   { label: "Settings", icon: "settings", href: "/dashboard/customer/settings" },
 ];
 

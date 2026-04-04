@@ -29,7 +29,6 @@ export default function WalletsPage() {
       {/* Balance Card */}
       <div className="mb-8">
         <WalletBalanceCard
-          userId="user-123"
           onFund={() => {}}
           onWithdraw={() => {}}
         />
@@ -45,6 +44,17 @@ export default function WalletsPage() {
           <h3 className="font-semibold text-lg mb-2">Fund Wallet</h3>
           <p className="text-gray-600 dark:text-gray-400 text-sm">
             Add funds from mobile money or card
+          </p>
+        </Link>
+
+        <Link
+          href="/dashboard/customer/cards"
+          className="p-6 bg-white dark:bg-background-dark rounded-xl border border-slate-200 dark:border-primary/10 shadow hover:shadow-lg transition"
+        >
+          <div className="text-3xl mb-3">Cards</div>
+          <h3 className="font-semibold text-lg mb-2">Virtual Cards</h3>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">
+            Create and fund cards for secure online payments
           </p>
         </Link>
 
