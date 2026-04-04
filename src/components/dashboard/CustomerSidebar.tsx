@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 const navItems = [
   { label: "Dashboard", icon: "dashboard", href: "/dashboard/customer", active: false },
@@ -22,9 +23,13 @@ export function CustomerSidebar({ userName = "Alex Johnson", userId = "88291" }:
     <aside className="w-64 border-r border-slate-200 dark:border-primary/10 bg-white dark:bg-background-dark hidden lg:flex flex-col h-screen sticky top-0">
       <div className="p-6 flex items-center gap-3">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="size-8 bg-primary rounded-lg flex items-center justify-center text-background-dark group-hover:scale-110 transition-transform">
-            <span className="material-symbols-outlined font-bold">payments</span>
-          </div>
+          <Image
+            src="/favicon.svg"
+            alt="WeduPay mark"
+            width={32}
+            height={32}
+            className="size-8 rounded-lg"
+          />
           <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">WeduPay</h2>
         </Link>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -38,10 +39,14 @@ export function Navbar() {
     <header className="relative flex items-center justify-between border-b border-slate-200 dark:border-primary/20 px-4 py-3 md:py-4 lg:px-20 sticky top-0 z-[100] bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm">
       <div className="flex items-center gap-2 md:gap-3">
         <Link href="/" className="flex items-center gap-2 md:gap-3">
-          <div className="text-primary flex items-center justify-center">
-            <span className="material-symbols-outlined text-2xl md:text-3xl">account_balance_wallet</span>
-          </div>
-          <h2 className="text-lg md:text-xl font-bold tracking-tight">WeduPay</h2>
+          <Image
+            src="/logo.svg"
+            alt="WeduPay"
+            width={164}
+            height={48}
+            priority
+            className="h-9 w-auto md:h-10"
+          />
         </Link>
       </div>
 

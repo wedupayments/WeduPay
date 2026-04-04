@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 interface AuthShellProps {
   title: string;
@@ -27,11 +28,15 @@ export function AuthShell({
             {backLabel}
           </Link>
 
-          <div className="mt-6 flex items-center justify-center gap-2">
-            <div className="size-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="material-symbols-outlined text-white">payments</span>
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">WeduPay</h1>
+          <div className="mt-6 flex items-center justify-center">
+            <Image
+              src="/logo.svg"
+              alt="WeduPay"
+              width={184}
+              height={54}
+              priority
+              className="h-12 w-auto"
+            />
           </div>
 
           <h2 className="mt-6 text-3xl font-bold text-slate-900 dark:text-white">{title}</h2>

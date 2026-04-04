@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const navItems = [
   { label: "Dashboard", icon: "dashboard", href: "/dashboard" },
@@ -31,9 +32,13 @@ export function Sidebar({ userType = "MERCHANT" }: SidebarProps) {
       <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-primary/10">
         {!collapsed && (
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="size-9 bg-primary rounded-lg flex items-center justify-center text-background-dark group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined font-bold text-lg">account_balance_wallet</span>
-            </div>
+            <Image
+              src="/favicon.svg"
+              alt="WeduPay mark"
+              width={36}
+              height={36}
+              className="size-9 rounded-lg"
+            />
             <div>
               <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">WeduPay</h2>
               <p className="text-[10px] font-bold text-primary uppercase tracking-wider">{userType === "MERCHANT" ? "Merchant" : "Student"}</p>

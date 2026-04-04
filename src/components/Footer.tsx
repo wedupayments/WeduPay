@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -6,10 +7,13 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 sm:gap-8 md:gap-12 mb-8 sm:mb-10 md:mb-16">
         <div className="col-span-2 lg:col-span-2">
           <div className="flex items-center gap-3 mb-6">
-            <div className="text-primary flex items-center justify-center">
-              <span className="material-symbols-outlined text-3xl">account_balance_wallet</span>
-            </div>
-            <h2 className="text-xl font-bold tracking-tight">WeduPay</h2>
+            <Image
+              src="/logo.svg"
+              alt="WeduPay"
+              width={164}
+              height={48}
+              className="h-10 w-auto"
+            />
           </div>
           <p className="text-slate-500 max-w-xs mb-6">
             The modern financial infrastructure for cross-border payment routing in Africa.

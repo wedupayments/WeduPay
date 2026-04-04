@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -46,9 +47,13 @@ export function CustomerLayout({ children, userName = "Student", userId = "00000
       <aside className="hidden lg:flex w-64 flex-col h-screen sticky top-0 bg-white dark:bg-background-dark border-r border-slate-200 dark:border-primary/10">
         <div className="p-4 sm:p-6 flex items-center gap-3">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="size-9 bg-primary rounded-lg flex items-center justify-center text-background-dark group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined font-bold text-lg">gps_fixed</span>
-            </div>
+            <Image
+              src="/favicon.svg"
+              alt="WeduPay mark"
+              width={36}
+              height={36}
+              className="size-9 rounded-lg"
+            />
             <div>
               <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">WeduPay</h2>
               <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Student</p>
