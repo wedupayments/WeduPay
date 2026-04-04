@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { P2PTransferService } from '@/services/routing/p2p-transfer-service';
+import { authenticateRequest, requireAuth, requireAppUser } from '@/lib/auth';
 
 const p2pService = new P2PTransferService();
 
@@ -29,7 +30,17 @@ export async function GET(request: NextRequest) {
   const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   
   try {
-    const recipients = await p2pService.getRecipients('user-123'); // Would be from auth
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
+    }
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+
+    const recipients = await p2pService.getRecipients(auth.userId!);
 
     return NextResponse.json({
       success: true,
@@ -56,11 +67,21 @@ export async function POST(request: NextRequest) {
   const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   
   try {
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
+    }
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+
     const body = await request.json();
     const validatedData = recipientSchema.parse(body);
 
     const recipient = await p2pService.saveRecipient({
-      userId: 'user-123', // Would be from auth
+      userId: auth.userId!,
       ...validatedData,
     });
 
@@ -99,6 +120,16 @@ export async function DELETE(request: NextRequest) {
   const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   
   try {
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
+    }
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+
     const { searchParams } = new URL(request.url);
     const recipientId = searchParams.get('id');
 
@@ -110,7 +141,7 @@ export async function DELETE(request: NextRequest) {
       }, { status: 400 });
     }
 
-    await p2pService.deleteRecipient('user-123', recipientId);
+    await p2pService.deleteRecipient(auth.userId!, recipientId);
 
     return NextResponse.json({
       success: true,

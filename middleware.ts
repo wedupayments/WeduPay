@@ -5,7 +5,10 @@ const publicPaths = [
   "/",
   "/auth/login",
   "/auth/register",
+  "/auth/forgot-password",
+  "/auth/reset-password",
   "/auth/callback",
+  "/api/auth/session",
   "/api/auth/create-user",
   "/api/waitlist",
   "/demo",
@@ -21,9 +24,11 @@ export function middleware(request: NextRequest) {
   }
 
   const accessToken = request.cookies.get("sb-access-token")?.value;
-  const appUserId = request.cookies.get("wedupay-user-id")?.value;
+  const refreshToken = request.cookies.get("sb-refresh-token")?.value;
+  const bearerToken = request.headers.get("authorization");
+  const apiKey = request.headers.get("x-api-key");
 
-  if (!accessToken && !appUserId) {
+  if (!accessToken && !refreshToken && !bearerToken?.startsWith("Bearer ") && !apiKey) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -6,7 +6,7 @@ import { paymentSchema, paginationSchema, validateRequest } from "@/lib/validati
 import type { WalletProvider } from "@/lib/validation";
 
 export class PaymentController {
-  async createPayment(request: Request) {
+  async createPayment(request: Request, userId: string) {
     try {
       const body = await request.json();
       const validation = validateRequest(paymentSchema, body);
@@ -33,7 +33,7 @@ export class PaymentController {
       const currencyValue = currency || "USD";
 
       const transaction = await paymentService.createTransaction({
-        userId: "system",
+        userId,
         amount,
         currency: currencyValue,
         type: "PAYMENT",
@@ -139,7 +139,7 @@ export class PaymentController {
     }
   }
 
-  async listPayments(request: Request) {
+  async listPayments(request: Request, userId: string) {
     try {
       const { searchParams } = new URL(request.url);
       const pagination = {
@@ -161,7 +161,7 @@ export class PaymentController {
 
       const { page = 1, limit = 20, status } = validation.data;
 
-      const { transactions, total } = await paymentService.getUserTransactions("system", {
+      const { transactions, total } = await paymentService.getUserTransactions(userId, {
         page,
         limit,
         status,
@@ -198,9 +198,9 @@ export class PaymentController {
 }
 
 export class WalletController {
-  async listWallets(request: Request) {
+  async listWallets(request: Request, userId: string) {
     try {
-      const wallets = await walletService.getUserWallets("system");
+      const wallets = await walletService.getUserWallets(userId);
 
       return NextResponse.json({
         data: wallets.map((w) => ({
@@ -223,10 +223,10 @@ export class WalletController {
     }
   }
 
-  async getWalletBalance(request: Request, params: { id: string }) {
+  async getWalletBalance(request: Request, params: { id: string }, userId: string) {
     try {
       const { id } = params;
-      const wallet = await walletService.getWallet("system", id);
+      const wallet = await walletService.getWallet(userId, id);
 
       if (!wallet) {
         return NextResponse.json(

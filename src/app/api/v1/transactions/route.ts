@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
 import { createApiResponse, createErrorResponse, getCacheHeaders } from "@/lib/api-response";
 import { validatePaginationParams, getSecurityHeaders } from "@/lib/api-middleware";
 import { 
@@ -10,16 +9,20 @@ import {
   parseExpandParam,
   buildCsvResponse 
 } from "@/lib/content-negotiation";
+import { authenticateRequest, requireAuth, requireAppUser } from "@/lib/auth";
 
 export async function GET(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("wedupay-user-id")?.value;
-
-    if (!userId) {
-      const error = createErrorResponse("UNAUTHORIZED", "Authentication required", undefined, 401);
-      return NextResponse.json(error.body, { status: error.status });
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
     }
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+    const userId = auth.userId!;
 
     const { searchParams } = new URL(request.url);
     const { page, perPage } = validatePaginationParams({

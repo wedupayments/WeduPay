@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
 import { createErrorResponse, getCacheHeaders } from "@/lib/api-response";
 import { getSecurityHeaders } from "@/lib/api-middleware";
 import { checkConditionalRequest, generateETag } from "@/lib/content-negotiation";
+import { authenticateRequest, requireAuth, requireAppUser } from "@/lib/auth";
 
 function buildResourceUrl(request: Request, id?: string): string {
   const url = new URL(request.url);
@@ -16,13 +16,16 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("wedupay-user-id")?.value;
-
-    if (!userId) {
-      const error = createErrorResponse("UNAUTHORIZED", "Authentication required", undefined, 401);
-      return NextResponse.json(error.body, { status: error.status });
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
     }
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+    const userId = auth.userId!;
 
     const { id } = await params;
 
@@ -88,13 +91,16 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("wedupay-user-id")?.value;
-
-    if (!userId) {
-      const error = createErrorResponse("UNAUTHORIZED", "Authentication required", undefined, 401);
-      return NextResponse.json(error.body, { status: error.status });
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
     }
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+    const userId = auth.userId!;
 
     const { id } = await params;
     const body = await request.json();
@@ -164,13 +170,16 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("wedupay-user-id")?.value;
-
-    if (!userId) {
-      const error = createErrorResponse("UNAUTHORIZED", "Authentication required", undefined, 401);
-      return NextResponse.json(error.body, { status: error.status });
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
     }
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+    const userId = auth.userId!;
 
     const { id } = await params;
     const operations = await request.json();
@@ -243,13 +252,16 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("wedupay-user-id")?.value;
-
-    if (!userId) {
-      const error = createErrorResponse("UNAUTHORIZED", "Authentication required", undefined, 401);
-      return NextResponse.json(error.body, { status: error.status });
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
     }
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+    const userId = auth.userId!;
 
     const { id } = await params;
 
@@ -291,12 +303,11 @@ export async function HEAD(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("wedupay-user-id")?.value;
-
-    if (!userId) {
+    const auth = await authenticateRequest(request);
+    if (!auth.authenticated || !auth.userId) {
       return new NextResponse(null, { status: 401 });
     }
+    const userId = auth.userId;
 
     const { id } = await params;
 

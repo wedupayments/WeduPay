@@ -44,12 +44,7 @@ export default function AdminTransfersPage() {
         ...(search && { search }),
       });
 
-      const response = await fetch(`/api/v1/admin/transfers?${params}`, {
-        headers: {
-          'x-user-id': 'admin-1',
-          'x-user-role': 'ADMIN',
-        },
-      });
+      const response = await fetch(`/api/v1/admin/transfers?${params}`, { credentials: 'include' });
 
       const data = await response.json();
 

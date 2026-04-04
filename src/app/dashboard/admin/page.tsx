@@ -31,12 +31,7 @@ export default function AdminDashboard() {
 
   const loadStats = async () => {
     try {
-      const response = await fetch('/api/v1/admin/stats', {
-        headers: {
-          'x-user-id': 'admin-1',
-          'x-user-role': 'ADMIN',
-        },
-      });
+      const response = await fetch('/api/v1/admin/stats', { credentials: 'include' });
 
       const data = await response.json();
 

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { cookies } from "next/headers";
 import { cardService } from "@/services/card.service";
 import { createErrorResponse } from "@/lib/api-response";
+import { authenticateRequest, requireAuth, requireAppUser } from "@/lib/auth";
 
 const updateCardSchema = z.object({
   status: z.enum(["ACTIVE", "FROZEN", "CANCELLED"]),
@@ -21,15 +21,16 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("wedupay-user-id")?.value;
-
-    if (!userId) {
-      return NextResponse.json(
-        createErrorResponse("UNAUTHORIZED", "Authentication required", undefined, 401).body,
-        { status: 401 }
-      );
+    const auth = await authenticateRequest(_request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
     }
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+    const userId = auth.userId!;
 
     const { id } = await params;
     const card = await cardService.getCard(id, userId);
@@ -56,15 +57,16 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("wedupay-user-id")?.value;
-
-    if (!userId) {
-      return NextResponse.json(
-        createErrorResponse("UNAUTHORIZED", "Authentication required", undefined, 401).body,
-        { status: 401 }
-      );
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
     }
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+    const userId = auth.userId!;
 
     const body = await request.json();
     const validation = updateCardSchema.safeParse(body);
@@ -105,15 +107,16 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("wedupay-user-id")?.value;
-
-    if (!userId) {
-      return NextResponse.json(
-        createErrorResponse("UNAUTHORIZED", "Authentication required", undefined, 401).body,
-        { status: 401 }
-      );
+    const auth = await authenticateRequest(_request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
     }
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+    const userId = auth.userId!;
 
     const { id } = await params;
     const deleted = await cardService.deleteCard(id, userId);

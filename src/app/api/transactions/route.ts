@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
+import { authenticateRequest, requireAuth, requireAppUser } from "@/lib/auth";
 
 /**
  * @swagger
@@ -63,12 +63,16 @@ import { cookies } from "next/headers";
 
 export async function GET(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("wedupay-user-id")?.value;
-
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
     }
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+    const userId = auth.userId!;
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");

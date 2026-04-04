@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { P2PTransferService } from '@/services/routing/p2p-transfer-service';
+import { authenticateRequest, requireAuth, requireAppUser } from '@/lib/auth';
 
 const p2pService = new P2PTransferService();
 
@@ -28,6 +29,16 @@ export async function GET(request: NextRequest) {
   const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   
   try {
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
+    }
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+
     const { searchParams } = new URL(request.url);
     const validatedData = historyQuerySchema.parse({
       page: searchParams.get('page'),
@@ -35,7 +46,7 @@ export async function GET(request: NextRequest) {
       status: searchParams.get('status'),
     });
 
-    const history = await p2pService.getTransferHistory('user-123', { // Would be from auth
+    const history = await p2pService.getTransferHistory(auth.userId!, {
       page: parseInt(validatedData.page),
       limit: parseInt(validatedData.limit),
       status: validatedData.status,

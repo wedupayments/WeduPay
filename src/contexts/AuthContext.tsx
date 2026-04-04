@@ -21,6 +21,8 @@ import {
   supabase,
   getCurrentSession,
   signOutUser,
+  persistServerSession,
+  clearServerSession,
   SessionData,
   UserProfile,
   isSessionExpired,
@@ -152,6 +154,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         switch (event) {
           case 'SIGNED_IN':
             // User signed in - refresh all state
+            if (session) {
+              await persistServerSession(session);
+            }
             const { user: profile } = await getCurrentSession();
             if (session && profile) {
               setSession({
@@ -167,6 +172,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
           case 'SIGNED_OUT':
             // User signed out - clear all state
+            await clearServerSession();
             setSession(null);
             setUser(null);
             setSupabaseUser(null);
@@ -175,6 +181,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           case 'TOKEN_REFRESHED':
             // Token refreshed - update session
             if (session) {
+              await persistServerSession(session);
               setSession(prev => prev ? ({
                 ...prev,
                 expiresAt: session.expires_at ? session.expires_at * 1000 : 0,

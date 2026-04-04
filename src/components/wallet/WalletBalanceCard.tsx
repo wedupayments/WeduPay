@@ -68,9 +68,7 @@ export default function WalletBalanceCard({
       setError(null);
 
       const response = await fetch('/api/v1/wallets/balance?all=true', {
-        headers: {
-          'x-user-id': userId || 'user-123',
-        },
+        credentials: 'include',
       });
 
       const data = await response.json();

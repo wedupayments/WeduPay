@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
+import { authenticateRequest, requireAuth, requireAppUser } from '@/lib/auth';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,17 +22,6 @@ const updateUserSchema = z.object({
     .optional(),
 });
 
-async function resolveCurrentUser() {
-  const cookieStore = await cookies();
-  const appUserId = cookieStore.get('wedupay-user-id')?.value;
-  const appUserEmail = cookieStore.get('wedupay-user-email')?.value;
-
-  return {
-    appUserId,
-    appUserEmail: appUserEmail ? decodeURIComponent(appUserEmail) : null,
-  };
-}
-
 function formatUser(user: Record<string, unknown>) {
   return {
     id: user.id,
@@ -50,29 +39,46 @@ export async function GET(request: NextRequest) {
   const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
   try {
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
+    }
+
     const { searchParams } = new URL(request.url);
     const supabaseUserId = searchParams.get('userId');
     const email = searchParams.get('email');
-    const { appUserId, appUserEmail } = await resolveCurrentUser();
 
     let query = supabaseAdmin.from('users').select('*');
 
     if (supabaseUserId) {
+      if (auth.supabaseUserId !== supabaseUserId && auth.role !== 'ADMIN') {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Forbidden',
+          },
+          { status: 403 }
+        );
+      }
       query = query.eq('supabaseUserId', supabaseUserId);
     } else if (email) {
+      if (auth.email !== email.trim().toLowerCase() && auth.role !== 'ADMIN') {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Forbidden',
+          },
+          { status: 403 }
+        );
+      }
       query = query.eq('email', email);
-    } else if (appUserId) {
-      query = query.eq('id', appUserId);
-    } else if (appUserEmail) {
-      query = query.eq('email', appUserEmail);
     } else {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Authentication required',
-        },
-        { status: 401 }
-      );
+      const profileError = requireAppUser(auth);
+      if (profileError) {
+        return profileError;
+      }
+      query = query.eq('id', auth.userId!);
     }
 
     const { data: user, error } = await query.single();
@@ -112,16 +118,15 @@ export async function PUT(request: NextRequest) {
   const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
   try {
-    const { appUserId } = await resolveCurrentUser();
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
+    }
 
-    if (!appUserId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Authentication required',
-        },
-        { status: 401 }
-      );
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
     }
 
     const body = await request.json();
@@ -161,7 +166,7 @@ export async function PUT(request: NextRequest) {
     const { data: user, error } = await supabaseAdmin
       .from('users')
       .update(updateData)
-      .eq('id', appUserId)
+      .eq('id', auth.userId!)
       .select('*')
       .single();
 

@@ -18,17 +18,20 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminStats } from '@/services/admin/admin.service';
+import { authenticateRequest, requireAuth } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   console.log(`[AdminStatsAPI] ${requestId} - Getting admin stats`);
 
   try {
-    // In production, verify admin authentication
-    const userId = request.headers.get('x-user-id');
-    const userRole = request.headers.get('x-user-role');
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
+    }
 
-    if (!userId || userRole !== 'ADMIN') {
+    if (auth.role !== 'ADMIN') {
       return NextResponse.json(
         {
           success: false,

@@ -12,6 +12,7 @@ import {
   getAdminTransfers,
   updateTransferStatus,
 } from '@/services/admin/admin.service';
+import { authenticateRequest, requireAuth } from '@/lib/auth';
 
 /**
  * GET - List transfers with filtering
@@ -21,9 +22,13 @@ export async function GET(request: NextRequest) {
   console.log(`[AdminTransfersAPI] ${requestId} - Getting transfers`);
 
   try {
-    // Verify admin access
-    const userRole = request.headers.get('x-user-role');
-    if (userRole !== 'ADMIN') {
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
+    }
+
+    if (auth.role !== 'ADMIN') {
       return NextResponse.json(
         { success: false, error: 'Admin access required' },
         { status: 403 }
@@ -64,9 +69,13 @@ export async function PUT(request: NextRequest) {
   console.log(`[AdminTransfersAPI] ${requestId} - Updating transfer status`);
 
   try {
-    // Verify admin access
-    const userRole = request.headers.get('x-user-role');
-    if (userRole !== 'ADMIN') {
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
+    }
+
+    if (auth.role !== 'ADMIN') {
       return NextResponse.json(
         { success: false, error: 'Admin access required' },
         { status: 403 }

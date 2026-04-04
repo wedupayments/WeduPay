@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { P2PTransferService } from '@/services/routing/p2p-transfer-service';
+import { authenticateRequest, requireAuth, requireAppUser } from '@/lib/auth';
 
 const p2pService = new P2PTransferService();
 
@@ -35,13 +36,23 @@ export async function POST(request: NextRequest) {
   console.log(`[P2PTransferAPI] ${requestId} - Received transfer request`);
 
   try {
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
+    }
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+
     // Parse and validate request
     const body = await request.json();
     const validatedData = transferRequestSchema.parse(body);
 
     // Execute transfer
     const result = await p2pService.executeTransfer({
-      userId: 'user-123', // Would be from auth session
+      userId: auth.userId!,
       ...validatedData,
     });
 

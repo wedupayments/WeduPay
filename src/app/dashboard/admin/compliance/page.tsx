@@ -37,12 +37,7 @@ export default function AdminCompliancePage() {
 
   const loadQueue = async () => {
     try {
-      const response = await fetch('/api/v1/admin/compliance', {
-        headers: {
-          'x-user-id': 'admin-1',
-          'x-user-role': 'ADMIN',
-        },
-      });
+      const response = await fetch('/api/v1/admin/compliance', { credentials: 'include' });
 
       const data = await response.json();
 
@@ -61,10 +56,7 @@ export default function AdminCompliancePage() {
     try {
       const response = await fetch(`/api/v1/admin/compliance/${transferRef}/approve`, {
         method: 'POST',
-        headers: {
-          'x-user-id': 'admin-1',
-          'x-user-role': 'ADMIN',
-        },
+        credentials: 'include',
       });
 
       const data = await response.json();
@@ -93,9 +85,8 @@ export default function AdminCompliancePage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': 'admin-1',
-          'x-user-role': 'ADMIN',
         },
+        credentials: 'include',
         body: JSON.stringify({ reason }),
       });
 

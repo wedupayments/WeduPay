@@ -1,51 +1,34 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
+import { authenticateRequest, requireAuth, requireAppUser } from "@/lib/auth";
 
 export async function GET(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const userEmail = cookieStore.get("wedupay-user-email")?.value;
-    const userId = cookieStore.get("wedupay-user-id")?.value;
-
-    let user = null;
-
-    if (userEmail) {
-      user = await prisma.user.findUnique({
-        where: { email: decodeURIComponent(userEmail) },
-        include: {
-          wallets: true,
-          transactions: {
-            orderBy: { createdAt: "desc" },
-            take: 10,
-          },
-          references: true,
-        },
-      });
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
     }
 
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: auth.userId! },
+      include: {
+        wallets: true,
+        transactions: {
+          orderBy: { createdAt: "desc" },
+          take: 10,
+        },
+        references: true,
+      },
+    });
+
     if (!user) {
-      return NextResponse.json({
-        stats: {
-          pendingApprovals: 2,
-          verifiedThisSemester: "$1,240.00",
-          primaryMerchant: "BYU-Pathway",
-        },
-        references: [
-          { id: "1", title: "BYU-Pathway Worldwide", ref: "BYU-2024-88291", icon: "school" },
-          { id: "2", title: "Course Materials Fund", ref: "MAT-BK-2024", icon: "menu_book" },
-        ],
-        transactions: [
-          { id: "1", merchant: "BYU-Pathway Tuition", purpose: "TUITION", term: "Winter 2024", date: "Mar 15, 2026", amount: "$450.00", status: "Verified" },
-          { id: "2", merchant: "Application Fee", purpose: "FEE", term: "Global Enrollment", date: "Mar 10, 2026", amount: "$35.00", status: "Pending" },
-        ],
-        wallets: [],
-        user: {
-          name: "Guest User",
-          userId: "00000",
-          email: "",
-        },
-      });
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const pendingApprovals = user.transactions.filter(

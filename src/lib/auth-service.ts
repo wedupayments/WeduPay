@@ -8,6 +8,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
 
 /**
  * Supabase client instance
@@ -71,6 +72,58 @@ export interface AuthResult {
   user?: UserProfile;
   error?: string;
   requiresConfirmation?: boolean;
+}
+
+async function persistServerSession(session: Session): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch('/api/auth/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        accessToken: session.access_token,
+        refreshToken: session.refresh_token,
+        expiresAt: session.expires_at,
+      }),
+    });
+
+    if (!response.ok) {
+      const result = await response.json().catch(() => null);
+      return {
+        success: false,
+        error: result?.error || 'Failed to persist server session',
+      };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to persist server session',
+    };
+  }
+}
+
+export async function clearServerSession(): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch('/api/auth/session', {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const result = await response.json().catch(() => null);
+      return {
+        success: false,
+        error: result?.error || 'Failed to clear server session',
+      };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to clear server session',
+    };
+  }
 }
 
 /**
@@ -255,6 +308,16 @@ export async function registerUser({
       };
     }
 
+    if (authData.session) {
+      const sessionResult = await persistServerSession(authData.session);
+      if (!sessionResult.success) {
+        return {
+          success: false,
+          error: sessionResult.error || 'Failed to establish a secure session',
+        };
+      }
+    }
+
     return {
       success: true,
       user: profileResult.user,
@@ -383,6 +446,17 @@ export async function signInUser({
       };
     }
 
+    if (authData.session) {
+      const sessionResult = await persistServerSession(authData.session);
+      if (!sessionResult.success) {
+        await supabase.auth.signOut();
+        return {
+          success: false,
+          error: sessionResult.error || 'Your account was verified, but WeduPay could not establish a secure session.',
+        };
+      }
+    }
+
     return {
       success: true,
       user: profile,
@@ -414,12 +488,15 @@ export async function signInUser({
  */
 export async function signOutUser(): Promise<{ success: boolean; error?: string }> {
   try {
-    const { error } = await supabase.auth.signOut();
+    const [{ error }, clearResult] = await Promise.all([
+      supabase.auth.signOut(),
+      clearServerSession(),
+    ]);
 
-    if (error) {
+    if (error || !clearResult.success) {
       return {
         success: false,
-        error: error.message,
+        error: error?.message || clearResult.error || 'Sign out failed',
       };
     }
 
@@ -560,7 +637,15 @@ async function createUserProfile(data: {
  */
 async function getUserProfile(supabaseUserId: string): Promise<UserProfile | null> {
   try {
-    const response = await fetch(`/api/auth/user?userId=${supabaseUserId}`);
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token;
+    const headers: HeadersInit = {};
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+
+    const response = await fetch(`/api/auth/user?userId=${supabaseUserId}`, { headers });
 
     if (!response.ok) {
       return null;
@@ -576,7 +661,15 @@ async function getUserProfile(supabaseUserId: string): Promise<UserProfile | nul
 
 async function getUserProfileByEmail(email: string): Promise<UserProfile | null> {
   try {
-    const response = await fetch(`/api/auth/user?email=${encodeURIComponent(email)}`);
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token;
+    const headers: HeadersInit = {};
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+
+    const response = await fetch(`/api/auth/user?email=${encodeURIComponent(email)}`, { headers });
 
     if (!response.ok) {
       return null;
@@ -808,6 +901,14 @@ export async function refreshSession(): Promise<{ success: boolean; session?: Se
       };
     }
 
+    const persistResult = await persistServerSession(session);
+    if (!persistResult.success) {
+      return {
+        success: false,
+        error: persistResult.error || 'Failed to refresh secure session',
+      };
+    }
+
     return {
       success: true,
       session: {
@@ -825,3 +926,5 @@ export async function refreshSession(): Promise<{ success: boolean; session?: Se
     };
   }
 }
+
+export { persistServerSession };

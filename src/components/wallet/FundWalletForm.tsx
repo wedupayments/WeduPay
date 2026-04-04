@@ -170,8 +170,8 @@ export default function FundWalletForm({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': userId || 'user-123',
         },
+        credentials: 'include',
         body: JSON.stringify({
           currency,
           amount: Number(amount),

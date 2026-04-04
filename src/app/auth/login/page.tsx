@@ -76,10 +76,6 @@ function LoginForm() {
       if (result.success) {
         setSuccessMessage('Login successful! Redirecting...');
 
-        document.cookie = `wedupay-user-id=${encodeURIComponent(result.user!.id)}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax; SameSite=Lax`;
-        document.cookie = `wedupay-user-email=${encodeURIComponent(result.user!.email)}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax; SameSite=Lax`;
-        document.cookie = `wedupay-user-role=${encodeURIComponent(result.user!.role)}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax; SameSite=Lax`;
-
         // Small delay for UX
         await new Promise((resolve) => setTimeout(resolve, 500));
 

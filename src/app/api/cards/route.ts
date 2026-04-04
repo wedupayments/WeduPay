@@ -1,19 +1,20 @@
 import { NextResponse } from "next/server";
 import { cardService } from "@/services/card.service";
 import { createErrorResponse } from "@/lib/api-response";
-import { cookies } from "next/headers";
+import { authenticateRequest, requireAuth, requireAppUser } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("wedupay-user-id")?.value;
-
-    if (!userId) {
-      return NextResponse.json(
-        createErrorResponse("UNAUTHORIZED", "Authentication required", undefined, 401).body,
-        { status: 401 }
-      );
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
     }
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+    const userId = auth.userId!;
 
     const cards = await cardService.getUserCards(userId);
 
@@ -46,15 +47,16 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("wedupay-user-id")?.value;
-
-    if (!userId) {
-      return NextResponse.json(
-        createErrorResponse("UNAUTHORIZED", "Authentication required", undefined, 401).body,
-        { status: 401 }
-      );
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
     }
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+    const userId = auth.userId!;
 
     const body = await request.json();
     const { provider, currency, limit } = body;

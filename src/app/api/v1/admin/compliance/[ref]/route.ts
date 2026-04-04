@@ -14,6 +14,7 @@ import {
   approveComplianceReview,
   rejectComplianceReview,
 } from '@/services/admin/admin.service';
+import { authenticateRequest, requireAuth, requireAppUser } from '@/lib/auth';
 
 /**
  * GET - Get compliance review queue
@@ -23,9 +24,13 @@ export async function GET(request: NextRequest) {
   console.log(`[AdminComplianceAPI] ${requestId} - Getting compliance queue`);
 
   try {
-    // Verify admin access
-    const userRole = request.headers.get('x-user-role');
-    if (userRole !== 'ADMIN') {
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
+    }
+
+    if (auth.role !== 'ADMIN') {
       return NextResponse.json(
         { success: false, error: 'Admin access required' },
         { status: 403 }
@@ -64,11 +69,18 @@ export async function POST(
   console.log(`[AdminComplianceAPI] ${requestId} - Processing compliance review for ${ref}`);
 
   try {
-    // Verify admin access
-    const userRole = request.headers.get('x-user-role');
-    const userId = request.headers.get('x-user-id');
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
+    }
 
-    if (userRole !== 'ADMIN') {
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+
+    if (auth.role !== 'ADMIN') {
       return NextResponse.json(
         { success: false, error: 'Admin access required' },
         { status: 403 }
@@ -81,9 +93,9 @@ export async function POST(
     let result;
 
     if (action === 'approve') {
-      result = await approveComplianceReview(ref, userId || 'admin');
+      result = await approveComplianceReview(ref, auth.userId!);
     } else if (action === 'reject') {
-      result = await rejectComplianceReview(ref, userId || 'admin', reason || 'Compliance review failed');
+      result = await rejectComplianceReview(ref, auth.userId!, reason || 'Compliance review failed');
     } else {
       return NextResponse.json(
         { success: false, error: 'Invalid action. Use "approve" or "reject"' },

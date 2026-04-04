@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CustomerLayoutProps {
   children: React.ReactNode;
@@ -31,15 +32,9 @@ const bottomNavItems = [
   { label: "Settings", icon: "settings", href: "/dashboard/customer/settings" },
 ];
 
-function handleSignOut() {
-  document.cookie = "sb-access-token=; path=/; max-age=0";
-  document.cookie = "wedupay-user-id=; path=/; max-age=0";
-  document.cookie = "wedupay-user-email=; path=/; max-age=0";
-  window.location.href = "/";
-}
-
 export function CustomerLayout({ children, userName = "Student", userId = "00000", title = "Dashboard" }: CustomerLayoutProps) {
   const pathname = usePathname();
+  const { logout } = useAuth();
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50 dark:bg-background-dark">
@@ -93,7 +88,7 @@ export function CustomerLayout({ children, userName = "Student", userId = "00000
             </div>
           </div>
           <button
-            onClick={handleSignOut}
+            onClick={() => void logout()}
             className="w-full flex items-center gap-3 px-3 sm:px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all text-sm"
           >
             <span className="material-symbols-outlined">logout</span>
