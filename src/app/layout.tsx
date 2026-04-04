@@ -14,11 +14,52 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const metadataBase = new URL(appUrl);
+
 export const metadata: Metadata = {
+  metadataBase,
+  applicationName: "WeduPay",
   title: "WeduPay | Secure Payment Routing for Africa and Beyond",
   description: "Secure payment routing for mobile wallets in Africa and beyond",
+  keywords: [
+    "WeduPay",
+    "payments",
+    "Africa",
+    "mobile wallets",
+    "cross-border payments",
+    "virtual cards",
+    "fintech",
+  ],
   icons: {
     icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/logo-slack.png",
+  },
+  openGraph: {
+    type: "website",
+    url: appUrl,
+    siteName: "WeduPay",
+    title: "WeduPay | Secure Payment Routing for Africa and Beyond",
+    description: "Secure payment routing for mobile wallets, transfers, and virtual cards across Africa.",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 343,
+        alt: "WeduPay logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "WeduPay | Secure Payment Routing for Africa and Beyond",
+    description: "Secure payment routing for mobile wallets, transfers, and virtual cards across Africa.",
+    images: ["/logo.png"],
+  },
+  other: {
+    "msapplication-TileImage": "/logo-slack.png",
+    "msapplication-TileColor": "#102219",
   },
 };
 
