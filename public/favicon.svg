@@ -1,4 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="20" fill="#4F46E5"/>
-  <text x="50" y="70" font-family="Arial, sans-serif" font-size="60" font-weight="bold" fill="white" text-anchor="middle">W</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="WeduPay">
+  <defs>
+    <linearGradient id="bg" x1="18" y1="12" x2="110" y2="116" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#153528"/>
+      <stop offset="1" stop-color="#0b1712"/>
+    </linearGradient>
+    <linearGradient id="path" x1="28" y1="28" x2="100" y2="98" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8ff7bd"/>
+      <stop offset="1" stop-color="#11d473"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="30" fill="url(#bg)"/>
+  <path d="M24 32 L42 88 L64 48 L86 88 L104 32" fill="none" stroke="url(#path)" stroke-linecap="round" stroke-linejoin="round" stroke-width="12"/>
+  <circle cx="24" cy="32" r="8" fill="#dfffea"/>
+  <circle cx="64" cy="48" r="8" fill="#dfffea"/>
+  <circle cx="104" cy="32" r="8" fill="#dfffea"/>
+  <circle cx="42" cy="88" r="8" fill="#11d473"/>
+  <circle cx="86" cy="88" r="8" fill="#11d473"/>
 </svg>

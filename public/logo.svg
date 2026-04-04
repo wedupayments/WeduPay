@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 120" role="img" aria-label="WeduPay logo">
+  <defs>
+    <linearGradient id="badge" x1="14" y1="10" x2="106" y2="110" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#153528"/>
+      <stop offset="1" stop-color="#0b1712"/>
+    </linearGradient>
+    <linearGradient id="signal" x1="24" y1="24" x2="96" y2="92" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8ff7bd"/>
+      <stop offset="1" stop-color="#11d473"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="104" height="104" rx="26" fill="url(#badge)"/>
+  <path d="M28 34 L44 82 L60 50 L76 82 L92 34" fill="none" stroke="url(#signal)" stroke-linecap="round" stroke-linejoin="round" stroke-width="10"/>
+  <circle cx="28" cy="34" r="6" fill="#dfffea"/>
+  <circle cx="60" cy="50" r="6" fill="#dfffea"/>
+  <circle cx="92" cy="34" r="6" fill="#dfffea"/>
+  <circle cx="44" cy="82" r="6" fill="#11d473"/>
+  <circle cx="76" cy="82" r="6" fill="#11d473"/>
+  <g fill="#102219">
+    <text x="136" y="58" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="38" font-weight="800" letter-spacing="-1.2">Wedu</text>
+    <text x="236" y="58" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="38" font-weight="800" letter-spacing="-1.2" fill="#11d473">Pay</text>
+    <text x="138" y="86" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13" font-weight="600" letter-spacing="2.6" fill="#4d6b5d">ROUTING AFRICAN PAYMENTS</text>
+  </g>
+</svg>
