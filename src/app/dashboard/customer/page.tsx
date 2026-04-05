@@ -9,7 +9,7 @@ import Link from "next/link";
 interface DashboardData {
   stats: {
     pendingApprovals: number;
-    verifiedThisSemester: string;
+    totalSpent: string;
     primaryMerchant: string;
   };
   references: Array<{

@@ -24,16 +24,16 @@ export function StatCard({ title, value, icon, colorClass }: StatCardProps) {
 interface StatsGridProps {
   stats?: {
     pendingApprovals: number;
-    verifiedThisSemester: string;
+    totalSpent: string;
     primaryMerchant: string;
   };
 }
 
 export function StatsGrid({ stats }: StatsGridProps) {
   const defaultStats = {
-    pendingApprovals: 2,
-    verifiedThisSemester: "$1,240.00",
-    primaryMerchant: "BYU-Pathway",
+    pendingApprovals: 0,
+    totalSpent: "$0.00",
+    primaryMerchant: "None",
   };
 
   const data = stats || defaultStats;
@@ -47,9 +47,9 @@ export function StatsGrid({ stats }: StatsGridProps) {
         colorClass="text-primary bg-primary"
       />
       <StatCard
-        title="Verified This Semester"
-        value={data.verifiedThisSemester}
-        icon="verified"
+        title="Total Spent"
+        value={data.totalSpent}
+        icon="payments"
         colorClass="text-blue-500 bg-blue-500"
       />
       <StatCard

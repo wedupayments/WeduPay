@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { buildTenantPath, extractTenantSlugFromHost, extractTenantSlugFromPathname, normalizeTenantSlug, stripTenantPrefix } from "@/lib/tenant";
-import { extractClientIP, filterIP, isKnownProviderIP } from "@/lib/ip-filter";
+import { extractClientIP, filterIP } from "@/lib/ip-filter";
 import { generateDeviceFingerprint, extractFingerprintFromHeaders } from "@/lib/device-fingerprint";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -49,17 +49,7 @@ const BLOCKED_BOT_AGENTS = [
   "Go-http-client", "curl/", "wget/",
 ];
 
-/**
- * Rate limit per endpoint pattern (window seconds, max requests)
- */
-const RATE_LIMITS: Record<string, { window: number; max: number }> = {
-  "/api/auth/": { window: 60, max: 10 },
-  "/api/payments": { window: 60, max: 30 },
-  "/api/transfers": { window: 60, max: 30 },
-  "/api/cards": { window: 60, max: 20 },
-  "/api/webhooks/": { window: 60, max: 100 },
-  "/api/": { window: 60, max: 100 },
-};
+
 
 // ============================================================
 // Security Pipeline
@@ -74,14 +64,7 @@ function isAllowedBot(pathname: string): boolean {
   return pathname === "/" || pathname.startsWith("/terms") || pathname.startsWith("/privacy") || pathname.startsWith("/api/docs");
 }
 
-function getRateLimitForPath(pathname: string): { window: number; max: number } {
-  if (pathname.startsWith("/api/webhooks/")) return RATE_LIMITS["/api/webhooks/"];
-  if (pathname.startsWith("/api/auth/")) return RATE_LIMITS["/api/auth/"];
-  if (pathname.startsWith("/api/payments")) return RATE_LIMITS["/api/payments"];
-  if (pathname.startsWith("/api/transfers")) return RATE_LIMITS["/api/transfers"];
-  if (pathname.startsWith("/api/cards")) return RATE_LIMITS["/api/cards"];
-  return RATE_LIMITS["/api/"];
-}
+
 
 function addSecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set("X-Content-Type-Options", "nosniff");
@@ -100,7 +83,6 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const strippedPathname = stripTenantPrefix(pathname);
-  const startTime = Date.now();
 
   // ============================================================
   // Security Step 1: Bot Detection
@@ -118,23 +100,13 @@ export async function proxy(request: NextRequest) {
   // ============================================================
   const clientIP = extractClientIP(request.headers);
   if (strippedPathname.startsWith("/api/webhooks/") && clientIP) {
-    const isAllowed = WEBHOOK_IP_ALLOWLIST.some((cidr) => {
-      const parts = cidr.split("/");
-      const [ip, prefixStr] = parts;
-      const prefix = parseInt(prefixStr, 10);
-      const ipParts = ip.split(".").map(Number);
-      const ipNum = ((ipParts[0] << 24) | (ipParts[1] << 16) | (ipParts[2] << 8) | ipParts[3]) >>> 0;
-      const mask = prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0;
-      const start = ipNum & mask;
-      const end = (start | ~mask) >>> 0;
-      const checkParts = clientIP.split(".").map(Number);
-      const checkNum = ((checkParts[0] << 24) | (checkParts[1] << 16) | (checkParts[2] << 8) | checkParts[3]) >>> 0;
-      return checkNum >= start && checkNum <= end;
+    const filterResult = filterIP(clientIP, {
+      allowedCIDRs: WEBHOOK_IP_ALLOWLIST,
     });
 
-    if (!isAllowed) {
+    if (!filterResult.allowed) {
       return NextResponse.json(
-        { error: "Forbidden", message: "Webhook source IP not allowed" },
+        { error: "Forbidden", message: filterResult.reason },
         { status: 403 }
       );
     }
@@ -144,7 +116,6 @@ export async function proxy(request: NextRequest) {
   // Security Step 3: Rate Limiting
   // ============================================================
   if (clientIP) {
-    const rateLimit = getRateLimitForPath(strippedPathname);
     const rateLimitKey = `${strippedPathname}:${clientIP}`;
     const rateLimitResult = await checkRateLimit(rateLimitKey);
 
@@ -167,7 +138,7 @@ export async function proxy(request: NextRequest) {
   // Security Step 4: Device Fingerprinting (header injection)
   // ============================================================
   const fingerprintInput = extractFingerprintFromHeaders(request.headers);
-  const fingerprint = await generateDeviceFingerprint(fingerprintInput);
+  await generateDeviceFingerprint(fingerprintInput);
 
   // ============================================================
   // Tenant Resolution

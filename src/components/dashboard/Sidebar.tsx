@@ -103,7 +103,7 @@ export function Sidebar({ userType = "MERCHANT" }: SidebarProps) {
       {/* User Profile */}
       <div className="p-3 border-t border-slate-200 dark:border-primary/10">
         <div className={`flex items-center gap-3 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-primary/5 transition-colors cursor-pointer group ${collapsed ? "justify-center" : ""}`}>
-          <div className="size-10 rounded-full bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center text-background-dark font-bold text-sm border-2 border-transparent group-hover:border-primary transition-all shrink-0">
+          <div className="size-10 rounded-full bg-linear-to-br from-primary to-emerald-600 flex items-center justify-center text-background-dark font-bold text-sm border-2 border-transparent group-hover:border-primary transition-all shrink-0">
             {userType === "MERCHANT" ? "M" : "C"}
           </div>
           {!collapsed && (

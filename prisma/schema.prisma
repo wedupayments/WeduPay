@@ -92,6 +92,7 @@ model Wallet {
   user       User     @relation(fields: [userId], references: [id])
 
   @@index([tenantId])
+  @@index([userId])
   @@map("wallets")
 }
 
@@ -108,6 +109,7 @@ model Transaction {
   user      User     @relation(fields: [userId], references: [id])
 
   @@index([tenantId])
+  @@index([userId])
   @@map("transactions")
 }
 
@@ -135,6 +137,7 @@ model PaymentReference {
   user          User     @relation(fields: [userId], references: [id])
 
   @@index([tenantId])
+  @@index([userId])
   @@map("payment_references")
 }
 

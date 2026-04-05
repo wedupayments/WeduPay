@@ -35,12 +35,12 @@ export async function GET(request: Request) {
       (t) => t.status === "PENDING"
     ).length;
 
-    const verifiedThisSemester = user.transactions
-      .filter((t) => t.status === "COMPLETED" && t.type === "TUITION")
+    const totalSpent = user.transactions
+      .filter((t) => t.status === "COMPLETED")
       .reduce((sum, t) => sum + t.amount, 0);
 
     const primaryMerchant = user.transactions.length > 0
-      ? user.transactions[0].reference.split(" ")[0]
+      ? user.transactions[0].reference
       : "None";
 
     const transactions = user.transactions.map((tx) => ({
@@ -70,7 +70,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       stats: {
         pendingApprovals,
-        verifiedThisSemester: `$${verifiedThisSemester.toFixed(2)}`,
+        totalSpent: `$${totalSpent.toFixed(2)}`,
         primaryMerchant,
       },
       references,

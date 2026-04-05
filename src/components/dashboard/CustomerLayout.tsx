@@ -79,7 +79,7 @@ export function CustomerLayout({ children, userName = "Customer", userId = "0000
 
         <div className="p-3 sm:p-4 border-t border-slate-200 dark:border-primary/10 space-y-2">
           <div className="flex items-center gap-2 sm:gap-3 p-2 rounded-xl bg-slate-100 dark:bg-primary/5">
-            <div className="size-8 sm:size-10 rounded-full bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center text-background-dark font-bold text-xs sm:text-sm shrink-0">
+            <div className="size-8 sm:size-10 rounded-full bg-linear-to-br from-primary to-emerald-600 flex items-center justify-center text-background-dark font-bold text-xs sm:text-sm shrink-0">
               {userName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
             </div>
             <div className="hidden sm:block overflow-hidden">

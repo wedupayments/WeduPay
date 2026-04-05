@@ -118,11 +118,33 @@ export default function WalletFundingPage() {
     setShowPaymentModal(true);
   };
 
-  const handlePaymentSuccess = () => {
-    toast.success("Payment Successful", `Successfully funded wallet with $${amount}`);
-    setAmount("");
-    setSelectedProvider(null);
-    setShowPaymentModal(false);
+  const handlePaymentSuccess = async () => {
+    if (!selectedWallet || !selectedProvider) return;
+    try {
+      setSubmitting(true);
+      const res = await fetch("/api/wallets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walletId: selectedWallet, amount: parseFloat(amount), provider: selectedProvider })
+      });
+      if (!res.ok) throw new Error("Failed to fund on backend");
+      
+      toast.success("Payment Successful", `Successfully funded wallet with $${amount}`);
+      setAmount("");
+      setSelectedProvider(null);
+      setShowPaymentModal(false);
+      
+      // Refresh wallets to show new balance
+      const balanceRes = await fetch("/api/wallets");
+      if (balanceRes.ok) {
+        const data = await balanceRes.json();
+        setWallets(data.wallets || []);
+      }
+    } catch(err) {
+      toast.error("Error", "Wallet funding failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const formatCurrency = (amount: number, currency: string) => {

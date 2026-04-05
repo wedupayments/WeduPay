@@ -15,10 +15,11 @@ interface CardRecord {
   limit?: number;
 }
 
-interface WalletBalance {
-  walletId: string;
+interface WalletItem {
+  id: string;
+  walletType: string;
   currency: string;
-  availableBalance: number;
+  balance: number;
 }
 
 const providers = ["Visa", "Mastercard"];
@@ -26,45 +27,46 @@ const providers = ["Visa", "Mastercard"];
 export default function CardsPage() {
   const toast = useToast();
   const [cards, setCards] = useState<CardRecord[]>([]);
-  const [wallets, setWallets] = useState<WalletBalance[]>([]);
+  const [wallets, setWallets] = useState<WalletItem[]>([]);
   const [provider, setProvider] = useState("Visa");
-  const [currency, setCurrency] = useState("USD");
+  const [selectedWalletId, setSelectedWalletId] = useState("");
   const [limit, setLimit] = useState("");
   const [fundAmount, setFundAmount] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
 
-  const loadCards = async () => {
-    const response = await fetch("/api/cards");
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Failed to load cards");
-    }
-
-    const nextCards = (data.data ?? []).map((item: { id: string; attributes: Omit<CardRecord, "id"> }) => ({
-      id: item.id,
-      ...item.attributes,
-    }));
-
-    setCards(nextCards);
-  };
-
-  const loadWallets = async () => {
-    const response = await fetch("/api/v1/wallets/balance?all=true");
-    const data = await response.json();
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.error || "Failed to load wallets");
-    }
-
-    setWallets(data.balances ?? []);
-    if (data.balances?.length) {
-      setCurrency(data.balances[0].currency);
-    }
-  };
-
   useEffect(() => {
+    const loadCards = async () => {
+      const response = await fetch("/api/cards");
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to load cards");
+      }
+
+      const nextCards = (data.data ?? []).map((item: { id: string; attributes: Omit<CardRecord, "id"> }) => ({
+        id: item.id,
+        ...item.attributes,
+      }));
+
+      setCards(nextCards);
+    };
+
+    const loadWallets = async () => {
+      const response = await fetch("/api/wallets");
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to load wallets");
+      }
+
+      const walletList = data.wallets || [];
+      setWallets(walletList);
+      if (walletList.length > 0 && !selectedWalletId) {
+        setSelectedWalletId(walletList[0].id);
+      }
+    };
+
     const load = async () => {
       try {
         await Promise.all([loadCards(), loadWallets()]);
@@ -76,19 +78,44 @@ export default function CardsPage() {
     };
 
     load();
-  }, [toast]);
+  }, [toast, selectedWalletId]);
+
+  const refreshData = async () => {
+    const loadCards = async () => {
+      const response = await fetch("/api/cards");
+      const data = await response.json();
+      if (response.ok) {
+        const nextCards = (data.data ?? []).map((item: { id: string; attributes: Omit<CardRecord, "id"> }) => ({
+          id: item.id,
+          ...item.attributes,
+        }));
+        setCards(nextCards);
+      }
+    };
+
+    const loadWallets = async () => {
+      const response = await fetch("/api/wallets");
+      const data = await response.json();
+      if (response.ok) {
+        setWallets(data.wallets || []);
+      }
+    };
+
+    await Promise.all([loadCards(), loadWallets()]);
+  };
 
   const handleCreateCard = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsCreating(true);
 
     try {
+      const selectedWallet = wallets.find(w => w.id === selectedWalletId);
       const response = await fetch("/api/cards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           provider,
-          currency,
+          currency: selectedWallet?.currency || "USD",
           limit: limit ? Number(limit) : undefined,
         }),
       });
@@ -100,7 +127,7 @@ export default function CardsPage() {
 
       toast.success("Virtual card created", "Your new card is ready to fund.");
       setLimit("");
-      await loadCards();
+      await refreshData();
     } catch (error) {
       toast.error("Card creation failed", error instanceof Error ? error.message : "Please try again.");
     } finally {
@@ -122,16 +149,21 @@ export default function CardsPage() {
       }
 
       toast.success("Card updated", data.message || "Card status updated.");
-      await loadCards();
+      await refreshData();
     } catch (error) {
       toast.error("Card update failed", error instanceof Error ? error.message : "Please try again.");
     }
   };
 
-  const handleFundCard = async (cardId: string, fundingCurrency: string) => {
+  const handleFundCard = async (cardId: string) => {
     const amount = Number(fundAmount[cardId]);
     if (!amount || amount <= 0) {
       toast.error("Invalid amount", "Enter a valid amount to fund the card.");
+      return;
+    }
+
+    if (!selectedWalletId) {
+      toast.error("No wallet selected", "Please select a funding wallet.");
       return;
     }
 
@@ -139,7 +171,7 @@ export default function CardsPage() {
       const response = await fetch(`/api/cards/${cardId}/fund`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount, currency: fundingCurrency }),
+        body: JSON.stringify({ amount, walletId: selectedWalletId }),
       });
 
       const data = await response.json();
@@ -149,7 +181,7 @@ export default function CardsPage() {
 
       toast.success("Card funded", data.message || "Your virtual card balance has been updated.");
       setFundAmount((current) => ({ ...current, [cardId]: "" }));
-      await Promise.all([loadCards(), loadWallets()]);
+      await refreshData();
     } catch (error) {
       toast.error("Funding failed", error instanceof Error ? error.message : "Please try again.");
     }
@@ -179,11 +211,15 @@ export default function CardsPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Funding currency</label>
-            <select value={currency} onChange={(event) => setCurrency(event.target.value)} className="w-full rounded-xl border border-slate-300 px-4 py-3 dark:border-slate-700 dark:bg-background-dark dark:text-white">
+            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Funding wallet</label>
+            <select 
+              value={selectedWalletId} 
+              onChange={(event) => setSelectedWalletId(event.target.value)} 
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 dark:border-slate-700 dark:bg-background-dark dark:text-white"
+            >
               {wallets.map((wallet) => (
-                <option key={wallet.walletId} value={wallet.currency}>
-                  {wallet.currency} • available {wallet.availableBalance.toFixed(2)}
+                <option key={wallet.id} value={wallet.id}>
+                  {wallet.walletType} ({wallet.currency}) • balance {wallet.balance.toFixed(2)}
                 </option>
               ))}
             </select>
@@ -209,12 +245,12 @@ export default function CardsPage() {
 
         <div className="space-y-4">
           <div className="rounded-2xl border border-slate-200 dark:border-primary/10 bg-white dark:bg-background-dark p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Wallets available for card funding</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Mobile Wallets for Funding</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {wallets.map((wallet) => (
-                <div key={wallet.walletId} className="rounded-xl bg-slate-50 p-4 dark:bg-primary/5">
-                  <p className="font-semibold text-slate-900 dark:text-white">{wallet.currency}</p>
-                  <p className="text-sm text-slate-500">Available {wallet.availableBalance.toFixed(2)}</p>
+                <div key={wallet.id} className="rounded-xl bg-slate-50 p-4 dark:bg-primary/5">
+                  <p className="font-semibold text-slate-900 dark:text-white">{wallet.walletType}</p>
+                  <p className="text-sm text-slate-500">{wallet.currency} Balance: {wallet.balance.toFixed(2)}</p>
                 </div>
               ))}
             </div>
@@ -252,11 +288,11 @@ export default function CardsPage() {
                         value={fundAmount[card.id] ?? ""}
                         onChange={(event) => setFundAmount((current) => ({ ...current, [card.id]: event.target.value }))}
                         className="rounded-xl border border-slate-300 px-4 py-3 dark:border-slate-700 dark:bg-background-dark dark:text-white"
-                        placeholder={`Fund ${card.currency}`}
+                        placeholder={`Amount in ${card.currency}`}
                       />
                       <div className="flex flex-wrap gap-2">
-                        <button type="button" onClick={() => handleFundCard(card.id, card.currency)} className="rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-background-dark transition hover:brightness-110">
-                          Fund
+                        <button type="button" onClick={() => handleFundCard(card.id)} className="rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-background-dark transition hover:brightness-110">
+                          Fund from Wallet
                         </button>
                         {card.status === "ACTIVE" ? (
                           <button type="button" onClick={() => handleCardAction(card.id, "FROZEN")} className="rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-300">

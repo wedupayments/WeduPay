@@ -35,16 +35,30 @@ export async function POST(request: Request) {
       return authError;
     }
 
-    const { walletType, amount } = await request.json();
+    const { walletId, amount } = await request.json();
 
-    if (!walletType || !amount) {
-      return NextResponse.json({ error: "walletType and amount required" }, { status: 400 });
+    if (!walletId || !amount) {
+      return NextResponse.json({ error: "walletId and amount required" }, { status: 400 });
     }
+
+    const wallet = await prisma.wallet.findFirst({
+      where: { id: walletId, userId: auth.userId! }
+    });
+
+    if (!wallet) {
+      return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
+    }
+
+    const updatedWallet = await prisma.wallet.update({
+      where: { id: walletId },
+      data: { balance: { increment: Number(amount) } }
+    });
 
     return NextResponse.json({
       success: true,
-      message: `Authenticated wallet funding request received for ${walletType} with ${amount}`,
+      message: `Wallet funded successfully. New balance: $${updatedWallet.balance}`,
       userId: auth.userId,
+      wallet: updatedWallet,
     });
   } catch (error) {
     console.error("Failed to fund wallet:", error);
