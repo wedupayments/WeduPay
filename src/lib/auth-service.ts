@@ -544,34 +544,55 @@ export async function getCurrentSession(): Promise<{
   isLoading: boolean;
 }> {
   try {
+    // 1. Try browser-side memory (short-lived due to persistSession: false)
     const { data: { session }, error } = await supabase.auth.getSession();
 
-    if (error || !session) {
-      return {
-        session: null,
-        user: null,
-        isLoading: false,
-      };
+    if (session) {
+      const userProfile = await ensureUserProfile(session.user);
+      if (userProfile) {
+        return {
+          session: {
+            userId: session.user.id,
+            email: session.user.email || '',
+            role: userProfile.role,
+            expiresAt: session.expires_at ? session.expires_at * 1000 : 0,
+          },
+          user: userProfile,
+          isLoading: false,
+        };
+      }
     }
 
-    const user = await ensureUserProfile(session.user);
-
-    if (!user) {
-      return {
-        session: null,
-        user: null,
-        isLoading: false,
-      };
+    // 2. Fallback to server session (via httpOnly cookies)
+    // Only attempt on client-side
+    if (typeof window !== 'undefined') {
+      try {
+        const response = await fetch('/api/auth/session');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.user) {
+            // Profile details from API
+            const profile = await getUserProfile(data.user.id);
+            if (profile) {
+              return {
+                session: {
+                  ...data.session,
+                  role: profile.role,
+                },
+                user: profile,
+                isLoading: false,
+              };
+            }
+          }
+        }
+      } catch (fetchErr) {
+        console.error('[AuthService] Failed to fetch server session:', fetchErr);
+      }
     }
 
     return {
-      session: {
-        userId: session.user.id,
-        email: session.user.email || '',
-        role: user.role,
-        expiresAt: session.expires_at ? session.expires_at * 1000 : 0,
-      },
-      user,
+      session: null,
+      user: null,
       isLoading: false,
     };
   } catch (error) {

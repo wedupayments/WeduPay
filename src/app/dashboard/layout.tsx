@@ -21,7 +21,13 @@ export default function DashboardLayout({
 
   useEffect(() => {
     // Wait for auth to initialize
-    if (!isInitialized || authLoading || !session) {
+    if (!isInitialized || authLoading) {
+      return;
+    }
+
+    // Redirect if no session is found after initialization
+    if (!session) {
+      router.push("/auth/login");
       return;
     }
 
@@ -56,7 +62,7 @@ export default function DashboardLayout({
     };
 
     fetchTenantData();
-  }, [isInitialized, authLoading, session]);
+  }, [isInitialized, authLoading, session, router]);
 
   // Update user name when user data is available
   useEffect(() => {

@@ -71,6 +71,11 @@ export async function POST(request: NextRequest) {
         id: user.id,
         email: user.email ?? null,
       },
+      session: {
+        userId: user.id,
+        email: user.email ?? null,
+        expiresAt: expiresAt ? expiresAt * 1000 : Date.now() + 60 * 60 * 1000,
+      }
     });
 
     const accessMaxAge = expiresAt
@@ -96,6 +101,41 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const accessToken = request.cookies.get("sb-access-token")?.value;
+    
+    if (!accessToken) {
+      return NextResponse.json({ success: false, session: null }, { status: 200 });
+    }
+
+    const user = await getSession(accessToken);
+
+    if (!user) {
+      const response = NextResponse.json({ success: false, session: null }, { status: 200 });
+      clearLegacyCookies(response);
+      return response;
+    }
+
+    return NextResponse.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email ?? null,
+      },
+      session: {
+        userId: user.id,
+        email: user.email ?? null,
+        // We don't have the exact expiry from the cookie easily, so we estimate or rely on the cookie itself
+        expiresAt: Date.now() + 60 * 60 * 1000, 
+      }
+    });
+  } catch (error) {
+    console.error('[Session API] GET Error:', error);
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }
 
