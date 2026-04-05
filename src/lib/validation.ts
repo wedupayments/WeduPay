@@ -73,7 +73,7 @@ export const registerSchema = z.object({
 export const waitlistSchema = z.object({
   email: z.string().email("Invalid email address"),
   name: z.string().min(1, "Name is required").max(100).optional(),
-  type: z.enum(["MERCHANT", "STUDENT"]),
+  type: z.enum(["MERCHANT", "CUSTOMER"]),
 });
 
 export const paginationSchema = z.object({

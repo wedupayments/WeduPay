@@ -13,7 +13,7 @@ const navItems = [
 ];
 
 interface SidebarProps {
-  userType?: "MERCHANT" | "STUDENT";
+  userType?: "MERCHANT" | "CUSTOMER";
 }
 
 export function Sidebar({ userType = "MERCHANT" }: SidebarProps) {
@@ -41,7 +41,7 @@ export function Sidebar({ userType = "MERCHANT" }: SidebarProps) {
             />
             <div>
               <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">WeduPay</h2>
-              <p className="text-[10px] font-bold text-primary uppercase tracking-wider">{userType === "MERCHANT" ? "Merchant" : "Student"}</p>
+              <p className="text-[10px] font-bold text-primary uppercase tracking-wider">{userType === "MERCHANT" ? "Merchant" : "Customer"}</p>
             </div>
           </Link>
         )}
@@ -104,7 +104,7 @@ export function Sidebar({ userType = "MERCHANT" }: SidebarProps) {
       <div className="p-3 border-t border-slate-200 dark:border-primary/10">
         <div className={`flex items-center gap-3 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-primary/5 transition-colors cursor-pointer group ${collapsed ? "justify-center" : ""}`}>
           <div className="size-10 rounded-full bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center text-background-dark font-bold text-sm border-2 border-transparent group-hover:border-primary transition-all shrink-0">
-            {userType === "MERCHANT" ? "M" : "S"}
+            {userType === "MERCHANT" ? "M" : "C"}
           </div>
           {!collapsed && (
             <div className="overflow-hidden">

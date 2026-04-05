@@ -43,7 +43,7 @@ export function CustomerDashboardShell({ data }: Props) {
 
   return (
     <>
-      <DashboardHeader title="Student Dashboard" />
+      <DashboardHeader title="Customer Dashboard" />
 
       <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full space-y-6 sm:space-y-8 mb-20 lg:mb-0">
         {/* Welcome Section */}
@@ -52,7 +52,7 @@ export function CustomerDashboardShell({ data }: Props) {
             <h2 className="text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
               {data.userName ? `Welcome back, ${data.userName}` : "Welcome back"}
             </h2>
-            <p className="text-slate-600 dark:text-slate-400 mt-1 text-lg">Ready to manage your education payments?</p>
+            <p className="text-slate-600 dark:text-slate-400 mt-1 text-lg">Ready to manage your payments?</p>
           </div>
           <Link 
             href="/dashboard/customer/funding"
@@ -166,18 +166,6 @@ export function CustomerDashboardShell({ data }: Props) {
           </div>
         )}
 
-        {/* Security Info */}
-        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-8 flex items-start gap-6 group hover:bg-primary/10 transition-colors">
-          <div className="p-3 bg-primary/20 rounded-xl text-primary transform group-hover:rotate-12 transition-transform">
-            <span className="material-symbols-outlined text-3xl">verified_user</span>
-          </div>
-          <div>
-            <h4 className="font-black text-xl text-primary mb-2">Secure Payment System</h4>
-            <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-              WeduPay uses end-to-end encryption for all institutional transfers. Your payments are verified directly with institutions within 24–48 business hours.
-            </p>
-          </div>
-        </div>
 
         <div className="h-12"></div>
       </div>

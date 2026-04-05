@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     // Email templates for confirmation and notification
     // In production, use these templates to send emails via Resend/SendGrid
     emailTemplates.waitlistConfirmation({
-      type: type === "MERCHANT" ? "Merchant" : "Student",
+      type: type === "MERCHANT" ? "Merchant" : "Customer",
       position: totalWaitlist,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard`,
       helpUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/help`,
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
     emailTemplates.waitlistNotification({
       email,
-      type: type === "MERCHANT" ? "Merchant" : "Student",
+      type: type === "MERCHANT" ? "Merchant" : "Customer",
       name: name || "Not provided",
       totalWaitlist,
       adminUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard/admin`,

@@ -9,14 +9,14 @@ export async function GET() {
 
     const total = await prisma.waitlist.count();
     const merchants = await prisma.waitlist.count({ where: { type: "MERCHANT" } });
-    const students = await prisma.waitlist.count({ where: { type: "STUDENT" } });
+    const customers = await prisma.waitlist.count({ where: { type: "CUSTOMER" } });
 
     return NextResponse.json({
       waitlist,
       stats: {
         total,
         merchants,
-        students,
+        customers,
       },
     });
   } catch (error: unknown) {

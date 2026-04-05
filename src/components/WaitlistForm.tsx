@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface WaitlistFormProps {
-  type: "MERCHANT" | "STUDENT";
+  type: "MERCHANT" | "CUSTOMER";
   buttonText: string;
   className?: string;
   showNameField?: boolean;

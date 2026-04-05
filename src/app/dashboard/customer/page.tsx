@@ -67,10 +67,10 @@ export default function CustomerDashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
         <div>
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-            Welcome back, {data?.user?.name || "Student"}
+            Welcome back, {data?.user?.name || "Customer"}
           </h2>
           <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm sm:text-base">
-            Ready to manage your education payments?
+            Ready to manage your payments?
           </p>
         </div>
         <Link 
@@ -88,18 +88,6 @@ export default function CustomerDashboardPage() {
 
       <TransactionTable transactions={data?.transactions} />
 
-      <div className="bg-primary/5 border border-primary/20 rounded-xl sm:rounded-2xl p-4 sm:p-6 flex items-start gap-3 sm:gap-4">
-        <div className="p-2 sm:p-3 bg-primary/20 rounded-lg sm:rounded-xl text-primary shrink-0">
-          <span className="material-symbols-outlined text-xl sm:text-2xl lg:text-3xl">verified_user</span>
-        </div>
-        <div>
-          <h4 className="font-bold text-primary text-sm sm:text-base">Secure Payment System</h4>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-            WeduPay uses end-to-end encryption for all institutional transfers. 
-            Your payments are verified directly with the institution within 24-48 business hours.
-          </p>
-        </div>
-      </div>
     </div>
   );
 }

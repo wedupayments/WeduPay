@@ -40,7 +40,7 @@ export function Footer() {
           <h5 className="font-bold mb-6">Solutions</h5>
           <ul className="space-y-4 text-slate-500 text-sm">
             <li><Link className="hover:text-primary" href="#">For Merchants</Link></li>
-            <li><Link className="hover:text-primary" href="#">For Students</Link></li>
+            <li><Link className="hover:text-primary" href="#">For Customers</Link></li>
             <li><Link className="hover:text-primary" href="#">API Docs</Link></li>
             <li><Link className="hover:text-primary" href="#">Mobile Wallets</Link></li>
           </ul>

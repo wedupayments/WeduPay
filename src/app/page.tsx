@@ -21,14 +21,14 @@ export default function Home() {
                                 Secure payment routing for <span className="text-primary">mobile wallets</span> in Africa
                             </h1>
 <p className="text-lg text-slate-600 dark:text-slate-400 max-w-xl">
-                                Empowering African merchants and students with direct settlement and real-time tracking for seamless cross-border transactions.
+                                Empowering African merchants and customers with direct settlement and real-time tracking for seamless cross-border transactions.
                             </p>
 </div>
 <div className="flex flex-col gap-4 max-w-md">
   <p className="text-sm font-bold text-primary uppercase tracking-wider">Join the Merchant Waitlist</p>
   <WaitlistForm type="MERCHANT" buttonText="Join as Merchant" />
   <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-    <span>Are you a student?</span>
+    <span>Are you a customer?</span>
     <Link href="#cta" className="text-primary hover:underline italic">Sign up below</Link>
   </div>
 </div>
@@ -124,8 +124,8 @@ export default function Home() {
 <div className="relative flex items-start gap-8 pb-12">
 <div className="z-10 w-12 h-12 shrink-0 rounded-full bg-primary text-background-dark flex items-center justify-center font-bold text-lg border-4 border-background-light dark:border-background-dark">1</div>
 <div className="flex-1 pt-1">
-<h4 className="text-xl font-bold mb-2">Student Selection</h4>
-<p className="text-slate-600 dark:text-slate-400">Students browse verified institutions and choose their preferred payment method via our portal.</p>
+<h4 className="text-xl font-bold mb-2">Customer Selection</h4>
+<p className="text-slate-600 dark:text-slate-400">Customers browse verified merchants and choose their preferred payment method via our portal.</p>
 </div>
 <div className="hidden md:block w-12 h-12 text-primary/30"><span className="material-symbols-outlined text-4xl">person_search</span></div>
 </div>
@@ -152,7 +152,7 @@ export default function Home() {
 <div className="z-10 w-12 h-12 shrink-0 rounded-full bg-primary text-background-dark flex items-center justify-center font-bold text-lg border-4 border-background-light dark:border-background-dark">4</div>
 <div className="flex-1 pt-1">
 <h4 className="text-xl font-bold mb-2">Instant Confirmation</h4>
-<p className="text-slate-600 dark:text-slate-400">Real-time notification is sent to both the student and the merchant, confirming successful fund routing.</p>
+<p className="text-slate-600 dark:text-slate-400">Real-time notification is sent to both the customer and the merchant, confirming successful fund routing.</p>
 </div>
 <div className="hidden md:block w-12 h-12 text-primary/30"><span className="material-symbols-outlined text-4xl">notifications_active</span></div>
 </div>
@@ -304,13 +304,13 @@ export default function Home() {
 <div className="max-w-2xl relative z-10">
 <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black mb-4 sm:mb-6">Ready to scale your business across Africa?</h2>
 <p className="text-lg font-medium opacity-90">
-                                Be among the first merchants and students to access WeduPay — built for faster, cheaper, and safer cross-border transactions across Africa.
+                                Be among the first merchants and customers to access WeduPay — built for faster, cheaper, and safer cross-border transactions across Africa.
                             </p>
 </div>
 <div className="flex flex-col gap-6 w-full lg:w-auto relative z-10" id="cta">
   <div className="bg-background-dark/10 p-6 rounded-2xl border border-background-dark/10 backdrop-blur-sm">
-    <p className="text-sm font-bold mb-3 uppercase tracking-widest opacity-80">Students: Get Early Access</p>
-    <WaitlistForm type="STUDENT" buttonText="Join Student Waitlist" className="w-full" />
+    <p className="text-sm font-bold mb-3 uppercase tracking-widest opacity-80">Customers: Get Early Access</p>
+    <WaitlistForm type="CUSTOMER" buttonText="Join Customer Waitlist" className="w-full" />
   </div>
 </div>
 </div>

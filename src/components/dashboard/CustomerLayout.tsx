@@ -32,7 +32,7 @@ const bottomNavItems = [
   { label: "Settings", icon: "settings", href: "/dashboard/customer/settings" },
 ];
 
-export function CustomerLayout({ children, userName = "Student", userId = "00000", title = "Dashboard" }: CustomerLayoutProps) {
+export function CustomerLayout({ children, userName = "Customer", userId = "00000", title = "Dashboard" }: CustomerLayoutProps) {
   const pathname = usePathname();
   const { logout } = useAuth();
 
@@ -51,7 +51,7 @@ export function CustomerLayout({ children, userName = "Student", userId = "00000
             />
             <div>
               <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">WeduPay</h2>
-              <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Student</p>
+              <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Customer</p>
             </div>
           </Link>
         </div>
