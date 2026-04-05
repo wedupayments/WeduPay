@@ -19,6 +19,8 @@ const publicPaths = [
   "/api/auth/session",
   "/api/auth/create-user",
   "/api/waitlist",
+  "/api/docs",
+  "/api/docs.json",
   "/demo",
 ];
 const isPublicPath = (path: string) =>
