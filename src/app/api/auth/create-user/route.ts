@@ -94,7 +94,7 @@ function normalizeCountry(country?: string): string | null {
   return /^[A-Z]{2}$/.test(normalizedCountry) ? normalizedCountry : null;
 }
 
-function determineUserRole(email: string, requestedRole?: string): 'USER' | 'MERCHANT' | 'ADMIN' {
+export function determineUserRole(email: string, requestedRole?: string): 'USER' | 'MERCHANT' | 'ADMIN' {
   if (email === 'admin@wedupay.test') {
     return 'ADMIN';
   }
@@ -110,7 +110,7 @@ function determineUserRole(email: string, requestedRole?: string): 'USER' | 'MER
   return 'USER';
 }
 
-function resolveExistingUserRole(email: string, currentRole?: string | null, requestedRole?: string): 'USER' | 'MERCHANT' | 'ADMIN' {
+export function resolveExistingUserRole(email: string, currentRole?: string | null, requestedRole?: string): 'USER' | 'MERCHANT' | 'ADMIN' {
   if (currentRole === 'ADMIN' || currentRole === 'MERCHANT') {
     return currentRole;
   }
