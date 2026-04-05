@@ -45,6 +45,7 @@ function RegisterForm() {
   const [password, setPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [country, setCountry] = useState("ZW");
+  const [role, setRole] = useState("USER");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -60,6 +61,7 @@ function RegisterForm() {
       password,
       phoneNumber,
       country,
+      role,
     });
 
     if (result.success) {
@@ -144,6 +146,21 @@ function RegisterForm() {
                 {option.label}
               </option>
             ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="role" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Account Type
+          </label>
+          <select
+            id="role"
+            value={role}
+            onChange={(event) => setRole(event.target.value)}
+            className="block w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+          >
+            <option value="USER">Customer (Personal Wallet)</option>
+            <option value="MERCHANT">Business (Merchant Account)</option>
           </select>
         </div>
 

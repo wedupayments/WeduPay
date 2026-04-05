@@ -228,11 +228,13 @@ export async function registerUser({
   password,
   phoneNumber,
   country,
+  role,
 }: {
   email: string;
   password: string;
   phoneNumber: string;
   country: string;
+  role?: string;
 }): Promise<AuthResult> {
   try {
     const normalizedEmail = email.trim().toLowerCase();
@@ -307,6 +309,7 @@ export async function registerUser({
       email: normalizedEmail,
       phoneNumber: cleanPhone,
       country,
+      role,
     });
 
     if (!profileResult.success) {
@@ -626,6 +629,7 @@ async function createUserProfile(data: {
   email: string;
   phoneNumber?: string;
   country?: string;
+  role?: string;
 }): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
   try {
     const response = await fetch('/api/auth/create-user', {

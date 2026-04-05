@@ -60,6 +60,7 @@ const createUserSchema = z.object({
   email: z.string().email('Invalid email address'),
   phoneNumber: z.string().optional(),
   country: z.string().optional(),
+  role: z.enum(['USER', 'MERCHANT', 'ADMIN']).optional(),
 });
 
 function normalizePhoneNumber(phoneNumber?: string): string | null {
@@ -93,7 +94,7 @@ function normalizeCountry(country?: string): string | null {
   return /^[A-Z]{2}$/.test(normalizedCountry) ? normalizedCountry : null;
 }
 
-function inferRoleFromEmail(email: string): 'USER' | 'MERCHANT' | 'ADMIN' {
+function determineUserRole(email: string, requestedRole?: string): 'USER' | 'MERCHANT' | 'ADMIN' {
   if (email === 'admin@wedupay.test') {
     return 'ADMIN';
   }
@@ -102,15 +103,19 @@ function inferRoleFromEmail(email: string): 'USER' | 'MERCHANT' | 'ADMIN' {
     return 'MERCHANT';
   }
 
+  if (requestedRole === 'MERCHANT' || requestedRole === 'ADMIN') {
+    return requestedRole as 'USER' | 'MERCHANT' | 'ADMIN';
+  }
+
   return 'USER';
 }
 
-function resolveExistingUserRole(email: string, currentRole?: string | null): 'USER' | 'MERCHANT' | 'ADMIN' {
+function resolveExistingUserRole(email: string, currentRole?: string | null, requestedRole?: string): 'USER' | 'MERCHANT' | 'ADMIN' {
   if (currentRole === 'ADMIN' || currentRole === 'MERCHANT') {
     return currentRole;
   }
 
-  return inferRoleFromEmail(email);
+  return determineUserRole(email, requestedRole);
 }
 
 export async function POST(request: NextRequest) {
@@ -134,7 +139,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { supabaseUserId, email, phoneNumber, country } = validation.data;
+    const { supabaseUserId, email, phoneNumber, country, role } = validation.data;
     const normalizedPhone = normalizePhoneNumber(phoneNumber);
     const normalizedCountry = normalizeCountry(country);
 
@@ -174,7 +179,7 @@ export async function POST(request: NextRequest) {
         .from('users')
         .update({
           supabaseUserId,
-          role: resolveExistingUserRole(email, duplicateEmail.role),
+          role: resolveExistingUserRole(email, duplicateEmail.role, role),
         })
         .eq('id', duplicateEmail.id)
         .select()
@@ -228,7 +233,7 @@ export async function POST(request: NextRequest) {
         phoneNumber: normalizedPhone,
         country: normalizedCountry,
         kycStatus: 'pending',
-        role: inferRoleFromEmail(email),
+        role: determineUserRole(email, role),
       })
       .select()
       .single();
