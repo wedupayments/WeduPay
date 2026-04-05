@@ -26,9 +26,17 @@ const isValidConfig = supabaseUrl && supabaseAnonKey &&
 /**
  * Client-side Supabase instance (for browser)
  * Uses anon key with RLS policies enforced
+ * Session persistence is disabled - we handle it server-side via cookies
  */
 export const supabase = isValidConfig
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: false, // Don't persist in localStorage - use server cookies
+        detectSessionInUrl: true,
+        flowType: 'pkce',
+      },
+    })
   : createClient("https://placeholder.supabase.co", "placeholder-key", {
       auth: {
         autoRefreshToken: false,

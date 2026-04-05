@@ -27,6 +27,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface WalletBalance {
   walletId: string;
@@ -50,6 +51,7 @@ export default function WalletBalanceCard({
   compact = false,
 }: WalletBalanceCardProps) {
   const router = useRouter();
+  const { isInitialized, isLoading: authLoading, session } = useAuth();
   const [balances, setBalances] = useState<WalletBalance[]>([]);
   const [totalUSD, setTotalUSD] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,8 +61,13 @@ export default function WalletBalanceCard({
    * Load wallet balances on mount
    */
   useEffect(() => {
+    // Wait for auth to initialize
+    if (!isInitialized || authLoading || !session) {
+      return;
+    }
+
     loadBalances();
-  }, []);
+  }, [isInitialized, authLoading, session]);
 
   const loadBalances = async () => {
     try {
@@ -133,7 +140,9 @@ export default function WalletBalanceCard({
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
         <div className="text-center py-8">
           <span className="text-4xl mb-4 block">⚠️</span>
-          <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+          <p className="text-red-600 dark:text-red-400 mb-4">
+            {typeof error === 'string' ? error : 'Failed to load wallet balances'}
+          </p>
           <button
             onClick={loadBalances}
             className="text-blue-600 hover:underline"

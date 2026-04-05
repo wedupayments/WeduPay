@@ -8,24 +8,28 @@ const sessionSchema = z.object({
   expiresAt: z.number().int().positive().optional(),
 });
 
+// Get cookie options based on environment
+function getCookieOptions(maxAge: number) {
+  const isProduction = process.env.NODE_ENV === "production";
+  
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: "lax" as const,
+    maxAge,
+    path: "/",
+    // In production, don't set domain to allow cookies to work on Vercel subdomains
+  };
+}
+
 function clearLegacyCookies(response: NextResponse) {
-  response.cookies.set("sb-access-token", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 0,
-    path: "/",
-  });
-  response.cookies.set("sb-refresh-token", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 0,
-    path: "/",
-  });
-  response.cookies.set("wedupay-user-id", "", { path: "/", maxAge: 0, sameSite: "lax" });
-  response.cookies.set("wedupay-user-email", "", { path: "/", maxAge: 0, sameSite: "lax" });
-  response.cookies.set("wedupay-user-role", "", { path: "/", maxAge: 0, sameSite: "lax" });
+  const clearOptions = getCookieOptions(0);
+  
+  response.cookies.set("sb-access-token", "", clearOptions);
+  response.cookies.set("sb-refresh-token", "", clearOptions);
+  response.cookies.set("wedupay-user-id", "", clearOptions);
+  response.cookies.set("wedupay-user-email", "", clearOptions);
+  response.cookies.set("wedupay-user-role", "", clearOptions);
 }
 
 export async function POST(request: NextRequest) {
@@ -45,9 +49,13 @@ export async function POST(request: NextRequest) {
     }
 
     const { accessToken, refreshToken, expiresAt } = validation.data;
+    
+    console.log('[Session API] Setting session cookies for production:', process.env.NODE_ENV === "production");
+    
     const user = await getSession(accessToken);
 
     if (!user) {
+      console.log('[Session API] Invalid access token');
       return NextResponse.json(
         {
           success: false,
@@ -69,27 +77,18 @@ export async function POST(request: NextRequest) {
       ? Math.max(60, expiresAt - Math.floor(Date.now() / 1000))
       : 60 * 60;
 
-    response.cookies.set("sb-access-token", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: accessMaxAge,
-      path: "/",
-    });
+    console.log('[Session API] Setting access token cookie with maxAge:', accessMaxAge);
+    response.cookies.set("sb-access-token", accessToken, getCookieOptions(accessMaxAge));
 
     if (refreshToken) {
-      response.cookies.set("sb-refresh-token", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 30,
-        path: "/",
-      });
+      console.log('[Session API] Setting refresh token cookie');
+      response.cookies.set("sb-refresh-token", refreshToken, getCookieOptions(60 * 60 * 24 * 30));
     }
 
     clearLegacyCookies(response);
     return response;
   } catch (error) {
+    console.error('[Session API] Error:', error);
     return NextResponse.json(
       {
         success: false,
