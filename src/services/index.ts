@@ -151,6 +151,14 @@ export class WalletService {
     return this.walletRepo.updateBalance(walletId, amount);
   }
 
+  async updateWallet(walletId: string, userId: string, data: { nickname?: string }) {
+    const wallet = await this.walletRepo.findById(walletId);
+    if (!wallet || wallet.userId !== userId) {
+      throw new Error("Wallet not found or access denied");
+    }
+    return this.walletRepo.update(walletId, data);
+  }
+
   async getWalletBalance(walletId: string, currency: string) {
     return this.ledgerRepo.getAccountBalance(walletId, currency);
   }

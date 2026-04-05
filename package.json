@@ -7,6 +7,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "jest --testPathPattern=\"src/.*\\.test\\.(ts|tsx)$\" --passWithNoTests",
+    "test:watch": "jest --testPathPattern=\"src/.*\\.test\\.(ts|tsx)$\" --watch",
     "seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate"
   },
@@ -29,6 +31,9 @@
   },
   "devDependencies": {
     "@hookform/resolvers": "^3.10.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",

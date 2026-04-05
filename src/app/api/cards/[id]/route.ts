@@ -5,7 +5,8 @@ import { createErrorResponse } from "@/lib/api-response";
 import { authenticateRequest, requireAuth, requireAppUser } from "@/lib/auth";
 
 const updateCardSchema = z.object({
-  status: z.enum(["ACTIVE", "FROZEN", "CANCELLED"]),
+  status: z.enum(["ACTIVE", "FROZEN", "CANCELLED"]).optional(),
+  nickname: z.string().min(1).max(50).optional(),
 });
 
 function mapValidationErrors(errors: z.ZodIssue[]) {
@@ -79,7 +80,7 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const updatedCard = await cardService.updateCardStatus(id, userId, validation.data.status);
+    const updatedCard = await cardService.updateCard(id, userId, validation.data);
 
     if (!updatedCard) {
       return NextResponse.json(
@@ -91,7 +92,7 @@ export async function PATCH(
     return NextResponse.json({
       success: true,
       card: updatedCard,
-      message: `Card ${validation.data.status.toLowerCase()} successfully`,
+      message: "Card updated successfully",
     });
   } catch (error) {
     console.error("Update card error:", error);

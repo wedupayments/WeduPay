@@ -89,6 +89,7 @@ model Wallet {
   tenantId   String?
   userId     String
   walletType String
+  nickname   String?
   user       User     @relation(fields: [userId], references: [id])
 
   @@index([tenantId])
@@ -238,6 +239,7 @@ model VirtualCard {
   balance        Float    @default(0)
   limit          Float?
   isVirtual      Boolean  @default(true)
+  nickname       String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   user           User     @relation(fields: [userId], references: [id])

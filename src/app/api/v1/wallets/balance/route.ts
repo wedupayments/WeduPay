@@ -79,12 +79,13 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        balances: balances.map(b => ({
-          walletId: b.walletId,
+        balances: balances.map((b) => ({
+          id: b.id,
           currency: b.currency,
           balance: b.balance,
           availableBalance: b.availableBalance,
           pendingBalance: b.pendingBalance,
+          nickname: b.nickname,
         })),
         totalUSD: totalUSD.totalUSD,
         breakdown: totalUSD.balances,
@@ -96,12 +97,13 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      balance: {
-        walletId: balance.walletId,
+      data: {
+        id: balance.id,
         currency: balance.currency,
         balance: balance.balance,
         availableBalance: balance.availableBalance,
         pendingBalance: balance.pendingBalance,
+        nickname: balance.nickname,
       },
     });
   } catch (error) {

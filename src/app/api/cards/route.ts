@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     const userId = auth.userId!;
 
     const body = await request.json();
-    const { provider, currency, limit } = body;
+    const { provider, currency, limit, nickname } = body;
 
     if (!provider) {
       return NextResponse.json(
@@ -73,6 +73,7 @@ export async function POST(request: Request) {
       provider,
       currency,
       limit,
+      nickname,
     });
 
     const response = {

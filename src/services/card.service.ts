@@ -5,6 +5,7 @@ export interface CreateCardInput {
   provider: string;
   currency?: string;
   limit?: number;
+  nickname?: string;
 }
 
 export interface CardResponse {
@@ -18,6 +19,7 @@ export interface CardResponse {
   balance: number;
   limit?: number;
   isVirtual: boolean;
+  nickname?: string;
   createdAt: Date;
 }
 
@@ -51,6 +53,7 @@ export class CardService {
         currency: input.currency || "USD",
         balance: 0,
         limit: input.limit,
+        nickname: input.nickname,
         isVirtual: true,
       },
     });
@@ -87,6 +90,7 @@ export class CardService {
       balance: card.balance,
       limit: card.limit || undefined,
       isVirtual: card.isVirtual,
+      nickname: card.nickname || undefined,
       createdAt: card.createdAt,
     }));
   }
@@ -136,6 +140,35 @@ export class CardService {
       balance: card.balance,
       limit: card.limit || undefined,
       isVirtual: card.isVirtual,
+      nickname: card.nickname || undefined,
+      createdAt: card.createdAt,
+    };
+  }
+  
+  async updateCard(cardId: string, userId: string, data: { status?: string; nickname?: string }): Promise<CardResponse | null> {
+    const existingCard = await prisma.virtualCard.findFirst({
+      where: { id: cardId, userId },
+    });
+
+    if (!existingCard) return null;
+
+    const card = await prisma.virtualCard.update({
+      where: { id: cardId },
+      data,
+    });
+
+    return {
+      id: card.id,
+      provider: card.provider,
+      lastFourDigits: card.lastFourDigits,
+      expiryMonth: card.expiryMonth,
+      expiryYear: card.expiryYear,
+      status: card.status,
+      currency: card.currency,
+      balance: card.balance,
+      limit: card.limit || undefined,
+      isVirtual: card.isVirtual,
+      nickname: card.nickname || undefined,
       createdAt: card.createdAt,
     };
   }

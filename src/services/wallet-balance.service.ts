@@ -24,13 +24,14 @@ const prisma = new PrismaClient();
  * Wallet balance data structure
  */
 export interface WalletBalance {
-  walletId: string;
+  id: string;
   userId: string;
   walletType: string;
   currency: string;
   balance: number;
   availableBalance: number;
   pendingBalance: number;
+  nickname?: string;
   lastUpdated: Date;
 }
 
@@ -144,13 +145,14 @@ export async function getWalletBalance(
     );
 
     return {
-      walletId: wallet.id,
+      id: wallet.id,
       userId: wallet.userId,
       walletType: wallet.walletType,
       currency: wallet.currency,
       balance: wallet.balance,
       availableBalance: wallet.balance - pendingAmount,
       pendingBalance: pendingAmount,
+      nickname: wallet.nickname || undefined,
       lastUpdated: wallet.createdAt, // Would update on balance changes
     };
   } catch (error) {
