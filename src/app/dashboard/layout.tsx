@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { TenantSwitcher, TenantMembership } from "@/components/ui/TenantSwitcher";
-import { signOutUser } from "@/lib/auth-service";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,10 +12,9 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { isInitialized, isLoading: authLoading, session, user } = useAuth();
+  const { isInitialized, isLoading: authLoading, session } = useAuth();
   const [memberships, setMemberships] = useState<TenantMembership[]>([]);
   const [currentTenant, setCurrentTenant] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string>("User");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -64,19 +62,7 @@ export default function DashboardLayout({
     fetchTenantData();
   }, [isInitialized, authLoading, session, router]);
 
-  // Update user name when user data is available
-  useEffect(() => {
-    if (user) {
-      setUserName(user.email || "User");
-    }
-  }, [user]);
 
-  const handleSignOut = async () => {
-    const result = await signOutUser();
-    if (result.success) {
-      router.push("/auth/login");
-    }
-  };
 
   // Show loading while auth or tenant data is loading
   if (!isInitialized || authLoading || isLoading) {
@@ -108,19 +94,7 @@ export default function DashboardLayout({
             </div>
           </div>
 
-          {/* Right: User Menu */}
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-600 dark:text-slate-400 hidden sm:block">
-              {userName}
-            </span>
-            <button
-              onClick={handleSignOut}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-            >
-              <span className="material-symbols-outlined text-base">logout</span>
-              <span className="hidden sm:inline">Sign out</span>
-            </button>
-          </div>
+
         </div>
       </header>
 
