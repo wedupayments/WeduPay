@@ -25,8 +25,7 @@ function getCookieOptions(maxAge: number) {
 function clearLegacyCookies(response: NextResponse) {
   const clearOptions = getCookieOptions(0);
   
-  response.cookies.set("sb-access-token", "", clearOptions);
-  response.cookies.set("sb-refresh-token", "", clearOptions);
+  // Only clear actual legacy cookies, do NOT clear sb-access-token or sb-refresh-token here
   response.cookies.set("wedupay-user-id", "", clearOptions);
   response.cookies.set("wedupay-user-email", "", clearOptions);
   response.cookies.set("wedupay-user-role", "", clearOptions);
@@ -141,6 +140,11 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE() {
   const response = NextResponse.json({ success: true });
+  const clearOptions = getCookieOptions(0);
+  
+  response.cookies.set("sb-access-token", "", clearOptions);
+  response.cookies.set("sb-refresh-token", "", clearOptions);
+  
   clearLegacyCookies(response);
   return response;
 }
