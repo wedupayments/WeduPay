@@ -1,18 +1,12 @@
-/**
- * Login Page
- *
- * User authentication page with email/password login.
- * Supports redirect after successful login and password reset flow.
- */
-
 'use client';
 
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signInUser, getCurrentSession, getDashboardPathForUser } from '@/lib/auth-service';
+import { signInUser, getDashboardPathForUser } from '@/lib/auth-service';
+import { useAuth } from '@/contexts/AuthContext';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { PasswordField } from '@/components/auth/PasswordField';
 import { buildTenantPath } from '@/lib/tenant';
@@ -24,105 +18,85 @@ const TEST_ACCOUNTS = [
 ];
 const showDemoAccounts = process.env.NEXT_PUBLIC_ENABLE_DEMO_ACCOUNTS === 'true';
 
-/**
- * Login form component with tenant-aware search params access
- * Wrapped in Suspense boundary in parent component
- */
 function LoginForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const { session, user, isLoading: authLoading, isInitialized } = useAuth();
+
   const tenantSlug = searchParams.get('tenant') ?? null;
+  const redirectTo = searchParams.get('redirect');
 
   const backHref = tenantSlug ? buildTenantPath('/', tenantSlug) : '/';
   const registerHref = tenantSlug ? buildTenantPath('/auth/register', tenantSlug) : '/auth/register';
   const forgotHref = tenantSlug ? buildTenantPath('/auth/forgot-password', tenantSlug) : '/auth/forgot-password';
 
-  // Form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [authLoading, setAuthLoading] = useState(true);
 
-  // Get redirect URL from query params
-  const redirectTo = searchParams.get('redirect');
-
-  // Check if user is already logged in
+  // Redirect if already authenticated
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const { session, user } = await getCurrentSession();
-        if (session && user) {
-          const target = redirectTo || getDashboardPathForUser(user);
-          const redirectUrl = tenantSlug ? buildTenantPath(target, tenantSlug) : target;
-          window.location.replace(redirectUrl);
-        }
-      } catch (err) {
-        console.error('Session check error:', err);
-      } finally {
-        setAuthLoading(false);
-      }
-    };
-    checkSession();
-  }, [redirectTo, tenantSlug]);
+    if (isInitialized && !authLoading && session && user) {
+      const target = redirectTo || getDashboardPathForUser(user);
+      const redirectUrl = tenantSlug ? buildTenantPath(target, tenantSlug) : target;
+      router.replace(redirectUrl);
+    }
+  }, [isInitialized, authLoading, session, user, redirectTo, tenantSlug, router]);
 
-  /**
-   * Handle form submission
-   * Authenticates user and redirects on success
-   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccessMessage('');
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     try {
-      // Attempt sign in
       const result = await signInUser({ email, password });
 
       if (result.success) {
         setSuccessMessage('Login successful! Redirecting...');
-
-        // Small delay for UX
         await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // Redirect to intended page
         const target = redirectTo || getDashboardPathForUser(result.user!);
         const redirectUrl = tenantSlug ? buildTenantPath(target, tenantSlug) : target;
         window.location.assign(redirectUrl);
       } else {
-        // Handle specific error cases
         if (result.requiresConfirmation) {
           setError('Please verify your email address. Check your inbox for the confirmation link.');
         } else {
-          setError(result.error || 'Login failed. Please check your credentials.');
+          setError(result.error || 'Invalid email or password.');
         }
       }
     } catch (err) {
       console.error('Login error:', err);
       setError('An unexpected error occurred. Please try again.');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  /**
-   * Handle demo login (for testing)
-   * Fills form with test credentials
-   */
   const handleDemoLogin = (account: typeof TEST_ACCOUNTS[number]) => {
     setEmail(account.email);
     setPassword(account.password);
   };
 
-  // Show loading while checking auth status
-  if (authLoading) {
+  // Show spinner while auth context initializes
+  if (!isInitialized || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
           <p className="mt-4 text-slate-600 dark:text-slate-400">Loading...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Already authenticated — spinner before redirect kicks in
+  if (session && user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
   }
@@ -141,36 +115,27 @@ function LoginForm() {
         </>
       }
     >
-      {/* Error Message */}
       {error && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <div className="flex items-start">
-            <span className="material-symbols-outlined mr-2 text-red-600 dark:text-red-400">
-              error
-            </span>
+            <span className="material-symbols-outlined mr-2 text-red-600 dark:text-red-400">error</span>
             <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
           </div>
         </div>
       )}
 
-      {/* Success Message */}
       {successMessage && (
         <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
           <div className="flex items-start">
-            <span className="material-symbols-outlined mr-2 text-green-600 dark:text-green-400">
-              check_circle
-            </span>
+            <span className="material-symbols-outlined mr-2 text-green-600 dark:text-green-400">check_circle</span>
             <p className="text-sm text-green-800 dark:text-green-200">{successMessage}</p>
           </div>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Email Field */}
         <div>
-          <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Email address
-          </label>
+          <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Email address</label>
           <input
             id="email"
             name="email"
@@ -184,7 +149,6 @@ function LoginForm() {
           />
         </div>
 
-        {/* Password Field */}
         <PasswordField
           id="password"
           name="password"
@@ -197,59 +161,32 @@ function LoginForm() {
           placeholder="Enter your password"
         />
 
-        {/* Remember Me & Forgot Password */}
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <input
-              id="remember-me"
-              name="remember-me"
-              type="checkbox"
-              className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
-            />
-            <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-700 dark:text-slate-300">
-              Remember me
-            </label>
+            <input id="remember-me" name="remember-me" type="checkbox" className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary" />
+            <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-700 dark:text-slate-300">Remember me</label>
           </div>
-
           <div className="text-sm">
-            <Link
-              href={forgotHref}
-              className="font-medium text-primary hover:brightness-110"
-            >
-              Forgot password?
-            </Link>
+            <Link href={forgotHref} className="font-medium text-primary hover:brightness-110">Forgot password?</Link>
           </div>
         </div>
 
-        {/* Submit Button */}
-        <div>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="flex w-full items-center justify-center rounded-lg border border-transparent bg-primary px-4 py-3 text-sm font-medium text-background-dark shadow-sm transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isLoading ? (
-              <>
-                <div className="mr-2 h-5 w-5 animate-spin rounded-full border-b-2 border-white" />
-                Signing in...
-              </>
-            ) : (
-              'Sign in'
-            )}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex w-full items-center justify-center rounded-lg border border-transparent bg-primary px-4 py-3 text-sm font-medium text-background-dark shadow-sm transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isSubmitting ? (
+            <><div className="mr-2 h-5 w-5 animate-spin rounded-full border-b-2 border-white" />Signing in...</>
+          ) : 'Sign in'}
+        </button>
       </form>
 
       {showDemoAccounts ? (
         <>
-          {/* Demo Login (for testing) */}
           <div className="mt-6">
-            <p className="mb-3 text-center text-sm text-slate-600 dark:text-slate-400">
-              Test accounts
-            </p>
-            <p className="mb-3 text-center text-xs text-slate-500 dark:text-slate-400">
-              These only work after matching Supabase auth users have been created for the seeded demo emails.
-            </p>
+            <p className="mb-3 text-center text-sm text-slate-600 dark:text-slate-400">Test accounts</p>
+            <p className="mb-3 text-center text-xs text-slate-500 dark:text-slate-400">These only work after matching Supabase auth users have been created for the seeded demo emails.</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {TEST_ACCOUNTS.map((account) => (
                 <button
@@ -263,47 +200,30 @@ function LoginForm() {
               ))}
             </div>
           </div>
-
-          {/* Divider */}
           <div className="relative mt-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-300 dark:border-slate-600" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-slate-500 dark:bg-background-dark">Or</span>
-            </div>
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-300 dark:border-slate-600" /></div>
+            <div className="relative flex justify-center text-sm"><span className="bg-white px-2 text-slate-500 dark:bg-background-dark">Or</span></div>
           </div>
         </>
       ) : null}
 
-      {/* Register Link */}
       <div className="mt-6 text-center">
         <p className="text-sm text-slate-600 dark:text-slate-400">
           Don&apos;t have an account?{' '}
-          <Link
-            href={registerHref}
-            className="font-medium text-primary hover:brightness-110"
-          >
-            Create one now
-          </Link>
+          <Link href={registerHref} className="font-medium text-primary hover:brightness-110">Create one now</Link>
         </p>
       </div>
     </AuthShell>
   );
 }
 
-/**
- * Login page with Suspense boundary for useSearchParams
- */
 export default function LoginPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-        </div>
-      }
-    >
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+      </div>
+    }>
       <LoginForm />
     </Suspense>
   );
