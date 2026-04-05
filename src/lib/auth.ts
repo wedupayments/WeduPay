@@ -184,6 +184,8 @@ export async function authenticateRequest(request: Request): Promise<AuthResult>
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("sb-access-token")?.value;
 
+  console.log('[Auth] Checking cookies - accessToken:', accessToken ? 'present' : 'missing');
+
   if (accessToken) {
     return authenticateSupabaseToken(accessToken, request);
   }

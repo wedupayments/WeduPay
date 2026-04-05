@@ -5,6 +5,7 @@ import { TenantSwitcher, TenantMembership } from "@/components/ui/TenantSwitcher
 import { signOutUser } from "@/lib/auth-service";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function DashboardLayout({
   children,
@@ -12,12 +13,18 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const { isInitialized, isLoading: authLoading, session, user } = useAuth();
   const [memberships, setMemberships] = useState<TenantMembership[]>([]);
   const [currentTenant, setCurrentTenant] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("User");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Wait for auth to initialize
+    if (!isInitialized || authLoading || !session) {
+      return;
+    }
+
     const fetchTenantData = async () => {
       try {
         const [membershipsRes] = await Promise.all([
@@ -49,7 +56,14 @@ export default function DashboardLayout({
     };
 
     fetchTenantData();
-  }, []);
+  }, [isInitialized, authLoading, session]);
+
+  // Update user name when user data is available
+  useEffect(() => {
+    if (user) {
+      setUserName(user.email || "User");
+    }
+  }, [user]);
 
   const handleSignOut = async () => {
     const result = await signOutUser();
@@ -58,7 +72,8 @@ export default function DashboardLayout({
     }
   };
 
-  if (isLoading) {
+  // Show loading while auth or tenant data is loading
+  if (!isInitialized || authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />

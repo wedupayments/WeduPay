@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/Toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface KycPayload {
   status: string;
@@ -25,6 +26,7 @@ const countryOptions = [
 
 export default function KycPage() {
   const toast = useToast();
+  const { isInitialized, isLoading: authLoading, session } = useAuth();
   const [kyc, setKyc] = useState<KycPayload | null>(null);
   const [fullName, setFullName] = useState("");
   const [documentType, setDocumentType] = useState("PASSPORT");
@@ -34,6 +36,11 @@ export default function KycPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    // Wait for auth to initialize before making API calls
+    if (!isInitialized || authLoading || !session) {
+      return;
+    }
+
     const loadKyc = async () => {
       try {
         const response = await fetch("/api/v1/kyc/status");
@@ -62,7 +69,7 @@ export default function KycPage() {
     };
 
     loadKyc();
-  }, [toast]);
+  }, [isInitialized, authLoading, session, toast]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
