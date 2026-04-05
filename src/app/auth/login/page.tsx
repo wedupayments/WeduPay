@@ -39,8 +39,10 @@ function LoginForm() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isInitialized && !authLoading && session && user) {
+      console.log('[Login] User authenticated, redirecting...', { user: user.email, session });
       const target = redirectTo || getDashboardPathForUser(user);
       const redirectUrl = tenantSlug ? buildTenantPath(target, tenantSlug) : target;
+      console.log('[Login] Redirect URL:', redirectUrl);
       router.replace(redirectUrl);
     }
   }, [isInitialized, authLoading, session, user, redirectTo, tenantSlug, router]);
@@ -56,21 +58,19 @@ function LoginForm() {
 
       if (result.success) {
         setSuccessMessage('Login successful! Redirecting...');
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        const target = redirectTo || getDashboardPathForUser(result.user!);
-        const redirectUrl = tenantSlug ? buildTenantPath(target, tenantSlug) : target;
-        window.location.assign(redirectUrl);
+        // Don't redirect here - let the AuthContext useEffect handle it
+        // after the session state is properly updated
       } else {
         if (result.requiresConfirmation) {
           setError('Please verify your email address. Check your inbox for the confirmation link.');
         } else {
           setError(result.error || 'Invalid email or password.');
         }
+        setIsSubmitting(false);
       }
     } catch (err) {
       console.error('Login error:', err);
       setError('An unexpected error occurred. Please try again.');
-    } finally {
       setIsSubmitting(false);
     }
   };

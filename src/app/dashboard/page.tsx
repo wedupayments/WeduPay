@@ -2,19 +2,29 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { getCurrentSession, getDashboardPathForUser } from "@/lib/auth-service";
+import { getDashboardPathForUser } from "@/lib/auth-service";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user, isLoading, isInitialized } = useAuth();
 
   useEffect(() => {
-    const redirectToDashboard = async () => {
-      const { user } = await getCurrentSession();
-      router.push(user ? getDashboardPathForUser(user) : "/auth/login?redirect=/dashboard");
-    };
+    // Wait for auth to initialize
+    if (!isInitialized || isLoading) {
+      return;
+    }
 
-    redirectToDashboard();
-  }, [router]);
+    // Redirect based on auth state
+    if (user) {
+      const dashboardPath = getDashboardPathForUser(user);
+      console.log('[Dashboard] Redirecting to:', dashboardPath);
+      router.push(dashboardPath);
+    } else {
+      console.log('[Dashboard] No user, redirecting to login');
+      router.push("/auth/login?redirect=/dashboard");
+    }
+  }, [user, isLoading, isInitialized, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
