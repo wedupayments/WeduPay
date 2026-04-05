@@ -374,8 +374,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
 export function useAuth(): AuthContextData {
   const context = useContext(AuthContext);
 
+  // During SSR, context is null. Return a safe default state.
   if (context === undefined || context === null) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    return {
+      session: null,
+      user: null,
+      supabaseUser: null,
+      isLoading: true,
+      isInitialized: false,
+      error: null,
+      refreshSession: async () => {},
+      logout: async () => {},
+      hasRole: () => false,
+      isSessionExpiringSoon: () => false,
+    };
   }
 
   return context;
