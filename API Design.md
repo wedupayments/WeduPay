@@ -368,6 +368,99 @@ Response:
 
 ---
 
+# Merchant API
+
+Merchants use the same API endpoints as customers but with a `MERCHANT` role. The platform automatically provides merchant-specific features based on the user's role.
+
+## Merchant Registration
+
+When creating a user with the `MERCHANT` role:
+
+`POST /api/auth/create-user`
+
+Request:
+```json
+{
+  "supabaseUserId": "abc123-def456",
+  "email": "merchant@example.com",
+  "phoneNumber": "254712345678",
+  "country": "KE",
+  "role": "MERCHANT"
+}
+```
+
+## Merchant Permissions
+
+Merchants automatically receive these permissions:
+- `read` - Read access to resources
+- `write` - Write access to resources
+- `payments:manage` - Manage payment operations
+- `transfers:manage` - Manage transfer operations
+
+## Merchant Dashboard
+
+`GET /api/dashboard/customer`
+
+Returns merchant-specific dashboard data including:
+- Total payments received
+- Completed payment count
+- Pending settlements
+- Active wallets
+- Recent merchant payments
+
+Response:
+```json
+{
+  "user": {
+    "name": "Merchant Name",
+    "email": "merchant@example.com",
+    "role": "MERCHANT"
+  },
+  "stats": {
+    "totalReceived": "$5,000.00",
+    "completedPayments": 150,
+    "pendingSettlements": 5,
+    "activeWallets": 3
+  },
+  "transactions": [
+    {
+      "id": "txn_1",
+      "reference": "PAY-123",
+      "amount": "$50.00",
+      "status": "completed",
+      "date": "2026-04-06"
+    }
+  ]
+}
+```
+
+## Merchant Payment Collection
+
+Merchants can collect payments using any payment endpoint:
+
+`POST /api/payments` - Generic payment
+`POST /api/mpesa` - M-Pesa specific
+`POST /api/ecocash` - EcoCash specific
+`POST /api/mtn` - MTN specific
+
+## Merchant Webhooks
+
+Merchants receive webhook notifications for:
+- Payment confirmations
+- Settlement updates
+- Transaction status changes
+
+Configure webhook URLs in merchant settings.
+
+## Multi-Tenant Merchants
+
+Merchants can operate across multiple tenants:
+
+`GET /api/tenant/memberships` - List all merchant tenants
+`POST /api/tenant/switch` - Switch active tenant context
+
+---
+
 # Dashboard API
 
 ## Customer Dashboard

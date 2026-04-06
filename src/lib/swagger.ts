@@ -224,16 +224,18 @@ const options: swaggerJsdoc.Options = {
     },
     tags: [
       { name: "Authentication", description: "User authentication and session management" },
-      { name: "Payments", description: "Mobile money payment operations" },
+      { name: "Payments", description: "Mobile money payment operations (M-Pesa, EcoCash, MTN)" },
       { name: "Transfers", description: "Wallet-to-wallet transfer operations" },
       { name: "Transactions", description: "Transaction history and records" },
       { name: "Wallets", description: "Wallet management and balance operations" },
       { name: "FX", description: "Foreign exchange and currency conversion" },
       { name: "Cards", description: "Virtual card operations" },
+      { name: "Dashboard", description: "Dashboard data for customers and merchants" },
       { name: "Routing", description: "Intelligent payment routing" },
       { name: "Analytics", description: "Analytics and reporting" },
       { name: "API Keys", description: "API key management" },
       { name: "Tenants", description: "Multi-tenant management" },
+      { name: "Waitlist", description: "Waitlist signup for customers and merchants" },
       { name: "KYC", description: "Know Your Customer verification" },
       { name: "Batch", description: "Batch operations" },
       { name: "Webhooks", description: "Mobile money provider callback endpoints" },
@@ -667,7 +669,373 @@ const options: swaggerJsdoc.Options = {
           },
         },
       },
-      "/routing/payment": {
+      "/dashboard/customer": {
+        get: {
+          tags: ["Dashboard"],
+          summary: "Get dashboard data",
+          description: "Get dashboard data for authenticated user (works for both customers and merchants)",
+          security: [{ cookieAuth: [] }],
+          responses: {
+            200: {
+              description: "Dashboard data retrieved",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      user: {
+                        type: "object",
+                        properties: {
+                          name: { type: "string" },
+                          email: { type: "string" },
+                          role: { type: "string", enum: ["USER", "MERCHANT", "ADMIN"] },
+                        },
+                      },
+                      stats: {
+                        type: "object",
+                        properties: {
+                          totalSpent: { type: "string" },
+                          completedPayments: { type: "integer" },
+                          pendingApprovals: { type: "integer" },
+                          primaryMerchant: { type: "string" },
+                        },
+                      },
+                      transactions: {
+                        type: "array",
+                        items: { $ref: "#/components/schemas/Transaction" },
+                      },
+                      wallets: {
+                        type: "array",
+                        items: { $ref: "#/components/schemas/Wallet" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/tenant/switch": {
+        post: {
+          tags: ["Tenants"],
+          summary: "Switch tenant",
+          description: "Switch active tenant context for multi-tenant users",
+          security: [{ cookieAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["tenantSlug"],
+                  properties: {
+                    tenantSlug: { type: "string", example: "my-company" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: "Tenant switched successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean" },
+                      tenant: { $ref: "#/components/schemas/Tenant" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/tenant/memberships": {
+        get: {
+          tags: ["Tenants"],
+          summary: "List tenant memberships",
+          description: "Get all tenant memberships for authenticated user",
+          security: [{ cookieAuth: [] }],
+          responses: {
+            200: {
+              description: "Memberships retrieved",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean" },
+                      memberships: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            tenantId: { type: "string" },
+                            tenantSlug: { type: "string" },
+                            tenantName: { type: "string" },
+                            role: { type: "string" },
+                            status: { type: "string" },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/waitlist": {
+        post: {
+          tags: ["Waitlist"],
+          summary: "Join waitlist",
+          description: "Add email to waitlist (for customers or merchants)",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["email", "type"],
+                  properties: {
+                    email: { type: "string", format: "email" },
+                    type: { type: "string", enum: ["CUSTOMER", "MERCHANT"] },
+                    name: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: "Added to waitlist",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean" },
+                      position: { type: "integer" },
+                      message: { type: "string" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/cards": {
+        get: {
+          tags: ["Cards"],
+          summary: "List virtual cards",
+          description: "Get all virtual cards for authenticated user",
+          security: [{ cookieAuth: [] }],
+          responses: {
+            200: {
+              description: "Cards retrieved",
+            },
+          },
+        },
+        post: {
+          tags: ["Cards"],
+          summary: "Create virtual card",
+          description: "Create a new virtual card",
+          security: [{ cookieAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["currency"],
+                  properties: {
+                    currency: { type: "string", example: "USD" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            201: {
+              description: "Card created",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      cardId: { type: "string" },
+                      status: { type: "string" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/mpesa": {
+        post: {
+          tags: ["Payments"],
+          summary: "M-Pesa payment",
+          description: "Initiate M-Pesa STK Push payment",
+          security: [{ cookieAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["phoneNumber", "amount"],
+                  properties: {
+                    phoneNumber: { type: "string", example: "254712345678" },
+                    amount: { type: "number", example: 100 },
+                    currency: { type: "string", example: "KES" },
+                    reference: { type: "string" },
+                    description: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: "Payment initiated",
+            },
+          },
+        },
+      },
+      "/ecocash": {
+        post: {
+          tags: ["Payments"],
+          summary: "EcoCash payment",
+          description: "Initiate EcoCash payment",
+          security: [{ cookieAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["phoneNumber", "amount"],
+                  properties: {
+                    phoneNumber: { type: "string", example: "263771234567" },
+                    amount: { type: "number", example: 10 },
+                    currency: { type: "string", example: "USD" },
+                    reference: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: "Payment initiated",
+            },
+          },
+        },
+      },
+      "/mtn": {
+        post: {
+          tags: ["Payments"],
+          summary: "MTN Mobile Money payment",
+          description: "Initiate MTN Mobile Money payment",
+          security: [{ cookieAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["phoneNumber", "amount"],
+                  properties: {
+                    phoneNumber: { type: "string", example: "256712345678" },
+                    amount: { type: "number", example: 50 },
+                    currency: { type: "string", example: "UGX" },
+                    reference: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: "Payment initiated",
+            },
+          },
+        },
+      },
+      "/webhooks/mpesa": {
+        post: {
+          tags: ["Webhooks"],
+          summary: "M-Pesa webhook",
+          description: "Receive M-Pesa payment callbacks",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    Body: {
+                      type: "object",
+                      properties: {
+                        stkCallback: {
+                          type: "object",
+                          properties: {
+                            MerchantRequestID: { type: "string" },
+                            CheckoutRequestID: { type: "string" },
+                            ResultCode: { type: "integer" },
+                            ResultDesc: { type: "string" },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: "Webhook received",
+            },
+          },
+        },
+      },
+      "/webhooks/ecocash": {
+        post: {
+          tags: ["Webhooks"],
+          summary: "EcoCash webhook",
+          description: "Receive EcoCash payment callbacks",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    transactionId: { type: "string" },
+                    reference: { type: "string" },
+                    status: { type: "string" },
+                    amount: { type: "number" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: "Webhook received",
+            },
+          },
+        },
+      },
         post: {
           tags: ["Routing"],
           summary: "Smart payment routing",
@@ -731,7 +1099,6 @@ const options: swaggerJsdoc.Options = {
         },
       },
     },
-  },
   apis: ["./src/app/api/**/*.ts"],
 };
 
