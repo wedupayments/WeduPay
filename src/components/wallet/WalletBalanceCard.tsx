@@ -62,7 +62,7 @@ const FALLBACK_BRAND = {
 };
 
 function getBrand(walletType: string) {
-  return WALLET_BRANDS[walletType.toLowerCase()] ?? FALLBACK_BRAND;
+  return WALLET_BRANDS[(walletType || '').toLowerCase()] ?? FALLBACK_BRAND;
 }
 
 // ─── Formatters ───────────────────────────────────────────────────────────────

@@ -65,7 +65,7 @@ function getCardBrand(provider: string) {
 }
 
 function getWalletBrand(walletType: string) {
-  return WALLET_BRANDS[walletType.toLowerCase()];
+  return WALLET_BRANDS[(walletType || '').toLowerCase()];
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
