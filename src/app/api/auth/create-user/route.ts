@@ -44,6 +44,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
+import { randomUUID } from 'crypto';
 
 // Initialize Supabase admin client (bypasses RLS)
 const supabaseAdmin = createClient(
@@ -123,6 +124,18 @@ export async function POST(request: NextRequest) {
   console.log(`[CreateUserAPI] ${requestId} - Creating user profile`);
 
   try {
+    // Verify Supabase client is initialized
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error(`[CreateUserAPI] ${requestId} - Missing Supabase credentials`);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Server configuration error: Missing Supabase credentials',
+        },
+        { status: 500 }
+      );
+    }
+
     // Parse and validate request body
     const body = await request.json();
     console.log(`[CreateUserAPI] ${requestId} - Request body:`, { 
@@ -244,9 +257,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user in database
+    console.log(`[CreateUserAPI] ${requestId} - Attempting to insert user:`, {
+      supabaseUserId,
+      email,
+      phoneNumber: normalizedPhone,
+      country: normalizedCountry,
+      kycStatus: 'pending',
+      role: determineUserRole(email, role),
+    });
+
+    const userId = randomUUID(); // Generate UUID explicitly
+
     const { data: newUser, error: createError } = await supabaseAdmin
       .from('users')
       .insert({
+        id: userId, // Explicitly set the ID
         supabaseUserId,
         email,
         phoneNumber: normalizedPhone,
@@ -258,7 +283,12 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (createError) {
-      console.error(`[CreateUserAPI] ${requestId} - Database error:`, createError);
+      console.error(`[CreateUserAPI] ${requestId} - Database error:`, {
+        message: createError.message,
+        code: createError.code,
+        details: createError.details,
+        hint: createError.hint,
+      });
       
       // Handle unique constraint violations
       if (createError.code === '23505') {
@@ -271,20 +301,39 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      throw createError;
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Database error: ${createError.message}`,
+          code: createError.code,
+        },
+        { status: 500 }
+      );
     }
 
     console.log(`[CreateUserAPI] ${requestId} - User created successfully: ${newUser.id}`);
 
     // Create initial wallet for user (default USD wallet)
-    await supabaseAdmin
+    console.log(`[CreateUserAPI] ${requestId} - Creating initial wallet for user: ${newUser.id}`);
+    const walletId = randomUUID(); // Generate UUID explicitly
+    
+    const { error: walletError } = await supabaseAdmin
       .from('wallets')
       .insert({
+        id: walletId, // Explicitly set the ID
         userId: newUser.id,
         walletType: 'mobile_wallet',
         currency: 'USD',
         balance: 0,
       });
+
+    if (walletError) {
+      console.error(`[CreateUserAPI] ${requestId} - Wallet creation failed:`, walletError);
+      // Don't fail the entire registration if wallet creation fails
+      // The user can still be created, wallet can be created later
+    } else {
+      console.log(`[CreateUserAPI] ${requestId} - Wallet created successfully`);
+    }
 
     return NextResponse.json(
       {
