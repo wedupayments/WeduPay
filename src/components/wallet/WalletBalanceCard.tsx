@@ -220,7 +220,7 @@ export default function WalletBalanceCard({
             const isRenaming = renamingId === walletId;
             const displayName =
               wallet.nickname ||
-              wallet.walletType.charAt(0).toUpperCase() + wallet.walletType.slice(1);
+              (wallet.walletType ? wallet.walletType.charAt(0).toUpperCase() + wallet.walletType.slice(1) : 'Wallet');
 
             return (
               <div
