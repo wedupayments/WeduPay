@@ -15,18 +15,25 @@ export class TransactionRepository extends BaseRepository<
   Prisma.TransactionUpdateInput
 > {
   protected readonly model = prisma.transaction as unknown as {
-    findUnique: (args: { where: { id: string } }) => Promise<Transaction | null>;
+    findUnique: (args: {
+      where: { id: string };
+    }) => Promise<Transaction | null>;
     findMany: (args?: Record<string, unknown>) => Promise<Transaction[]>;
     findFirst: (args?: Record<string, unknown>) => Promise<Transaction | null>;
-    create: (args: { data: Prisma.TransactionCreateInput }) => Promise<Transaction>;
-    update: (args: { where: { id: string }; data: Prisma.TransactionUpdateInput }) => Promise<Transaction>;
+    create: (args: {
+      data: Prisma.TransactionCreateInput;
+    }) => Promise<Transaction>;
+    update: (args: {
+      where: { id: string };
+      data: Prisma.TransactionUpdateInput;
+    }) => Promise<Transaction>;
     delete: (args: { where: { id: string } }) => Promise<Transaction>;
     count: (args?: Record<string, unknown>) => Promise<number>;
   };
 
   async findByUserId(
     userId: string,
-    options?: { page?: number; limit?: number; status?: string }
+    options?: { page?: number; limit?: number; status?: string },
   ): Promise<TransactionPage> {
     const { page = 1, limit = 20, status } = options ?? {};
     const skip = (page - 1) * limit;

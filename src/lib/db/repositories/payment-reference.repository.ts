@@ -8,11 +8,20 @@ export class PaymentReferenceRepository extends BaseRepository<
   Prisma.PaymentReferenceUpdateInput
 > {
   protected readonly model = prisma.paymentReference as unknown as {
-    findUnique: (args: { where: { id: string } }) => Promise<PaymentReference | null>;
+    findUnique: (args: {
+      where: { id: string };
+    }) => Promise<PaymentReference | null>;
     findMany: (args?: Record<string, unknown>) => Promise<PaymentReference[]>;
-    findFirst: (args?: Record<string, unknown>) => Promise<PaymentReference | null>;
-    create: (args: { data: Prisma.PaymentReferenceCreateInput }) => Promise<PaymentReference>;
-    update: (args: { where: { id: string }; data: Prisma.PaymentReferenceUpdateInput }) => Promise<PaymentReference>;
+    findFirst: (
+      args?: Record<string, unknown>,
+    ) => Promise<PaymentReference | null>;
+    create: (args: {
+      data: Prisma.PaymentReferenceCreateInput;
+    }) => Promise<PaymentReference>;
+    update: (args: {
+      where: { id: string };
+      data: Prisma.PaymentReferenceUpdateInput;
+    }) => Promise<PaymentReference>;
     delete: (args: { where: { id: string } }) => Promise<PaymentReference>;
     count: (args?: Record<string, unknown>) => Promise<number>;
   };
@@ -25,7 +34,7 @@ export class PaymentReferenceRepository extends BaseRepository<
   }
 
   async findByReferenceCode(
-    referenceCode: string
+    referenceCode: string,
   ): Promise<PaymentReference | null> {
     return prisma.paymentReference.findUnique({ where: { referenceCode } });
   }

@@ -14,11 +14,18 @@ export class LedgerEntryRepository extends BaseRepository<
   Prisma.LedgerEntryUpdateInput
 > {
   protected readonly model = prisma.ledgerEntry as unknown as {
-    findUnique: (args: { where: { id: string } }) => Promise<LedgerEntry | null>;
+    findUnique: (args: {
+      where: { id: string };
+    }) => Promise<LedgerEntry | null>;
     findMany: (args?: Record<string, unknown>) => Promise<LedgerEntry[]>;
     findFirst: (args?: Record<string, unknown>) => Promise<LedgerEntry | null>;
-    create: (args: { data: Prisma.LedgerEntryCreateInput }) => Promise<LedgerEntry>;
-    update: (args: { where: { id: string }; data: Prisma.LedgerEntryUpdateInput }) => Promise<LedgerEntry>;
+    create: (args: {
+      data: Prisma.LedgerEntryCreateInput;
+    }) => Promise<LedgerEntry>;
+    update: (args: {
+      where: { id: string };
+      data: Prisma.LedgerEntryUpdateInput;
+    }) => Promise<LedgerEntry>;
     delete: (args: { where: { id: string } }) => Promise<LedgerEntry>;
     count: (args?: Record<string, unknown>) => Promise<number>;
   };
@@ -40,7 +47,7 @@ export class LedgerEntryRepository extends BaseRepository<
   async createDoubleEntry(
     transactionId: string,
     debits: DoubleEntryLine[],
-    credits: DoubleEntryLine[]
+    credits: DoubleEntryLine[],
   ): Promise<Prisma.BatchPayload> {
     const entries = [
       ...debits.map((d) => ({
@@ -63,7 +70,7 @@ export class LedgerEntryRepository extends BaseRepository<
 
   async getAccountBalance(
     accountId: string,
-    currency: string
+    currency: string,
   ): Promise<number> {
     const result = await prisma.ledgerEntry.groupBy({
       by: ["entryType"],

@@ -11,7 +11,11 @@
 
 // Re-export from feature modules so existing imports keep working
 export { WalletService } from "@/features/wallet";
-export { PaymentService, LedgerService, RefundService } from "@/features/payments";
+export {
+  PaymentService,
+  LedgerService,
+  RefundService,
+} from "@/features/payments";
 export type {
   TransactionStatus,
   TransactionType,
@@ -21,7 +25,11 @@ export { TransferService } from "@/features/transfers";
 export type { TransferInput } from "@/features/transfers";
 
 import { WalletService } from "@/features/wallet";
-import { PaymentService, LedgerService, RefundService } from "@/features/payments";
+import {
+  PaymentService,
+  LedgerService,
+  RefundService,
+} from "@/features/payments";
 import { TransferService } from "@/features/transfers";
 
 export const paymentService = new PaymentService();

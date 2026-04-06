@@ -8,11 +8,20 @@ export class IdempotencyRepository extends BaseRepository<
   Prisma.IdempotencyRecordUpdateInput
 > {
   protected readonly model = prisma.idempotencyRecord as unknown as {
-    findUnique: (args: { where: { id: string } }) => Promise<IdempotencyRecord | null>;
+    findUnique: (args: {
+      where: { id: string };
+    }) => Promise<IdempotencyRecord | null>;
     findMany: (args?: Record<string, unknown>) => Promise<IdempotencyRecord[]>;
-    findFirst: (args?: Record<string, unknown>) => Promise<IdempotencyRecord | null>;
-    create: (args: { data: Prisma.IdempotencyRecordCreateInput }) => Promise<IdempotencyRecord>;
-    update: (args: { where: { id: string }; data: Prisma.IdempotencyRecordUpdateInput }) => Promise<IdempotencyRecord>;
+    findFirst: (
+      args?: Record<string, unknown>,
+    ) => Promise<IdempotencyRecord | null>;
+    create: (args: {
+      data: Prisma.IdempotencyRecordCreateInput;
+    }) => Promise<IdempotencyRecord>;
+    update: (args: {
+      where: { id: string };
+      data: Prisma.IdempotencyRecordUpdateInput;
+    }) => Promise<IdempotencyRecord>;
     delete: (args: { where: { id: string } }) => Promise<IdempotencyRecord>;
     count: (args?: Record<string, unknown>) => Promise<number>;
   };
@@ -20,7 +29,7 @@ export class IdempotencyRepository extends BaseRepository<
   async findExisting(
     key: string,
     method: string,
-    path: string
+    path: string,
   ): Promise<IdempotencyRecord | null> {
     return prisma.idempotencyRecord.findFirst({
       where: {

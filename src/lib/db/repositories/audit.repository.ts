@@ -12,7 +12,10 @@ export class AuditLogRepository extends BaseRepository<
     findMany: (args?: Record<string, unknown>) => Promise<AuditLog[]>;
     findFirst: (args?: Record<string, unknown>) => Promise<AuditLog | null>;
     create: (args: { data: Prisma.AuditLogCreateInput }) => Promise<AuditLog>;
-    update: (args: { where: { id: string }; data: Prisma.AuditLogUpdateInput }) => Promise<AuditLog>;
+    update: (args: {
+      where: { id: string };
+      data: Prisma.AuditLogUpdateInput;
+    }) => Promise<AuditLog>;
     delete: (args: { where: { id: string } }) => Promise<AuditLog>;
     count: (args?: Record<string, unknown>) => Promise<number>;
   };

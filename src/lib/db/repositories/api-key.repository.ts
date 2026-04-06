@@ -12,7 +12,10 @@ export class ApiKeyRepository extends BaseRepository<
     findMany: (args?: Record<string, unknown>) => Promise<ApiKey[]>;
     findFirst: (args?: Record<string, unknown>) => Promise<ApiKey | null>;
     create: (args: { data: Prisma.ApiKeyCreateInput }) => Promise<ApiKey>;
-    update: (args: { where: { id: string }; data: Prisma.ApiKeyUpdateInput }) => Promise<ApiKey>;
+    update: (args: {
+      where: { id: string };
+      data: Prisma.ApiKeyUpdateInput;
+    }) => Promise<ApiKey>;
     delete: (args: { where: { id: string } }) => Promise<ApiKey>;
     count: (args?: Record<string, unknown>) => Promise<number>;
   };

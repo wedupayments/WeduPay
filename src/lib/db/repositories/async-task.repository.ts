@@ -12,7 +12,10 @@ export class AsyncTaskRepository extends BaseRepository<
     findMany: (args?: Record<string, unknown>) => Promise<AsyncTask[]>;
     findFirst: (args?: Record<string, unknown>) => Promise<AsyncTask | null>;
     create: (args: { data: Prisma.AsyncTaskCreateInput }) => Promise<AsyncTask>;
-    update: (args: { where: { id: string }; data: Prisma.AsyncTaskUpdateInput }) => Promise<AsyncTask>;
+    update: (args: {
+      where: { id: string };
+      data: Prisma.AsyncTaskUpdateInput;
+    }) => Promise<AsyncTask>;
     delete: (args: { where: { id: string } }) => Promise<AsyncTask>;
     count: (args?: Record<string, unknown>) => Promise<number>;
   };

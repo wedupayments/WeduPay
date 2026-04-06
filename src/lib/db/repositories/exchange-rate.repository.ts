@@ -14,18 +14,25 @@ export class ExchangeRateRepository extends BaseRepository<
   Prisma.ExchangeRateUpdateInput
 > {
   protected readonly model = prisma.exchangeRate as unknown as {
-    findUnique: (args: { where: { id: string } }) => Promise<ExchangeRate | null>;
+    findUnique: (args: {
+      where: { id: string };
+    }) => Promise<ExchangeRate | null>;
     findMany: (args?: Record<string, unknown>) => Promise<ExchangeRate[]>;
     findFirst: (args?: Record<string, unknown>) => Promise<ExchangeRate | null>;
-    create: (args: { data: Prisma.ExchangeRateCreateInput }) => Promise<ExchangeRate>;
-    update: (args: { where: { id: string }; data: Prisma.ExchangeRateUpdateInput }) => Promise<ExchangeRate>;
+    create: (args: {
+      data: Prisma.ExchangeRateCreateInput;
+    }) => Promise<ExchangeRate>;
+    update: (args: {
+      where: { id: string };
+      data: Prisma.ExchangeRateUpdateInput;
+    }) => Promise<ExchangeRate>;
     delete: (args: { where: { id: string } }) => Promise<ExchangeRate>;
     count: (args?: Record<string, unknown>) => Promise<number>;
   };
 
   async findRate(
     baseCurrency: string,
-    targetCurrency: string
+    targetCurrency: string,
   ): Promise<ExchangeRate | null> {
     return prisma.exchangeRate.findFirst({
       where: {
