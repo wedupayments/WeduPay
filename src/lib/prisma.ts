@@ -2,13 +2,21 @@ import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
+// Use direct connection in development to avoid pool exhaustion
+const getDatabaseUrl = () => {
+  if (process.env.NODE_ENV === "development") {
+    return process.env.DIRECT_URL || process.env.DATABASE_URL;
+  }
+  return process.env.DATABASE_URL;
+};
+
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
     datasources: {
       db: {
-        url: process.env.DATABASE_URL,
+        url: getDatabaseUrl(),
       },
     },
   });
