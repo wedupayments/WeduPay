@@ -33,7 +33,7 @@ async function main() {
     data: {
       email: "customer@wedupay.test",
       phoneNumber: "+263771234567",
-      country: "Zimbabwe",
+      country: "ZW",
       kycStatus: "VERIFIED",
       role: "USER",
       supabaseUserId: null,
@@ -107,7 +107,7 @@ async function main() {
     data: {
       email: "merchant@wedupay.test",
       phoneNumber: "+2348012345678",
-      country: "Nigeria",
+      country: "NG",
       kycStatus: "VERIFIED",
       role: "MERCHANT",
       supabaseUserId: null,
@@ -151,7 +151,7 @@ async function main() {
     data: {
       email: "admin@wedupay.test",
       phoneNumber: "+263772000000",
-      country: "Zimbabwe",
+      country: "ZW",
       kycStatus: "VERIFIED",
       role: "ADMIN",
       supabaseUserId: null,

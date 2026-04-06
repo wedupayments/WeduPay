@@ -149,6 +149,7 @@ function getDemoProfileDefaults(email: string): { phoneNumber: string; country: 
     'customer@wedupay.test': { phoneNumber: '+263771234567', country: 'ZW' },
     'merchant@wedupay.test': { phoneNumber: '+2348012345678', country: 'NG' },
     'admin@wedupay.test': { phoneNumber: '+263772000000', country: 'ZW' },
+    'wedupay@gmail.com': { phoneNumber: '+263771234567', country: 'ZW' },
   };
 
   return demoProfiles[email] ?? null;
@@ -728,20 +729,33 @@ async function ensureUserProfile(user: {
 
   const seedData = getProfileSeedData(user);
   if (!seedData) {
+    console.error('[ensureUserProfile] No seed data available for user:', user.id);
     return null;
   }
 
+  // Check if there's an existing profile with this email that needs to be linked
   const emailProfile = await getUserProfileByEmail(seedData.email);
+  if (emailProfile) {
+    console.log('[ensureUserProfile] Found existing profile for email, will be linked by create-user endpoint');
+  }
+
+  // If no existing profile and missing required fields, we can't create the profile
   if (!emailProfile && (!seedData.phoneNumber || !seedData.country)) {
+    console.error('[ensureUserProfile] Missing required fields (phone/country) for new profile:', seedData.email);
     return null;
   }
 
+  console.log('[ensureUserProfile] Creating profile for:', seedData.email);
   const profileResult = await createUserProfile({
     supabaseUserId: user.id,
     email: seedData.email,
     phoneNumber: seedData.phoneNumber,
     country: seedData.country,
   });
+
+  if (!profileResult.success) {
+    console.error('[ensureUserProfile] Failed to create profile:', profileResult.error);
+  }
 
   return profileResult.success ? profileResult.user ?? null : null;
 }
