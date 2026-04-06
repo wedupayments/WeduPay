@@ -1,26 +1,47 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// ─── Deprecated route map ─────────────────────────────────────────────────────
+// Maps unversioned legacy paths to their /api/v1/ successors.
+// Requests to these paths receive deprecation headers.
+// They are NOT redirected yet (preserves UI compatibility).
+// Once all UI callers are updated to use /api/v1/, replace with 308 redirects.
+
+const DEPRECATED_ROUTES: Record<string, string> = {
+  '/api/wallets':       '/api/v1/wallets',
+  '/api/transfers':     '/api/v1/transfers',
+  '/api/payments':      '/api/v1/payments',
+  '/api/transactions':  '/api/v1/transactions',
+  '/api/cards':         '/api/v1/payments', // cards are under payments in v1
+};
+
+const SUNSET_DATE = '2026-12-31';
+
+// ─── Middleware ───────────────────────────────────────────────────────────────
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow access to auth pages and API routes
-  if (
-    pathname.startsWith('/auth') ||
-    pathname.startsWith('/api') ||
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon') ||
-    pathname === '/'
-  ) {
-    return NextResponse.next();
+  // ── Unversioned API deprecation signals ───────────────────────────────────
+  // Attach headers so API consumers know to migrate, without breaking anything.
+  const matchedLegacyPath = Object.keys(DEPRECATED_ROUTES).find(
+    (legacy) => pathname === legacy || pathname.startsWith(`${legacy}/`)
+  );
+
+  if (matchedLegacyPath) {
+    const successor = DEPRECATED_ROUTES[matchedLegacyPath];
+    const response = NextResponse.next();
+    response.headers.set('Deprecation', 'true');
+    response.headers.set('Sunset', SUNSET_DATE);
+    response.headers.set('Link', `<${successor}>; rel="successor-version"`);
+    return response;
   }
 
-  // For dashboard routes, check if user has a session
+  // ── Auth guard for dashboard routes ───────────────────────────────────────
   if (pathname.startsWith('/dashboard')) {
     const accessToken = request.cookies.get('sb-access-token')?.value;
-    
+
     if (!accessToken) {
-      // No session, redirect to login
       const url = request.nextUrl.clone();
       url.pathname = '/auth/login';
       url.searchParams.set('redirect', pathname);

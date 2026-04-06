@@ -1,3 +1,12 @@
+/**
+ * @deprecated Use /api/v1/transfers instead.
+ *
+ * Migration path:
+ *   GET  /api/transfers   → GET  /api/v1/transactions (filter by type=TRANSFER)
+ *   POST /api/transfers   → POST /api/v1/transfers/p2p
+ *
+ * Deprecation headers are automatically added by middleware.
+ */
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateRequest, requireAuth, requireAppUser } from "@/lib/auth";

@@ -1,69 +1,8 @@
-import { POST } from '@/app/api/wallets/route';
-import { prisma } from '@/lib/prisma';
-import { authenticateRequest, requireAuth, requireAppUser } from '@/lib/auth';
-
-jest.mock('@/lib/prisma', () => ({
-  prisma: {
-    wallet: {
-      findFirst: jest.fn(),
-      update: jest.fn(),
-    },
-  },
-}));
-
-jest.mock('@/lib/auth', () => ({
-  authenticateRequest: jest.fn(),
-  requireAuth: jest.fn(),
-  requireAppUser: jest.fn(),
-}));
-
-describe('Wallets API - POST /api/wallets', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('should return error if walletId or amount is missing', async () => {
-    (authenticateRequest as jest.Mock).mockResolvedValue({ userId: 'test-user-id' });
-    (requireAuth as jest.Mock).mockReturnValue(null);
-    (requireAppUser as jest.Mock).mockReturnValue(null);
-
-    const req = new Request('http://localhost:3000/api/wallets', {
-      method: 'POST',
-      body: JSON.stringify({ walletId: 'wallet-1' }), // amount missing
-    });
-
-    const res = await POST(req);
-    expect(res.status).toBe(400);
-  });
-
-  it('should successfully fund a wallet', async () => {
-    // Setup auth mocks
-    (authenticateRequest as jest.Mock).mockResolvedValue({ userId: 'test-user-id' });
-    (requireAuth as jest.Mock).mockReturnValue(null);
-    (requireAppUser as jest.Mock).mockReturnValue(null);
-    
-    // Setup prisma mocks
-    (prisma.wallet.findFirst as jest.Mock).mockResolvedValue({ 
-      id: 'wallet-1', 
-      userId: 'test-user-id', 
-      balance: 50 
-    });
-    
-    (prisma.wallet.update as jest.Mock).mockResolvedValue({ 
-      id: 'wallet-1', 
-      balance: 150 
-    });
-
-    const req = new Request('http://localhost:3000/api/wallets', {
-      method: 'POST',
-      body: JSON.stringify({ walletId: 'wallet-1', amount: 100 }),
-    });
-
-    const res = await POST(req);
-    const body = await res.json();
-
-    expect(res.status).toBe(200);
-    expect(body.success).toBe(true);
-    expect(body.wallet.balance).toBe(150);
-  });
-});
+/**
+ * This file has been moved to:
+ *   src/app/api/wallets/route.test.ts
+ *
+ * Tests are co-located with their route handler per CLAUDE.md convention.
+ * This file is intentionally empty — jest ignores it because the testPathPattern
+ * in package.json only matches src/**.test.ts.
+ */

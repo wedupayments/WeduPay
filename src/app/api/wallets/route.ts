@@ -1,3 +1,14 @@
+/**
+ * @deprecated Use /api/v1/wallets instead.
+ *
+ * Migration path:
+ *   GET  /api/wallets      → GET  /api/v1/wallets
+ *   POST /api/wallets      → POST /api/v1/wallets/fund
+ *
+ * Deprecation headers are automatically added by middleware.
+ * This route will be replaced with a 308 redirect once all UI
+ * callers have been updated to /api/v1/wallets.
+ */
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateRequest, requireAuth, requireAppUser } from "@/lib/auth";

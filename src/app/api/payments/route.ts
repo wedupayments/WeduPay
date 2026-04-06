@@ -1,3 +1,12 @@
+/**
+ * @deprecated Use /api/v1/payments instead.
+ *
+ * Migration path:
+ *   GET  /api/payments   → GET  /api/v1/payments
+ *   POST /api/payments   → POST /api/v1/payments
+ *
+ * Deprecation headers are automatically added by middleware.
+ */
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateRequest, requireAuth, requireAppUser } from "@/lib/auth";

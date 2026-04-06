@@ -61,6 +61,15 @@ import { authenticateRequest, requireAuth, requireAppUser } from "@/lib/auth";
  *         $ref: '#/components/responses/Unauthorized'
  */
 
+/**
+ * @deprecated Use /api/v1/transactions instead.
+ *
+ * Migration path:
+ *   GET /api/transactions → GET /api/v1/transactions
+ *
+ * Deprecation headers (Deprecation, Sunset, Link) are automatically
+ * injected by middleware for this route.
+ */
 export async function GET(request: Request) {
   try {
     const auth = await authenticateRequest(request);

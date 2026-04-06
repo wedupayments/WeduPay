@@ -1,55 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { StatsGrid } from "@/components/dashboard/StatsGrid";
 import { PaymentReferencesSection } from "@/components/dashboard/PaymentReferences";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
+import { useCustomerDashboard } from "@/features/dashboard/hooks/useCustomerDashboard";
 import Link from "next/link";
 
-interface DashboardData {
-  stats: {
-    pendingApprovals: number;
-    totalSpent: string;
-    primaryMerchant: string;
-  };
-  references: Array<{
-    id: string;
-    title: string;
-    ref: string;
-    icon: string;
-  }>;
-  transactions: Array<{
-    id: string;
-    merchant: string;
-    purpose: string;
-    term: string;
-    date: string;
-    amount: string;
-    status: "Verified" | "Pending" | "Processing" | "Failed";
-  }>;
-  user: {
-    name: string;
-    userId: string;
-    email: string;
-  };
-}
-
 export default function CustomerDashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/dashboard/customer")
-      .then((res) => res.json())
-      .then((data) => {
-        setData(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Failed to fetch dashboard data:", err);
-        setLoading(false);
-      });
-  }, []);
+  const { data, isLoading: loading, error } = useCustomerDashboard();
 
   if (loading) {
     return (
@@ -57,6 +15,17 @@ export default function CustomerDashboardPage() {
         <div className="text-center">
           <span className="material-symbols-outlined text-5xl sm:text-6xl text-primary animate-spin">progress_activity</span>
           <p className="text-slate-600 dark:text-slate-400 mt-4 text-sm sm:text-base">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="text-center space-y-3">
+          <span className="material-symbols-outlined text-5xl text-red-500">error</span>
+          <p className="text-slate-600 dark:text-slate-400 text-sm">{error}</p>
         </div>
       </div>
     );

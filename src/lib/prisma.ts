@@ -1,11 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
-
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
-  });
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+/**
+ * @deprecated Import from "@/lib/db/prisma" instead.
+ * This shim exists only for backward compatibility.
+ */
+export { prisma } from "@/lib/db/prisma";

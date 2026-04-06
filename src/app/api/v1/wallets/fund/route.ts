@@ -43,24 +43,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { fundWallet } from '@/services/wallet-balance.service';
 import { authenticateRequest, requireAuth } from '@/lib/auth';
-
-/**
- * Request validation schema
- * Ensures all required fields are present and valid
- */
-const fundWalletSchema = z.object({
-  currency: z.string().length(3, 'Invalid currency code'),
-  amount: z.number().positive('Amount must be positive'),
-  source: z.enum(['mobile_money', 'card', 'bank_transfer'], {
-    errorMap: () => ({ message: 'Invalid payment source' }),
-  }),
-  sourceReference: z.string().optional(),
-  description: z.string().optional(),
-  walletId: z.string().optional(),
-});
+// Shared schema — single source of truth for both form and API route
+import { fundWalletSchema } from '@/features/wallet/schemas/wallet.schemas';
 
 export async function POST(request: NextRequest) {
   const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;

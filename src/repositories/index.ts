@@ -1,4 +1,28 @@
-import { prisma } from "@/lib/prisma";
+/**
+ * @deprecated Import from "@/lib/db/repositories" instead.
+ * This file is a backward-compatibility shim — do not add new code here.
+ */
+
+// Re-export everything from the new typed location
+export {
+  UserRepository,
+  WalletRepository,
+  TransactionRepository,
+  LedgerEntryRepository,
+  WebhookEventRepository,
+  IdempotencyRepository,
+  AuditLogRepository,
+  AsyncTaskRepository,
+  ApiKeyRepository,
+  PaymentReferenceRepository,
+  PaymentRepository,
+  ExchangeRateRepository,
+} from "@/lib/db/repositories";
+
+// Legacy code kept below only so in-flight imports of specific classes still compile.
+// New code should import from @/lib/db/repositories.
+
+import { prisma } from "@/lib/db/prisma";
 import { Prisma } from "@prisma/client";
 
 export class BaseRepository<T> {
