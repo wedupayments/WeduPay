@@ -146,45 +146,45 @@ export function MobileMoneyPayment({
 
   if (success) {
     return (
-      <div className="space-y-6 p-6 bg-white dark:bg-background-dark rounded-2xl border border-slate-200 dark:border-primary/10">
+      <div className="space-y-6 p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
         <div className="text-center space-y-4">
-          <div className="size-16 mx-auto rounded-full bg-primary/20 flex items-center justify-center">
-            <span className="material-symbols-outlined text-4xl text-primary animate-pulse">
+          <div className="size-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+            <span className="material-symbols-outlined text-4xl text-green-600 dark:text-green-400 animate-pulse">
               hourglass_empty
             </span>
           </div>
           <h3 className="text-xl font-bold text-slate-900 dark:text-white">
             Payment Initiated
           </h3>
-          <p className="text-slate-600 dark:text-slate-400">
+          <p className="text-slate-600 dark:text-slate-300">
             Please check your phone and enter your PIN to confirm
           </p>
         </div>
 
-        <div className="bg-slate-50 dark:bg-primary/5 rounded-xl p-4 space-y-2">
+        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 space-y-3 border border-slate-200 dark:border-slate-700">
           <div className="flex justify-between text-sm">
-            <span className="text-slate-500">Amount</span>
+            <span className="text-slate-500 dark:text-slate-400">Amount</span>
             <span className="font-bold text-slate-900 dark:text-white">${amount.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-slate-500">Phone</span>
+            <span className="text-slate-500 dark:text-slate-400">Phone</span>
             <span className="font-bold text-slate-900 dark:text-white">{phoneNumber}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-slate-500">Provider</span>
-            <span className="font-bold text-primary">{currentProvider.name}</span>
+            <span className="text-slate-500 dark:text-slate-400">Provider</span>
+            <span className="font-bold text-slate-900 dark:text-white">{currentProvider.name}</span>
           </div>
         </div>
 
-        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
-          <h4 className="font-bold text-blue-900 dark:text-blue-300 mb-2 flex items-center gap-2">
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+          <h4 className="font-bold text-blue-900 dark:text-blue-200 mb-3 flex items-center gap-2">
             <span className="material-symbols-outlined text-lg">info</span>
-            Instructions
+            Next Steps
           </h4>
-          <ul className="space-y-2 text-sm text-blue-700 dark:text-blue-400">
+          <ul className="space-y-2 text-sm text-blue-800 dark:text-blue-300">
             {instructions.map((instruction, index) => (
               <li key={index} className="flex items-start gap-2">
-                <span className="size-5 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center text-xs font-bold shrink-0">
+                <span className="size-5 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                   {index + 1}
                 </span>
                 {instruction}
@@ -194,14 +194,14 @@ export function MobileMoneyPayment({
         </div>
 
         {transactionId && (
-          <p className="text-xs text-slate-400 text-center">
-            Transaction ID: {transactionId}
+          <p className="text-xs text-slate-400 dark:text-slate-500 text-center font-mono">
+            ID: {transactionId}
           </p>
         )}
 
         <button
           onClick={onCancel}
-          className="w-full py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          className="w-full py-3 rounded-xl border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
         >
           Done
         </button>
@@ -210,10 +210,10 @@ export function MobileMoneyPayment({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
       <div className="text-center space-y-2">
-        <div className="size-16 mx-auto rounded-full bg-primary/20 flex items-center justify-center">
-          <span className="material-symbols-outlined text-4xl text-primary">
+        <div className="size-16 mx-auto rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+          <span className="material-symbols-outlined text-4xl text-slate-700 dark:text-slate-300">
             {currentProvider.icon}
           </span>
         </div>
@@ -235,21 +235,21 @@ export function MobileMoneyPayment({
               key={provider.id}
               type="button"
               onClick={() => handleProviderChange(provider.id)}
-              className={`w-full p-4 rounded-xl border flex items-center gap-4 transition-all ${
+              className={`w-full p-4 rounded-xl border-2 flex items-center gap-4 transition-all ${
                 selectedProvider === provider.id
-                  ? "border-primary bg-primary/5"
-                  : "border-slate-200 dark:border-slate-700 hover:border-primary/50"
+                  ? "border-slate-900 dark:border-slate-300 bg-slate-50 dark:bg-slate-700"
+                  : "border-slate-200 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-500"
               }`}
             >
-              <span className="material-symbols-outlined text-2xl text-primary">
+              <span className="material-symbols-outlined text-2xl text-slate-700 dark:text-slate-300">
                 {provider.icon}
               </span>
               <div className="text-left">
                 <p className="font-bold text-slate-900 dark:text-white">{provider.name}</p>
-                <p className="text-xs text-slate-500">{provider.shortCode}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{provider.shortCode}</p>
               </div>
               {selectedProvider === provider.id && (
-                <span className="material-symbols-outlined text-primary ml-auto">
+                <span className="material-symbols-outlined text-slate-900 dark:text-slate-300 ml-auto">
                   check_circle
                 </span>
               )}
@@ -259,9 +259,9 @@ export function MobileMoneyPayment({
       ) : (
         <>
           {error && (
-            <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 flex items-center gap-3">
+            <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 flex items-center gap-3">
               <span className="material-symbols-outlined">error</span>
-              <span className="text-sm">{error}</span>
+              <span className="text-sm font-medium">{error}</span>
             </div>
           )}
 
@@ -273,14 +273,14 @@ export function MobileMoneyPayment({
               <button
                 type="button"
                 onClick={() => setShowProviderSelector(true)}
-                className="text-xs text-primary hover:underline flex items-center gap-1"
+                className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1 font-medium"
               >
                 Change provider
                 <span className="material-symbols-outlined text-sm">chevron_right</span>
               </button>
             </div>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 font-bold">
                 +{currentProvider.prefix.replace(/^0/, "")}
               </span>
               <input
@@ -288,34 +288,34 @@ export function MobileMoneyPayment({
                 value={phoneNumber}
                 onChange={handlePhoneChange}
                 placeholder={currentProvider.placeholder}
-                className="w-full pl-16 pr-4 py-4 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-background-dark text-slate-900 dark:text-white text-lg font-bold focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                className="w-full pl-16 pr-4 py-4 rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-lg font-bold focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 focus:border-slate-400 dark:focus:border-slate-500 outline-none transition-all"
                 maxLength={12}
                 inputMode="numeric"
                 autoFocus
               />
             </div>
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               {currentProvider.hint}
             </p>
           </div>
 
-          <div className="bg-slate-50 dark:bg-primary/5 rounded-xl p-4">
+          <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
             <div className="flex justify-between items-center">
-              <span className="text-slate-600 dark:text-slate-400">Amount</span>
+              <span className="text-slate-600 dark:text-slate-400 font-medium">Amount to Pay</span>
               <span className="text-2xl font-black text-slate-900 dark:text-white">
                 ${amount.toFixed(2)}
               </span>
             </div>
           </div>
 
-          <div className="bg-primary/5 rounded-xl p-4 border border-primary/20">
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
             <div className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-primary shrink-0">
-                {currentProvider.icon}
+              <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 shrink-0">
+                info
               </span>
               <div className="space-y-1">
-                <p className="text-sm font-bold text-primary">{currentProvider.name}</p>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
+                <p className="text-sm font-bold text-blue-900 dark:text-blue-200">{currentProvider.name} Payment</p>
+                <p className="text-xs text-blue-700 dark:text-blue-300">
                   You will receive a payment prompt on your phone. Enter your PIN to confirm the payment.
                 </p>
               </div>
@@ -326,14 +326,14 @@ export function MobileMoneyPayment({
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 py-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              className="flex-1 py-4 rounded-xl border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || phoneNumber.replace(/\D/g, "").length < 9}
-              className="flex-1 py-4 rounded-xl bg-primary text-background-dark font-bold shadow-lg shadow-primary/20 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              className="flex-1 py-4 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-bold shadow-lg hover:bg-slate-800 dark:hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
