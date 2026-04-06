@@ -125,6 +125,13 @@ export async function POST(request: NextRequest) {
   try {
     // Parse and validate request body
     const body = await request.json();
+    console.log(`[CreateUserAPI] ${requestId} - Request body:`, { 
+      supabaseUserId: body.supabaseUserId, 
+      email: body.email,
+      hasPhone: !!body.phoneNumber,
+      hasCountry: !!body.country 
+    });
+    
     const validation = createUserSchema.safeParse(body);
 
     if (!validation.success) {
@@ -143,10 +150,17 @@ export async function POST(request: NextRequest) {
     const normalizedPhone = normalizePhoneNumber(phoneNumber);
     const normalizedCountry = normalizeCountry(country);
 
+    console.log(`[CreateUserAPI] ${requestId} - Normalized data:`, {
+      email,
+      normalizedPhone,
+      normalizedCountry,
+      role
+    });
+
     // Check if user already exists
     const { data: existingUser } = await supabaseAdmin
       .from('users')
-      .select('id, email')
+      .select('id, email, phoneNumber, country, role')
       .eq('supabaseUserId', supabaseUserId)
       .single();
 
@@ -171,10 +185,12 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (duplicateEmailError && duplicateEmailError.code !== 'PGRST116') {
+      console.error(`[CreateUserAPI] ${requestId} - Database error checking email:`, duplicateEmailError);
       throw duplicateEmailError;
     }
 
     if (duplicateEmail) {
+      console.log(`[CreateUserAPI] ${requestId} - Linking existing email profile: ${email}`);
       const { data: updatedUser, error: updateError } = await supabaseAdmin
         .from('users')
         .update({
@@ -196,6 +212,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      console.log(`[CreateUserAPI] ${requestId} - Successfully linked profile for: ${email}`);
       return NextResponse.json(
         {
           success: true,
@@ -215,10 +232,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (!normalizedPhone || !normalizedCountry) {
+      console.warn(`[CreateUserAPI] ${requestId} - Missing required fields for new profile: phone=${!!normalizedPhone}, country=${!!normalizedCountry}`);
       return NextResponse.json(
         {
           success: false,
           error: 'Phone number and 2-letter country code are required to create a new profile',
+          code: 'MISSING_PROFILE_DATA',
         },
         { status: 400 }
       );

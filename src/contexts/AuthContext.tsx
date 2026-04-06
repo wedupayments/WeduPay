@@ -167,6 +167,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
               });
               setUser(profile);
               setSupabaseUser(session.user);
+            } else if (session && !profile) {
+              // User authenticated but no profile - they need to complete it
+              console.log('[AuthContext] User authenticated but profile missing');
+              setSupabaseUser(session.user);
+              setSession(null);
+              setUser(null);
             }
             break;
 

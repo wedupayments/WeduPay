@@ -54,6 +54,44 @@ function RegisterForm() {
     event.preventDefault();
     setError("");
     setSuccess("");
+
+    // Client-side validation
+    if (!email || !password || !phoneNumber || !country) {
+      setError("All fields are required");
+      return;
+    }
+
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
+    // Validate password
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return;
+    }
+    if (!/\d/.test(password)) {
+      setError("Password must contain at least 1 number");
+      return;
+    }
+
+    // Validate phone number
+    const cleanPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
+    const phoneRegex = /^\+?[1-9]\d{8,14}$/;
+    if (!phoneRegex.test(cleanPhone)) {
+      setError("Please enter a valid phone number with country code (e.g., +263771234567)");
+      return;
+    }
+
+    // Validate country
+    if (country.length !== 2) {
+      setError("Please select a valid country");
+      return;
+    }
+
     setIsSubmitting(true);
 
     const result = await registerUser({
@@ -67,13 +105,13 @@ function RegisterForm() {
     if (result.success) {
       setSuccess(
         result.requiresConfirmation
-          ? "Account created. Check your email to verify the account before signing in."
-          : "Account created successfully. Redirecting to sign in..."
+          ? "Account created! Check your email to verify your account before signing in."
+          : "Account created successfully! Redirecting to sign in..."
       );
 
-      setTimeout(() => router.push(loginHref), 1200);
+      setTimeout(() => router.push(loginHref), 2000);
     } else {
-      setError(result.error || "We couldn't create your account.");
+      setError(result.error || "We couldn't create your account. Please try again.");
     }
 
     setIsSubmitting(false);
@@ -117,7 +155,7 @@ function RegisterForm() {
 
         <div>
           <label htmlFor="phoneNumber" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Phone number
+            Phone number <span className="text-red-500">*</span>
           </label>
           <input
             id="phoneNumber"
@@ -129,14 +167,18 @@ function RegisterForm() {
             className="block w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
             placeholder="+263771234567"
           />
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Include country code (e.g., +263 for Zimbabwe, +254 for Kenya)
+          </p>
         </div>
 
         <div>
           <label htmlFor="country" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Country
+            Country <span className="text-red-500">*</span>
           </label>
           <select
             id="country"
+            required
             value={country}
             onChange={(event) => setCountry(event.target.value)}
             className="block w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
@@ -147,6 +189,9 @@ function RegisterForm() {
               </option>
             ))}
           </select>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Select your country of residence
+          </p>
         </div>
 
         <div>
@@ -174,6 +219,9 @@ function RegisterForm() {
           className="block w-full rounded-lg border border-slate-300 px-4 py-3 pr-36 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
           placeholder="At least 8 characters and 1 number"
         />
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Must be at least 8 characters and contain at least 1 number
+        </p>
 
         <button
           type="submit"

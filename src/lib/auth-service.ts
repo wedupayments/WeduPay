@@ -240,11 +240,11 @@ export async function registerUser({
   try {
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Validate input
+    // Validate input - ALL fields are required
     if (!normalizedEmail || !password || !phoneNumber || !country) {
       return {
         success: false,
-        error: 'All fields are required',
+        error: 'All fields are required: email, password, phone number, and country',
       };
     }
 
@@ -258,22 +258,44 @@ export async function registerUser({
     }
 
     // Validate password strength (min 8 chars, at least 1 number)
-    if (password.length < 8 || !/\d/.test(password)) {
+    if (password.length < 8) {
       return {
         success: false,
-        error: 'Password must be at least 8 characters with 1 number',
+        error: 'Password must be at least 8 characters long',
+      };
+    }
+    
+    if (!/\d/.test(password)) {
+      return {
+        success: false,
+        error: 'Password must contain at least 1 number',
       };
     }
 
-    // Validate phone number (basic check for international format)
+    // Validate and normalize phone number (international format)
     const phoneRegex = /^\+?[1-9]\d{8,14}$/;
     const cleanPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
     if (!phoneRegex.test(cleanPhone)) {
       return {
         success: false,
-        error: 'Invalid phone number. Use international format (e.g., +254712345678)',
+        error: 'Invalid phone number. Use international format (e.g., +263771234567)',
       };
     }
+
+    // Validate country code (must be 2 letters)
+    const cleanCountry = country.trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(cleanCountry)) {
+      return {
+        success: false,
+        error: 'Invalid country code. Use 2-letter ISO code (e.g., ZW, KE, NG)',
+      };
+    }
+
+    console.log('[registerUser] Registering user:', {
+      email: normalizedEmail,
+      phone: cleanPhone,
+      country: cleanCountry,
+    });
 
     // Create user in Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -282,12 +304,13 @@ export async function registerUser({
       options: {
         data: {
           phone_number: cleanPhone,
-          country,
+          country: cleanCountry,
         },
       },
     });
 
     if (authError) {
+      console.error('[registerUser] Supabase auth error:', authError);
       return {
         success: false,
         error: authError.message,
@@ -297,35 +320,51 @@ export async function registerUser({
     if (!authData.user) {
       return {
         success: false,
-        error: 'Failed to create user',
+        error: 'Failed to create user account',
       };
     }
+
+    console.log('[registerUser] Supabase user created:', authData.user.id);
 
     // Check if email confirmation is required
     const requiresConfirmation = !authData.session;
 
     // Create user profile in database via API
+    console.log('[registerUser] Creating user profile...');
     const profileResult = await createUserProfile({
       supabaseUserId: authData.user.id,
       email: normalizedEmail,
       phoneNumber: cleanPhone,
-      country,
+      country: cleanCountry,
       role,
     });
 
     if (!profileResult.success) {
+      console.error('[registerUser] Profile creation failed:', profileResult.error);
+      
+      // Clean up Supabase user if profile creation fails
+      try {
+        await supabase.auth.admin.deleteUser(authData.user.id);
+      } catch (cleanupError) {
+        console.error('[registerUser] Failed to cleanup Supabase user:', cleanupError);
+      }
+      
       return {
         success: false,
-        error: profileResult.error || 'Failed to create profile',
+        error: profileResult.error || 'Failed to create user profile',
       };
     }
 
+    console.log('[registerUser] Profile created successfully');
+
+    // Persist session if available
     if (authData.session) {
       const sessionResult = await persistServerSession(authData.session);
       if (!sessionResult.success) {
+        console.error('[registerUser] Session persistence failed:', sessionResult.error);
         return {
           success: false,
-          error: sessionResult.error || 'Failed to establish a secure session',
+          error: sessionResult.error || 'Failed to establish session',
         };
       }
     }
@@ -336,7 +375,7 @@ export async function registerUser({
       requiresConfirmation,
     };
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('[registerUser] Unexpected error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Registration failed',
@@ -450,6 +489,25 @@ export async function signInUser({
     const profile = await ensureUserProfile(authData.user);
 
     if (!profile) {
+      // Check if this is a case where profile creation failed due to missing data
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      if (currentUser) {
+        // User is authenticated but profile creation failed
+        // Keep them signed in and redirect to profile completion
+        console.log('[signInUser] Profile creation failed, user needs to complete profile');
+        
+        if (authData.session) {
+          await persistServerSession(authData.session);
+        }
+        
+        return {
+          success: true,
+          user: undefined,
+          error: 'PROFILE_INCOMPLETE',
+        };
+      }
+      
       await supabase.auth.signOut();
       return {
         success: false,
@@ -682,13 +740,14 @@ async function getUserProfile(supabaseUserId: string): Promise<UserProfile | nul
     const response = await fetch(`/api/auth/user?userId=${supabaseUserId}`, { headers });
 
     if (!response.ok) {
+      console.log('[getUserProfile] Profile not found for Supabase user:', supabaseUserId);
       return null;
     }
 
     const result = await response.json();
     return result.user;
   } catch (error) {
-    console.error('Get profile error:', error);
+    console.error('[getUserProfile] Error fetching profile:', error);
     return null;
   }
 }
@@ -706,46 +765,94 @@ async function getUserProfileByEmail(email: string): Promise<UserProfile | null>
     const response = await fetch(`/api/auth/user?email=${encodeURIComponent(email)}`, { headers });
 
     if (!response.ok) {
+      console.log('[getUserProfileByEmail] Profile not found for email:', email);
       return null;
     }
 
     const result = await response.json();
     return result.user;
   } catch (error) {
-    console.error('Get profile by email error:', error);
+    console.error('[getUserProfileByEmail] Error fetching profile:', error);
     return null;
   }
 }
 
+/**
+ * Ensure user has a profile in the database
+ * 
+ * This function is called after Supabase authentication to ensure
+ * the user has a corresponding profile in our database.
+ * 
+ * Flow:
+ * 1. Check if profile exists by Supabase user ID
+ * 2. If not, check if profile exists by email (for linking)
+ * 3. If email profile exists, link it to Supabase user
+ * 4. If no profile exists, try to create one with available data
+ * 5. If data is missing, return null (caller should redirect to profile completion)
+ * 
+ * @param user - Supabase user object
+ * @returns UserProfile if successful, null if profile needs to be completed
+ */
 async function ensureUserProfile(user: {
   id: string;
   email?: string;
   user_metadata?: Record<string, unknown>;
 }): Promise<UserProfile | null> {
+  const email = user.email?.toLowerCase();
+  
+  if (!email) {
+    console.error('[ensureUserProfile] No email provided');
+    return null;
+  }
+
+  // 1. Check if profile already exists by Supabase user ID
   const existingProfile = await getUserProfile(user.id);
   if (existingProfile) {
+    console.log('[ensureUserProfile] Profile found by Supabase ID:', email);
     return existingProfile;
   }
 
+  // 2. Check if profile exists by email (needs linking)
+  const emailProfile = await getUserProfileByEmail(email);
+  if (emailProfile) {
+    console.log('[ensureUserProfile] Found profile by email, attempting to link:', email);
+    
+    // Link the profile by updating it with Supabase user ID
+    const linkResult = await createUserProfile({
+      supabaseUserId: user.id,
+      email,
+      // These will be ignored since profile exists, but required by schema
+      phoneNumber: emailProfile.phoneNumber,
+      country: emailProfile.country,
+    });
+    
+    if (linkResult.success && linkResult.user) {
+      console.log('[ensureUserProfile] Successfully linked profile:', email);
+      return linkResult.user;
+    }
+    
+    console.error('[ensureUserProfile] Failed to link profile:', linkResult.error);
+    return null;
+  }
+
+  // 3. Try to get profile data from user metadata or demo defaults
   const seedData = getProfileSeedData(user);
   if (!seedData) {
-    console.error('[ensureUserProfile] No seed data available for user:', user.id);
+    console.error('[ensureUserProfile] No seed data available for:', email);
     return null;
   }
 
-  // Check if there's an existing profile with this email that needs to be linked
-  const emailProfile = await getUserProfileByEmail(seedData.email);
-  if (emailProfile) {
-    console.log('[ensureUserProfile] Found existing profile for email, will be linked by create-user endpoint');
+  // 4. Check if we have complete data to create profile
+  if (!seedData.phoneNumber || !seedData.country) {
+    console.log('[ensureUserProfile] Incomplete data for new profile:', email, {
+      hasPhone: !!seedData.phoneNumber,
+      hasCountry: !!seedData.country,
+    });
+    return null; // Caller should redirect to profile completion
   }
 
-  // If no existing profile and missing required fields, we can't create the profile
-  if (!emailProfile && (!seedData.phoneNumber || !seedData.country)) {
-    console.error('[ensureUserProfile] Missing required fields (phone/country) for new profile:', seedData.email);
-    return null;
-  }
-
-  console.log('[ensureUserProfile] Creating profile for:', seedData.email);
+  // 5. Create new profile with complete data
+  console.log('[ensureUserProfile] Creating new profile for:', email);
   const profileResult = await createUserProfile({
     supabaseUserId: user.id,
     email: seedData.email,
@@ -755,9 +862,11 @@ async function ensureUserProfile(user: {
 
   if (!profileResult.success) {
     console.error('[ensureUserProfile] Failed to create profile:', profileResult.error);
+    return null;
   }
 
-  return profileResult.success ? profileResult.user ?? null : null;
+  console.log('[ensureUserProfile] Successfully created profile:', email);
+  return profileResult.user ?? null;
 }
 
 /**

@@ -57,6 +57,13 @@ function LoginForm() {
       const result = await signInUser({ email, password });
 
       if (result.success) {
+        // Check if profile is incomplete
+        if (result.error === 'PROFILE_INCOMPLETE') {
+          console.log('[Login] Profile incomplete, redirecting to complete profile');
+          router.push('/auth/complete-profile');
+          return;
+        }
+        
         setSuccessMessage('Login successful! Redirecting...');
         // Don't redirect here - let the AuthContext useEffect handle it
         // after the session state is properly updated
