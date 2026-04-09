@@ -9,8 +9,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Disabled standalone to fix _global-error prerender bug in Next.js 16 + Turbopack
-  // Re-enable for Vercel deployment: output: 'standalone',
+  output: 'standalone',
 };
 
 export default nextConfig;

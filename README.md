@@ -362,3 +362,56 @@ secure wallet integrations
 scalable payment infrastructure  
 clear separation of concerns  
 maintainable fintech codebase
+
+---
+
+# Deployment
+
+This project uses a standardized deployment workflow involving Docker for local development, Terraform for infrastructure as code, and Vercel for production hosting.
+
+## Local Development (Docker)
+
+To run the application locally using Docker:
+
+1.  **Build and Start**:
+    ```bash
+    docker compose up --build
+    ```
+2.  **Access the App**:
+    The application will be available at [http://localhost:3000](http://localhost:3000).
+3.  **Hot Reloading**:
+    Changes to the source code will trigger an automatic reload within the container.
+
+## Infrastructure as Code (Terraform)
+
+Infrastructure on Vercel is managed via Terraform located in the `/terraform` directory.
+
+### Prerequisites
+- [Terraform CLI](https://developer.hashicorp.com/terraform/downloads) installed.
+- A Vercel API Token.
+
+### Setup
+1.  Navigate to the terraform directory: `cd terraform`
+2.  Initialize Terraform: `terraform init`
+3.  Create a `terraform.tfvars` file based on `terraform.tfvars.example`.
+4.  Plan changes: `terraform plan`
+5.  **Import Existing Project** (First time only):
+    ```bash
+    terraform import vercel_project.app prj_ZWs8nKjRh1V6dcjRm0i2b1qfm47O
+    ```
+6.  Apply changes: `terraform apply`
+
+## Continuous Deployment (GitHub Actions)
+
+The project includes a GitHub Actions workflow (`.github/workflows/infra.yml`) that:
+- Runs `terraform plan` on Pull Requests to the `main` branch.
+- Runs `terraform apply` when changes are merged into `main`.
+
+Ensure the `VERCEL_API_TOKEN` secret is configured in your GitHub repository secrets.
+
+## Production (Vercel)
+
+The application is configured to use Next.js's **standalone output** for optimal performance and size.
+- Production Domain: `wedupay.com`
+- Infrastructure: Managed by Terraform.
+- Deployment: Automatic via GitHub integration with Vercel.

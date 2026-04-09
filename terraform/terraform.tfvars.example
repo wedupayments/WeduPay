@@ -1,0 +1,15 @@
+vercel_api_token    = "your_vercel_token"
+project_id          = "prj_ZWs8nKjRh1V6dcjRm0i2b1qfm47O"
+org_id              = "team_K9tAQXSoVQPR6rvMDkSitM9W"
+github_repo         = "wedupayments/WeduPay"
+production_domain   = "wedupay.com"
+
+environment_variables = {
+  DATABASE_URL                  = "your_db_url"
+  DIRECT_URL                    = "your_direct_url"
+  NEXT_PUBLIC_SUPABASE_URL      = "https://your-project.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = "your_anon_key"
+  SUPABASE_SERVICE_ROLE_KEY      = "your_service_role_key"
+  SUPABASE_JWT_SECRET           = "your_jwt_secret"
+  NEXT_PUBLIC_APP_URL           = "https://wedupay.com"
+}

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+// import { Inter } from "next/font/google";
 import "./globals.css";
 import { VercelAnalytics } from "@/components/VercelAnalytics";
 import { Providers } from "@/app/providers";
@@ -8,11 +8,9 @@ import { Providers } from "@/app/providers";
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter",
-});
+// Removed next/font/google to avoid build-time network issues
+// const inter = Inter({ ... });
+const inter = { variable: "font-sans" };
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 const metadataBase = new URL(appUrl);
