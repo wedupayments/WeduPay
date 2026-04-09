@@ -197,61 +197,8 @@ export class PaymentController {
   }
 }
 
-export class WalletController {
-  async listWallets(request: Request, userId: string) {
-    try {
-      const wallets = await walletService.getUserWallets(userId);
+export const paymentController = new PaymentController();
 
-      return NextResponse.json({
-        data: wallets.map((w) => ({
-          id: w.id,
-          type: "wallet",
-          attributes: {
-            walletType: w.walletType,
-            currency: w.currency,
-            balance: w.balance,
-            createdAt: w.createdAt,
-          },
-        })),
-      });
-    } catch (error) {
-      console.error("List wallets error:", error);
-      return NextResponse.json(
-        createErrorResponse("INTERNAL_ERROR", "Failed to list wallets", undefined, 500).body,
-        { status: 500 }
-      );
-    }
-  }
-
-  async getWalletBalance(request: Request, params: { id: string }, userId: string) {
-    try {
-      const { id } = params;
-      const wallet = await walletService.getWallet(userId, id);
-
-      if (!wallet) {
-        return NextResponse.json(
-          createErrorResponse("NOT_FOUND", "Wallet not found", undefined, 404).body,
-          { status: 404 }
-        );
-      }
-
-      return NextResponse.json({
-        data: {
-          id: wallet.id,
-          type: "wallet-balance",
-          attributes: {
-            walletType: wallet.walletType,
-            currency: wallet.currency,
-            balance: wallet.balance,
-          },
-        },
-      });
-    } catch (error) {
-      console.error("Get wallet balance error:", error);
-      return NextResponse.json(
-        createErrorResponse("INTERNAL_ERROR", "Failed to get wallet balance", undefined, 500).body,
-        { status: 500 }
-      );
-    }
-  }
-}
+// WalletController has been promoted to its own file.
+// Re-export for backward compatibility with any existing imports.
+export { WalletController, walletController } from "./wallet.controller";

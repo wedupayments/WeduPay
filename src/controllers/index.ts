@@ -5,3 +5,6 @@ export * from "./settlement.controller";
 export * from "./export.controller";
 export * from "./webhook.controller";
 export * from "./analytics.controller";
+export * from "./transaction.controller";
+export * from "./transfer.controller";
+export * from "./wallet.controller";

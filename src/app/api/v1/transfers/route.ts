@@ -1,181 +1,23 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { createApiResponse, createErrorResponse } from "@/lib/api-response";
+import { NextRequest } from "next/server";
+import { transferController } from "@/controllers/transfer.controller";
 import { authenticateRequest, requireAuth, requireAppUser } from "@/lib/auth";
 
-function buildResourceUrl(request: Request, id?: string): string {
-  const url = new URL(request.url);
-  const baseUrl = `${url.protocol}//${url.host}/api/v1/transfers`;
-  return id ? `${baseUrl}/${id}` : baseUrl;
+export async function GET(request: NextRequest) {
+  const auth = await authenticateRequest(request);
+  const authError = requireAuth(auth);
+  if (authError) return authError;
+  const profileError = requireAppUser(auth);
+  if (profileError) return profileError;
+
+  return transferController.list(request, auth.userId!);
 }
 
-export async function GET(request: Request) {
-  try {
-    const auth = await authenticateRequest(request);
-    const authError = requireAuth(auth);
-    if (authError) {
-      return authError;
-    }
-    const profileError = requireAppUser(auth);
-    if (profileError) {
-      return profileError;
-    }
-    const userId = auth.userId!;
+export async function POST(request: NextRequest) {
+  const auth = await authenticateRequest(request);
+  const authError = requireAuth(auth);
+  if (authError) return authError;
+  const profileError = requireAppUser(auth);
+  if (profileError) return profileError;
 
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const perPage = parseInt(searchParams.get("perPage") || "20");
-
-    const where = {
-      userId,
-      type: { in: ["TRANSFER", "TRANSFER_RECEIVED"] },
-    };
-
-    const [transfers, total] = await Promise.all([
-      prisma.transaction.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        take: perPage,
-        skip: (page - 1) * perPage,
-      }),
-      prisma.transaction.count({ where }),
-    ]);
-
-    const response = createApiResponse(transfers, request, { page, perPage, total });
-    return NextResponse.json(response, { status: 200 });
-  } catch (error) {
-    console.error("Failed to fetch transfers:", error);
-    const errorResp = createErrorResponse("INTERNAL_ERROR", "Failed to fetch transfers", undefined, 500);
-    return NextResponse.json(errorResp.body, { status: errorResp.status });
-  }
-}
-
-export async function POST(request: Request) {
-  try {
-    const auth = await authenticateRequest(request);
-    const authError = requireAuth(auth);
-    if (authError) {
-      return authError;
-    }
-    const profileError = requireAppUser(auth);
-    if (profileError) {
-      return profileError;
-    }
-    const userId = auth.userId!;
-
-    const body = await request.json();
-    const { toUserId, amount, currency, walletType, description } = body;
-
-    const errors: Array<{ code: string; target: string; message: string }> = [];
-    if (!toUserId) errors.push({ code: "REQUIRED", target: "toUserId", message: "Recipient user ID is required" });
-    if (!amount) errors.push({ code: "REQUIRED", target: "amount", message: "Amount is required" });
-    if (!currency) errors.push({ code: "REQUIRED", target: "currency", message: "Currency is required" });
-    if (!walletType) errors.push({ code: "REQUIRED", target: "walletType", message: "Wallet type is required" });
-
-    if (errors.length > 0) {
-      const error = createErrorResponse("VALIDATION_ERROR", "Invalid request data", errors, 400);
-      return NextResponse.json(error.body, { status: error.status });
-    }
-
-    if (amount <= 0) {
-      const error = createErrorResponse("INVALID_AMOUNT", "Amount must be greater than 0", undefined, 400);
-      return NextResponse.json(error.body, { status: error.status });
-    }
-
-    if (userId === toUserId) {
-      const error = createErrorResponse("SELF_TRANSFER", "Cannot transfer to yourself", undefined, 400);
-      return NextResponse.json(error.body, { status: error.status });
-    }
-
-    const [senderWallet, recipientWallet] = await Promise.all([
-      prisma.wallet.findFirst({ where: { userId, walletType, currency } }),
-      prisma.wallet.findFirst({ where: { userId: toUserId, walletType, currency } }),
-    ]);
-
-    if (!senderWallet) {
-      const error = createErrorResponse("WALLET_NOT_FOUND", "Sender wallet not found", undefined, 404);
-      return NextResponse.json(error.body, { status: error.status });
-    }
-
-    if (senderWallet.balance < amount) {
-      const error = createErrorResponse("INSUFFICIENT_BALANCE", "Insufficient balance", undefined, 400);
-      return NextResponse.json(error.body, { status: error.status });
-    }
-
-    const reference = `TRF-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-
-    const result = await prisma.$transaction(async (tx) => {
-      await tx.wallet.update({
-        where: { id: senderWallet.id },
-        data: { balance: { decrement: amount } },
-      });
-
-      if (recipientWallet) {
-        await tx.wallet.update({
-          where: { id: recipientWallet.id },
-          data: { balance: { increment: amount } },
-        });
-      }
-
-      const debitTransaction = await tx.transaction.create({
-        data: {
-          userId,
-          amount,
-          currency,
-          status: "COMPLETED",
-          type: "TRANSFER",
-          reference,
-        },
-      });
-
-      const creditTransaction = await tx.transaction.create({
-        data: {
-          userId: toUserId,
-          amount,
-          currency,
-          status: "COMPLETED",
-          type: "TRANSFER_RECEIVED",
-          reference: `${reference}-RECV`,
-        },
-      });
-
-      return { debitTransaction, creditTransaction };
-    });
-
-    const response = {
-      data: {
-        id: result.debitTransaction.id,
-        type: "transfer",
-        attributes: {
-          amount,
-          currency,
-          status: "COMPLETED",
-          reference,
-          description,
-          recipientUserId: toUserId,
-          createdAt: result.debitTransaction.createdAt,
-        },
-        relationships: {
-          debitTransaction: {
-            id: result.debitTransaction.id,
-            type: "transaction",
-          },
-          creditTransaction: {
-            id: result.creditTransaction.id,
-            type: "transaction",
-          },
-        },
-      },
-      links: {
-        self: buildResourceUrl(request, result.debitTransaction.id),
-        collection: buildResourceUrl(request),
-      },
-    };
-
-    return NextResponse.json(response, { status: 201 });
-  } catch (error) {
-    console.error("Failed to process transfer:", error);
-    const errorResp = createErrorResponse("INTERNAL_ERROR", "Failed to process transfer", undefined, 500);
-    return NextResponse.json(errorResp.body, { status: errorResp.status });
-  }
+  return transferController.create(request, auth.userId!);
 }
