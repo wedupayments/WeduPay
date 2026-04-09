@@ -280,7 +280,7 @@ export class AsyncTaskRepository extends BaseRepository<any> {
     const status = task && task.attempts >= task.maxAttempts ? "FAILED" : "PENDING";
     return this.model.update({
       where: { id },
-      data: { status, error },
+      data: { status, errorMessage: error },
     });
   }
 }

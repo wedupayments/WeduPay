@@ -33,7 +33,7 @@ export async function GET(
       status: task.status,
       payload: JSON.parse(task.payload),
       result: task.result ? JSON.parse(task.result) : null,
-      error: task.error,
+      error: task.errorMessage,
       attempts: task.attempts,
       maxAttempts: task.maxAttempts,
       scheduledAt: task.scheduledAt,

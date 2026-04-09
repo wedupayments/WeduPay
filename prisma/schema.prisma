@@ -27,8 +27,8 @@ model User {
   phoneNumber    String
   supabaseUserId String?            @unique
   role           String             @default("USER")
-  memberships    TenantMembership[]
   references     PaymentReference[]
+  memberships    TenantMembership[]
   transactions   Transaction[]
   cards          VirtualCard[]
   wallets        Wallet[]
@@ -43,8 +43,8 @@ model Tenant {
   status      String             @default("ACTIVE")
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
-  memberships TenantMembership[]
   domains     TenantDomain[]
+  memberships TenantMembership[]
 
   @@index([slug])
   @@map("tenants")
@@ -98,20 +98,70 @@ model Wallet {
 }
 
 model Transaction {
-  id        String   @id @default(uuid())
-  amount    Float
-  currency  String
-  status    String
-  type      String
-  reference String
-  createdAt DateTime @default(now())
-  tenantId  String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  id            String       @id @default(uuid())
+  amount        Float
+  currency      String
+  status        String
+  type          String
+  reference     String
+  createdAt     DateTime     @default(now())
+  tenantId      String?
+  userId        String
+  paymentLinkId String?
+  paymentLink   PaymentLink? @relation(fields: [paymentLinkId], references: [id])
+  user          User         @relation(fields: [userId], references: [id])
+  metadata      Json?
 
   @@index([tenantId])
   @@index([userId])
+  @@index([paymentLinkId])
   @@map("transactions")
+}
+
+model PaymentLink {
+  id           String        @id @default(uuid())
+  linkId       String        @unique
+  tenantId     String
+  userId       String
+  amount       Float
+  currency     String
+  description  String?
+  expiresAt    DateTime?
+  usageLimit   Int?
+  usageCount   Int           @default(0)
+  status       String        @default("ACTIVE")
+  metadata     Json?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+
+  @@index([tenantId])
+  @@index([linkId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("payment_links")
+}
+
+model Settlement {
+  id               String    @id @default(uuid())
+  tenantId         String
+  userId           String
+  amount           Float
+  currency         String
+  status           String    @default("PENDING")
+  settlementPeriod String
+  requestedAt      DateTime  @default(now())
+  processedAt      DateTime?
+  completedAt      DateTime?
+  failureReason    String?
+  bankAccount      Json?
+  transactionIds   String[]
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([status])
+  @@index([requestedAt])
+  @@map("settlements")
 }
 
 model LedgerEntry {
@@ -211,8 +261,8 @@ model AsyncTask {
   status      String    @default("PENDING")
   payload     String
   result      String?
-  error       String?
-  attempts    Int       @default(0)
+  errorMessage String?
+  attempts     Int       @default(0)
   maxAttempts Int       @default(3)
   scheduledAt DateTime  @default(now())
   startedAt   DateTime?
@@ -225,7 +275,7 @@ model AsyncTask {
 
 model VirtualCard {
   id             String   @id @default(uuid())
-  tenantId        String?
+  tenantId       String?
   userId         String
   provider       String
   cardNumber     String   @unique
@@ -239,9 +289,9 @@ model VirtualCard {
   balance        Float    @default(0)
   limit          Float?
   isVirtual      Boolean  @default(true)
-  nickname       String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  nickname       String?
   user           User     @relation(fields: [userId], references: [id])
 
   @@index([tenantId])
@@ -472,7 +522,7 @@ model P2PTransfer {
 
 model TransferRecipient {
   id          String    @id @default(uuid())
-  tenantId     String?
+  tenantId    String?
   userId      String
   name        String
   phoneNumber String
@@ -529,4 +579,84 @@ model ComplianceCheck {
   @@index([userId])
   @@index([status])
   @@map("compliance_checks")
+}
+
+model WebhookEndpoint {
+  id           String            @id @default(uuid())
+  tenantId     String
+  userId       String
+  url          String
+  description  String?
+  secretKey    String
+  events       String[]
+  isActive     Boolean           @default(true)
+  lastTestedAt DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  deliveries   WebhookDelivery[]
+
+  @@index([tenantId])
+  @@index([isActive])
+  @@map("webhook_endpoints")
+}
+
+model WebhookDelivery {
+  id            String          @id @default(uuid())
+  endpointId    String
+  eventType     String
+  payload       Json
+  signature     String
+  status        String          @default("PENDING")
+  httpStatus    Int?
+  responseTime  Float?
+  attemptNumber Int             @default(1)
+  maxAttempts   Int             @default(3)
+  nextRetryAt   DateTime?
+  errorMessage  String?
+  createdAt     DateTime        @default(now())
+  deliveredAt   DateTime?
+  endpoint      WebhookEndpoint @relation(fields: [endpointId], references: [id])
+
+  @@index([endpointId])
+  @@index([status])
+  @@index([nextRetryAt])
+  @@map("webhook_deliveries")
+}
+
+model ExportJob {
+  id           String    @id @default(uuid())
+  tenantId     String
+  userId       String
+  type         String
+  format       String
+  filters      Json
+  status       String    @default("PENDING")
+  recordCount  Int?
+  fileUrl      String?
+  fileSize     Int?
+  expiresAt    DateTime?
+  errorMessage String?
+  createdAt    DateTime  @default(now())
+  completedAt  DateTime?
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("export_jobs")
+}
+
+model AnalyticsCache {
+  id         String   @id @default(uuid())
+  tenantId   String
+  cacheKey   String
+  metricType String
+  data       Json
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@unique([tenantId, cacheKey])
+  @@index([tenantId])
+  @@index([expiresAt])
+  @@map("analytics_cache")
 }

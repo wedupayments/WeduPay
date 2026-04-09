@@ -26,12 +26,17 @@ interface MerchantDashboardData {
   }>;
 }
 
+import { useAuthenticatedFetch } from "@/hooks/useAuthenticatedFetch";
+
 export default function MerchantDashboardPage() {
   const [data, setData] = useState<MerchantDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { fetch: authFetch, isReady } = useAuthenticatedFetch();
 
   useEffect(() => {
-    fetch("/api/dashboard/merchant")
+    if (!isReady) return;
+
+    authFetch("/api/dashboard/merchant")
       .then((response) => response.json())
       .then((payload) => {
         setData(payload);
@@ -40,9 +45,9 @@ export default function MerchantDashboardPage() {
         console.error("Failed to fetch merchant dashboard:", err);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [isReady, authFetch]);
 
-  if (loading) {
+  if (loading || !isReady) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center">

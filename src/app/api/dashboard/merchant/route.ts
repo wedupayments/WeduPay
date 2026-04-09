@@ -1,62 +1,56 @@
 import { NextResponse } from "next/server";
-import { authenticateRequest, requireAuth } from "@/lib/auth";
+import { authenticateRequest, requireTenantAccess } from "@/lib/auth";
+import { transactionService } from "@/services/transaction.service";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
   try {
     const auth = await authenticateRequest(request);
-    
-    const authError = requireAuth(auth);
-    if (authError) {
-      return authError;
-    }
+    const tenantError = requireTenantAccess(auth);
+    if (tenantError) return tenantError;
 
-    // Mock merchant dashboard data
+    const tenantId = auth.tenantId!;
+
+    const [statsArray, recentTxs, activeLinkCount] = await Promise.all([
+      transactionService.getTransactionStats({ tenantId }),
+      transactionService.getTransactions({ tenantId, limit: 5 }),
+      prisma.paymentLink.count({ where: { tenantId, status: "ACTIVE" } })
+    ]);
+
+    // Aggregate stats if multiple currencies exist, or pick the first one
+    const stats = statsArray[0] || { totalRevenue: 0, totalCount: 0, successfulCount: 0, currency: "USD" };
+
+
+    // Format stats for frontend
     const dashboardData = {
       user: {
         name: auth.email?.split("@")[0] || "Merchant",
         email: auth.email,
+        tenantName: auth.tenantName
       },
       stats: {
-        totalRevenue: "$24,890.00",
-        todayRevenue: "$1,250.00",
-        completedPayments: 234,
-        pendingPayments: 12,
-        successRate: "98.5%",
-        activeLinks: 8,
+        totalRevenue: `${stats.totalRevenue.toLocaleString()} ${stats.totalCount > 0 ? "USD" : ""}`, // Simple formatting
+        todayRevenue: "0.00", // Would need specific filtering for today
+        completedPayments: stats.successfulCount,
+        pendingPayments: stats.totalCount - stats.successfulCount,
+        successRate: stats.totalCount > 0 ? `${((stats.successfulCount / stats.totalCount) * 100).toFixed(1)}%` : "0%",
+        activeLinks: activeLinkCount,
       },
-      recentPayments: [
-        {
-          id: "1",
-          reference: "PAY-2024-001",
-          customer: "John Doe",
-          amount: "$125.00",
-          status: "Verified",
-          date: "2024-01-15 10:30 AM",
-        },
-        {
-          id: "2",
-          reference: "PAY-2024-002",
-          customer: "Jane Smith",
-          amount: "$89.50",
-          status: "Pending",
-          date: "2024-01-15 09:15 AM",
-        },
-        {
-          id: "3",
-          reference: "PAY-2024-003",
-          customer: "Bob Johnson",
-          amount: "$250.00",
-          status: "Verified",
-          date: "2024-01-14 04:20 PM",
-        },
-      ],
+      recentPayments: recentTxs.transactions.map(tx => ({
+        id: tx.id,
+        reference: tx.reference || `TX-${tx.id.slice(0, 8)}`,
+        customer: (tx as any).user?.name || "Unknown Customer",
+        amount: `${tx.amount.toLocaleString()} ${tx.currency}`,
+        status: tx.status === "COMPLETED" ? "Verified" : tx.status === "PENDING" ? "Pending" : "Failed",
+        date: tx.createdAt.toLocaleString(),
+      })),
     };
 
     return NextResponse.json(dashboardData);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Merchant dashboard error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch merchant dashboard data" },
+      { error: "Failed to fetch merchant dashboard data", details: error.message },
       { status: 500 }
     );
   }
