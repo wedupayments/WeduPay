@@ -58,7 +58,7 @@ describe('AnalyticsService Property-based Tests', () => {
           mockPrisma.transaction.findMany.mockResolvedValue(sortedTxs);
           mockPrisma.analyticsCache.upsert.mockResolvedValue({});
 
-          const result = await analyticsService.getRevenueOverTime('t1', timeframe as any);
+          const result = await analyticsService.getRevenueOverTime('t1', timeframe as any) as any[];
 
           expect(result.length).toBeGreaterThan(0);
           result.forEach(item => {
@@ -88,7 +88,7 @@ describe('AnalyticsService Property-based Tests', () => {
                   mockPrisma.transaction.findMany.mockResolvedValue(sortedTxs);
                   mockPrisma.analyticsCache.upsert.mockResolvedValue({});
 
-                  const result = await analyticsService.getSuccessRateTrend('t1', 'DAILY');
+                  const result = await analyticsService.getSuccessRateTrend('t1', 'DAILY') as any[];
 
                   result.forEach(item => {
                       expect(item.successRate).toBeGreaterThanOrEqual(0);

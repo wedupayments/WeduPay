@@ -17,7 +17,7 @@ jest.mock('@/lib/prisma', () => ({
   },
 }));
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockPrisma = prisma as any;
 
 describe('SettlementService Property-based Tests', () => {
   beforeEach(() => {

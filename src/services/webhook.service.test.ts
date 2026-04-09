@@ -70,11 +70,12 @@ describe('WebhookService Property-based Tests', () => {
 
   // Property 31: Secret Key Regeneration - Validates: Requirements 5.10
   it('should regenerate secret keys with correct prefix', async () => {
-    mockPrisma.webhookEndpoint.update.mockResolvedValue({ id: 'ep-1' } as any);
+    (mockPrisma.webhookEndpoint.update as jest.Mock).mockResolvedValue({ id: 'ep-1' } as any);
     
-    await webhookService.regenerateSecretKey('ep-1');
+    // NOTE: Need to pass both 'id' and 'tenantId' based on the service method signature
+    await webhookService.regenerateSecret('ep-1', 'tenant-1');
     
-    const call = mockPrisma.webhookEndpoint.update.mock.calls[0][0];
+    const call = (mockPrisma.webhookEndpoint.update as jest.Mock).mock.calls[0][0];
     expect(call.data.secretKey).toMatch(/^whsec_/);
   });
 });

@@ -13,7 +13,7 @@ jest.mock('@/lib/prisma', () => ({
   },
 }));
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockPrisma = prisma as any;
 
 describe('TransactionService Property-based Tests', () => {
   beforeEach(() => {
@@ -116,7 +116,7 @@ describe('TransactionService Property-based Tests', () => {
           mockStats.forEach(s => uniqueStatsMap.set(s.currency, s));
           const uniqueStats = Array.from(uniqueStatsMap.values());
 
-          mockPrisma.transaction.groupBy.mockImplementation(({ where }) => {
+          mockPrisma.transaction.groupBy.mockImplementation(({ where }: any) => {
             if (where?.status === 'COMPLETED') {
               return Promise.resolve(uniqueStats.map(s => ({
                 currency: s.currency,
