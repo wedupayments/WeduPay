@@ -8,3 +8,5 @@ export * from "./analytics.controller";
 export * from "./transaction.controller";
 export * from "./transfer.controller";
 export * from "./wallet.controller";
+export * from "./admin.controller";
+export * from "./api-key.controller";

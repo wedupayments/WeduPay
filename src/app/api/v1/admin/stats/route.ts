@@ -17,45 +17,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminStats } from '@/services/admin/admin.service';
+import { adminController } from '@/controllers/admin.controller';
 import { authenticateRequest, requireAuth } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
-  const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-  console.log(`[AdminStatsAPI] ${requestId} - Getting admin stats`);
+  const auth = await authenticateRequest(request);
+  const authError = requireAuth(auth);
+  if (authError) return authError;
 
-  try {
-    const auth = await authenticateRequest(request);
-    const authError = requireAuth(auth);
-    if (authError) {
-      return authError;
-    }
-
-    if (auth.role !== 'ADMIN') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Admin access required',
-        },
-        { status: 403 }
-      );
-    }
-
-    const stats = await getAdminStats();
-
-    return NextResponse.json({
-      success: true,
-      stats,
-    });
-  } catch (error) {
-    console.error(`[AdminStatsAPI] ${requestId} - Error:`, error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to get stats',
-      },
-      { status: 500 }
-    );
+  if (auth.role !== 'ADMIN') {
+    return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
   }
+
+  return adminController.getStats(request);
 }
