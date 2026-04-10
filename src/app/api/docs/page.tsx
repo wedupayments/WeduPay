@@ -4,6 +4,14 @@ import dynamic from "next/dynamic";
 import "swagger-ui-react/swagger-ui.css";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "API Documentation | WeduPay",
+  description: "WeduPay REST API Reference",
+  robots: "noindex, nofollow",
+};
+
 const SwaggerUI = dynamic(() => import("swagger-ui-react"), { ssr: false });
 
 function ApiDocs() {
