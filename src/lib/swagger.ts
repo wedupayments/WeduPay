@@ -223,25 +223,94 @@ const options: swaggerJsdoc.Options = {
       },
     },
     tags: [
-      { name: "Authentication", description: "User authentication and session management" },
-      { name: "Payments", description: "Mobile money payment operations (M-Pesa, EcoCash, MTN)" },
-      { name: "Transfers", description: "Wallet-to-wallet transfer operations" },
-      { name: "Transactions", description: "Transaction history and records" },
-      { name: "Wallets", description: "Wallet management and balance operations" },
-      { name: "FX", description: "Foreign exchange and currency conversion" },
-      { name: "Cards", description: "Virtual card operations" },
-      { name: "Dashboard", description: "Dashboard data for customers and merchants" },
-      { name: "Routing", description: "Intelligent payment routing" },
-      { name: "Analytics", description: "Analytics and reporting" },
-      { name: "API Keys", description: "API key management" },
-      { name: "Tenants", description: "Multi-tenant management" },
-      { name: "Waitlist", description: "Waitlist signup for customers and merchants" },
-      { name: "KYC", description: "Know Your Customer verification" },
-      { name: "Batch", description: "Batch operations" },
-      { name: "Webhooks", description: "Mobile money provider callback endpoints" },
-      { name: "Admin", description: "Administrative operations" },
+      { name: "Users", description: "Consumer API: Personal wallets, cards, transactions, and P2P transfers" },
+      { name: "Merchants", description: "Business API: Payment collection, links, analytics, and API keys" },
+      { name: "Admins", description: "Platform API: User management, routing rules, and multi-tenant controls" },
+      { name: "Public", description: "Publicly accessible endpoints (Waitlist, FX Rates)" },
+      { name: "System", description: "System operations and webhooks" },
+      { name: "Authentication", description: "All Roles: Session management" },
     ],
     paths: {
+      "/settlements": {
+        get: {
+          tags: ["Merchants"],
+          summary: "List settlements",
+          description: "Get settlement history and status",
+          security: [{ cookieAuth: [] }, { apiKeyAuth: [] }],
+          responses: {
+            200: { description: "Settlements retrieved" }
+          }
+        },
+        post: {
+          tags: ["Merchants"],
+          summary: "Request settlement",
+          description: "Withdraw funds to connected bank account",
+          security: [{ cookieAuth: [] }, { apiKeyAuth: [] }],
+          responses: {
+            200: { description: "Settlement initiated" }
+          }
+        }
+      },
+      "/exports": {
+        get: {
+          tags: ["Merchants"],
+          summary: "List exports",
+          description: "Get recent export jobs (CSV/Excel)",
+          security: [{ cookieAuth: [] }],
+          responses: { 200: { description: "Exports retrieved" } }
+        },
+        post: {
+          tags: ["Merchants"],
+          summary: "Create export",
+          description: "Queue asynchronous data export in the background",
+          security: [{ cookieAuth: [] }],
+          responses: { 200: { description: "Export queued" } }
+        }
+      },
+      "/kyc/submit": {
+        post: {
+          tags: ["Users"],
+          summary: "Submit KYC documents",
+          description: "Upload identity documents for verification",
+          security: [{ cookieAuth: [] }],
+          responses: { 200: { description: "KYC submitted" } }
+        }
+      },
+      "/kyc/status": {
+        get: {
+          tags: ["Users"],
+          summary: "Check KYC status",
+          description: "Get current identity verification status",
+          security: [{ cookieAuth: [] }],
+          responses: { 200: { description: "KYC status retrieved" } }
+        }
+      },
+      "/admin/users": {
+        get: {
+          tags: ["Admins"],
+          summary: "List all users",
+          description: "Admin: List users across platform",
+          security: [{ cookieAuth: [] }],
+          responses: { 200: { description: "Users retrieved" } }
+        }
+      },
+      "/routing/payment": {
+        post: {
+          tags: ["Admins"],
+          summary: "Payment Routing Engine",
+          description: "Intelligently route a payment based on fee analytics",
+          security: [{ cookieAuth: [] }],
+          responses: { 200: { description: "Routed successfully" } }
+        }
+      },
+      "/health": {
+        get: {
+          tags: ["Public"],
+          summary: "Health Check",
+          description: "Verify API is operational",
+          responses: { 200: { description: "Healthy" } }
+        }
+      },
       "/auth/session": {
         post: {
           tags: ["Authentication"],
@@ -314,7 +383,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/fx/convert": {
         get: {
-          tags: ["FX"],
+          tags: ["Public"],
           summary: "Convert currency",
           description: "Convert amount from one currency to another",
           parameters: [
@@ -357,7 +426,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/fx/rates": {
         get: {
-          tags: ["FX"],
+          tags: ["Public"],
           summary: "Get exchange rates",
           description: "Get current exchange rates",
           parameters: [
@@ -396,7 +465,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/wallets/balance": {
         get: {
-          tags: ["Wallets"],
+          tags: ["Users"],
           summary: "Get wallet balance",
           description: "Get balance for specific currency or all wallets",
           security: [{ cookieAuth: [] }],
@@ -432,7 +501,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/payments": {
         post: {
-          tags: ["Payments"],
+          tags: ["Merchants"],
           summary: "Create payment",
           description: "Initiate a mobile money payment",
           security: [{ cookieAuth: [] }],
@@ -464,7 +533,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/transfers": {
         post: {
-          tags: ["Transfers"],
+          tags: ["Users"],
           summary: "Create transfer",
           description: "Transfer funds between wallets",
           security: [{ cookieAuth: [] }],
@@ -496,7 +565,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/transactions": {
         get: {
-          tags: ["Transactions"],
+          tags: ["Users"],
           summary: "List transactions",
           description: "Get transaction history with pagination",
           security: [{ cookieAuth: [] }],
@@ -535,7 +604,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/api-keys": {
         get: {
-          tags: ["API Keys"],
+          tags: ["Merchants"],
           summary: "List API keys",
           description: "Get all API keys for authenticated user",
           security: [{ cookieAuth: [] }],
@@ -571,7 +640,7 @@ const options: swaggerJsdoc.Options = {
           },
         },
         post: {
-          tags: ["API Keys"],
+          tags: ["Merchants"],
           summary: "Create API key",
           description: "Generate a new API key",
           security: [{ cookieAuth: [] }],
@@ -610,7 +679,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/analytics": {
         get: {
-          tags: ["Analytics"],
+          tags: ["Merchants"],
           summary: "Get analytics",
           description: "Retrieve analytics data for specified period",
           security: [{ cookieAuth: [] }],
@@ -630,7 +699,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/batch": {
         post: {
-          tags: ["Batch"],
+          tags: ["Merchants"],
           summary: "Batch operations",
           description: "Execute multiple API operations in a single request (max 50)",
           security: [{ cookieAuth: [] }, { apiKeyAuth: [] }],
@@ -671,7 +740,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/dashboard/customer": {
         get: {
-          tags: ["Dashboard"],
+          tags: ["Users"],
           summary: "Get dashboard data",
           description: "Get dashboard data for authenticated user (works for both customers and merchants)",
           security: [{ cookieAuth: [] }],
@@ -718,7 +787,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/tenant/switch": {
         post: {
-          tags: ["Tenants"],
+          tags: ["Admins"],
           summary: "Switch tenant",
           description: "Switch active tenant context for multi-tenant users",
           security: [{ cookieAuth: [] }],
@@ -756,7 +825,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/tenant/memberships": {
         get: {
-          tags: ["Tenants"],
+          tags: ["Admins"],
           summary: "List tenant memberships",
           description: "Get all tenant memberships for authenticated user",
           security: [{ cookieAuth: [] }],
@@ -792,7 +861,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/waitlist": {
         post: {
-          tags: ["Waitlist"],
+          tags: ["Public"],
           summary: "Join waitlist",
           description: "Add email to waitlist (for customers or merchants)",
           requestBody: {
@@ -832,7 +901,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/cards": {
         get: {
-          tags: ["Cards"],
+          tags: ["Users"],
           summary: "List virtual cards",
           description: "Get all virtual cards for authenticated user",
           security: [{ cookieAuth: [] }],
@@ -843,7 +912,7 @@ const options: swaggerJsdoc.Options = {
           },
         },
         post: {
-          tags: ["Cards"],
+          tags: ["Users"],
           summary: "Create virtual card",
           description: "Create a new virtual card",
           security: [{ cookieAuth: [] }],
@@ -881,7 +950,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/mpesa": {
         post: {
-          tags: ["Payments"],
+          tags: ["Merchants"],
           summary: "M-Pesa payment",
           description: "Initiate M-Pesa STK Push payment",
           security: [{ cookieAuth: [] }],
@@ -912,7 +981,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/ecocash": {
         post: {
-          tags: ["Payments"],
+          tags: ["Merchants"],
           summary: "EcoCash payment",
           description: "Initiate EcoCash payment",
           security: [{ cookieAuth: [] }],
@@ -942,7 +1011,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/mtn": {
         post: {
-          tags: ["Payments"],
+          tags: ["Merchants"],
           summary: "MTN Mobile Money payment",
           description: "Initiate MTN Mobile Money payment",
           security: [{ cookieAuth: [] }],
@@ -972,7 +1041,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/webhooks/mpesa": {
         post: {
-          tags: ["Webhooks"],
+          tags: ["System"],
           summary: "M-Pesa webhook",
           description: "Receive M-Pesa payment callbacks",
           requestBody: {
@@ -1010,7 +1079,7 @@ const options: swaggerJsdoc.Options = {
       },
       "/webhooks/ecocash": {
         post: {
-          tags: ["Webhooks"],
+          tags: ["System"],
           summary: "EcoCash webhook",
           description: "Receive EcoCash payment callbacks",
           requestBody: {
@@ -1037,7 +1106,7 @@ const options: swaggerJsdoc.Options = {
         },
       },
         post: {
-          tags: ["Routing"],
+          tags: ["Admins"],
           summary: "Smart payment routing",
           description: "Automatically route payment to best provider",
           security: [{ cookieAuth: [] }],
@@ -1068,7 +1137,7 @@ const options: swaggerJsdoc.Options = {
           },
         },
         get: {
-          tags: ["Routing"],
+          tags: ["Admins"],
           summary: "Get fee quotes",
           description: "Get fee quotes from all providers",
           parameters: [
