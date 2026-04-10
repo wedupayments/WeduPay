@@ -231,6 +231,70 @@ const options: swaggerJsdoc.Options = {
       { name: "Authentication", description: "All Roles: Session management" },
     ],
     paths: {
+      "/transfers/p2p": {
+        post: { tags: ["Users"], summary: "Peer-to-Peer Transfer", description: "Send funds directly to another user", security: [{ cookieAuth: [] }], responses: { 200: { description: "Transfer initiated" } } }
+      },
+      "/transfers/p2p/quote": {
+        get: { tags: ["Users"], summary: "P2P Transfer Quote", description: "Get a quote (fees & fx) before sending a P2P transfer", security: [{ cookieAuth: [] }], responses: { 200: { description: "Quote generated" } } }
+      },
+      "/transfers/p2p/history": {
+        get: { tags: ["Users"], summary: "P2P Transfer History", description: "View past peer-to-peer transfers", security: [{ cookieAuth: [] }], responses: { 200: { description: "History retrieved" } } }
+      },
+      "/wallets/fund": {
+        post: { tags: ["Users"], summary: "Fund Wallet", description: "Deposit funds into your wallet using mobile money/card", security: [{ cookieAuth: [] }], responses: { 200: { description: "Deposit request initiated" } } }
+      },
+      "/wallets/withdraw": {
+        post: { tags: ["Users"], summary: "Withdraw from Wallet", description: "Withdraw funds from your wallet to a mobile money account", security: [{ cookieAuth: [] }], responses: { 200: { description: "Withdrawal initiated" } } }
+      },
+      "/users/{id}/transactions": {
+        get: { tags: ["Users"], summary: "User Transactions", description: "Get transaction history scoped to a specific user", security: [{ cookieAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "User transactions retrieved" } } }
+      },
+      "/users/{id}/wallets": {
+        get: { tags: ["Users"], summary: "User Wallets", description: "Get wallets scoped to a specific user", security: [{ cookieAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "User wallets retrieved" } } }
+      },
+      "/webhooks/flutterwave": {
+        post: { tags: ["System"], summary: "Flutterwave Webhook", description: "Incoming callback from Flutterwave", responses: { 200: { description: "Acknowledged" } } }
+      },
+      "/webhooks/paystack": {
+        post: { tags: ["System"], summary: "Paystack Webhook", description: "Incoming callback from Paystack", responses: { 200: { description: "Acknowledged" } } }
+      },
+      "/webhooks/mtn": {
+        post: { tags: ["System"], summary: "MTN Webhook", description: "Incoming callback from MTN Mobile Money", responses: { 200: { description: "Acknowledged" } } }
+      },
+      "/webhooks/endpoints": {
+        get: { tags: ["Merchants"], summary: "List Webhook Endpoints", description: "List configured merchant webhook endpoints", security: [{ cookieAuth: [] }, { apiKeyAuth: [] }], responses: { 200: { description: "Endpoints retrieved" } } },
+        post: { tags: ["Merchants"], summary: "Register Webhook Endpoint", description: "Create a new merchant webhook endpoint", security: [{ cookieAuth: [] }, { apiKeyAuth: [] }], responses: { 200: { description: "Endpoint created" } } }
+      },
+      "/webhooks/endpoints/{id}": {
+        delete: { tags: ["Merchants"], summary: "Delete Webhook", description: "Remove a configured webhook receiver", security: [{ cookieAuth: [] }, { apiKeyAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "Deleted" } } }
+      },
+      "/webhooks/deliveries": {
+        get: { tags: ["Merchants"], summary: "Webhook Delivery Logs", description: "Access logs of sent webhooks and their delivery status", security: [{ cookieAuth: [] }, { apiKeyAuth: [] }], responses: { 200: { description: "Logs retrieved" } } }
+      },
+      "/analytics/revenue": {
+        get: { tags: ["Merchants"], summary: "Revenue Analytics", description: "Get aggregated revenue data over time", security: [{ cookieAuth: [] }], responses: { 200: { description: "Data retrieved" } } }
+      },
+      "/analytics/payment-methods": {
+        get: { tags: ["Merchants"], summary: "Payment Method Analytics", description: "Get distribution of payment methods used", security: [{ cookieAuth: [] }], responses: { 200: { description: "Data retrieved" } } }
+      },
+      "/analytics/success-rate": {
+        get: { tags: ["Merchants"], summary: "Transaction Success Rate", description: "Get success vs failure rate of transactions", security: [{ cookieAuth: [] }], responses: { 200: { description: "Data retrieved" } } }
+      },
+      "/analytics/geography": {
+        get: { tags: ["Merchants"], summary: "Geographic Analytics", description: "Get user transaction volume by country/region", security: [{ cookieAuth: [] }], responses: { 200: { description: "Data retrieved" } } }
+      },
+      "/admin/stats": {
+        get: { tags: ["Admins"], summary: "Global Platform Stats", description: "High-level platform usage statistics", security: [{ cookieAuth: [] }], responses: { 200: { description: "Stats retrieved" } } }
+      },
+      "/admin/transfers": {
+        get: { tags: ["Admins"], summary: "Global Transfer Audit", description: "Audit trail of all system transfers", security: [{ cookieAuth: [] }], responses: { 200: { description: "Transfers retrieved" } } }
+      },
+      "/routing/cross-border": {
+        get: { tags: ["Admins"], summary: "Cross-Border Options", description: "List available corridors for cross-border routes", security: [{ cookieAuth: [] }], responses: { 200: { description: "Corridors retrieved" } } }
+      },
+      "/routing/health": {
+        get: { tags: ["Admins"], summary: "Routing Engine Health", description: "Get status of all payment carrier networks", security: [{ cookieAuth: [] }], responses: { 200: { description: "Health retrieved" } } }
+      },
       "/settlements": {
         get: {
           tags: ["Merchants"],
