@@ -231,6 +231,67 @@ const options: swaggerJsdoc.Options = {
       { name: "Authentication", description: "All Roles: Session management" },
     ],
     paths: {
+      "/api-keys/{id}": {
+        delete: { tags: ["Merchants"], summary: "Revoke API Key", description: "Delete an API key by ID", security: [{ cookieAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "Deleted" } } }
+      },
+      "/exports/{id}": {
+        get: { tags: ["Merchants"], summary: "Get Export Status", description: "Check status of an export job", security: [{ cookieAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "Status retrieved" } } }
+      },
+      "/exports/{id}/download": {
+        get: { tags: ["Merchants"], summary: "Download Export", description: "Download a completed export file", security: [{ cookieAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "File download" } } }
+      },
+      "/notifications/preferences": {
+        get: { tags: ["Users"], summary: "Notification Preferences", description: "Get user email and SMS preferences", security: [{ cookieAuth: [] }], responses: { 200: { description: "Preferences retrieved" } } },
+        put: { tags: ["Users"], summary: "Update Preferences", description: "Update notification settings", security: [{ cookieAuth: [] }], responses: { 200: { description: "Updated" } } }
+      },
+      "/tasks": {
+        get: { tags: ["System"], summary: "List Async Tasks", description: "List background processing tasks", security: [{ cookieAuth: [] }], responses: { 200: { description: "Tasks retrieved" } } }
+      },
+      "/tasks/{id}": {
+        get: { tags: ["System"], summary: "Task Status", description: "Get status of an async task", security: [{ cookieAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "Task retrieved" } } }
+      },
+      "/payments/{id}": {
+        get: { tags: ["Users"], summary: "Get Payment Details", description: "Retrieve info for specific payment", security: [{ cookieAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "Payment retrieved" } } }
+      },
+      "/transfers/{id}": {
+        get: { tags: ["Users"], summary: "Get Transfer Details", description: "Retrieve info for specific transfer", security: [{ cookieAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "Transfer retrieved" } } }
+      },
+      "/transfers/p2p/recipients": {
+        get: { tags: ["Users"], summary: "P2P Recipients", description: "List past P2P transfer recipients", security: [{ cookieAuth: [] }], responses: { 200: { description: "Recipients retrieved" } } }
+      },
+      "/transfers/p2p/{ref}": {
+        get: { tags: ["Users"], summary: "P2P Reference Details", description: "Get specific P2P reference payload", security: [{ cookieAuth: [] }], parameters: [{ name: "ref", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "Details retrieved" } } }
+      },
+      "/admin/compliance/{ref}": {
+        get: { tags: ["Admins"], summary: "Compliance Check", description: "Admin review of flagged transfer", security: [{ cookieAuth: [] }], parameters: [{ name: "ref", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "Data retrieved" } } }
+      },
+      "/routing/health/{providerId}": {
+        get: { tags: ["Admins"], summary: "Provider Health", description: "Get deep health metrics for provider", security: [{ cookieAuth: [] }], parameters: [{ name: "providerId", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "Health retrieved" } } }
+      },
+      "/users/{id}": {
+        get: { tags: ["Admins"], summary: "Get User Data", description: "Get specific user profile (Admin)", security: [{ cookieAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "Profile retrieved" } } }
+      },
+      "/wallets": {
+        get: { tags: ["Users"], summary: "List All Wallets", description: "List all wallets belonging to user", security: [{ cookieAuth: [] }], responses: { 200: { description: "Wallets retrieved" } } }
+      },
+      "/wallets/history": {
+        get: { tags: ["Users"], summary: "Global Wallet History", description: "Transaction history for all wallets", security: [{ cookieAuth: [] }], responses: { 200: { description: "History retrieved" } } }
+      },
+      "/webhooks/endpoints/{id}/regenerate-secret": {
+        post: { tags: ["Merchants"], summary: "Regenerate Webhook Secret", description: "Roll the webhook singing secret", security: [{ cookieAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "Secret regenerated" } } }
+      },
+      "/schemas": {
+        get: { tags: ["Public"], summary: "OpenAPI JSON Definition", description: "Download dynamic OpenAPI schema natively", responses: { 200: { description: "Schema JSON" } } }
+      },
+      "/settlements/balance": {
+        get: { tags: ["Merchants"], summary: "Settlement Balance", description: "Check balance available for settling", security: [{ cookieAuth: [] }], responses: { 200: { description: "Balance retrieved" } } }
+      },
+      "/settlements/request": {
+        post: { tags: ["Merchants"], summary: "New Settlement Request", description: "Alias for requesting a new settlement", security: [{ cookieAuth: [] }], responses: { 200: { description: "Settlement registered" } } }
+      },
+      "/settlements/{id}": {
+        get: { tags: ["Merchants"], summary: "Get Settlement Details", description: "Get exact status of withdrawal", security: [{ cookieAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "Settlement retrieved" } } }
+      },
       "/transfers/p2p": {
         post: { tags: ["Users"], summary: "Peer-to-Peer Transfer", description: "Send funds directly to another user", security: [{ cookieAuth: [] }], responses: { 200: { description: "Transfer initiated" } } }
       },
