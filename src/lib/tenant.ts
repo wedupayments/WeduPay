@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 const DEFAULT_TENANT_SLUG = process.env.NEXT_PUBLIC_DEFAULT_TENANT_SLUG || "wedupay";
-const PLATFORM_HOSTS = new Set(["localhost", "127.0.0.1", "wedu-pay.vercel.app", "www.wedu-pay.vercel.app"]);
+const PLATFORM_HOSTS = new Set(["localhost", "127.0.0.1", "wedupay.com", "www.wedupay.com"]);
 const RESERVED_SUBDOMAINS = new Set(["www", "app"]);
 
 export interface TenantContext {
@@ -50,7 +50,7 @@ export function extractTenantSlugFromHost(hostname: string): string | null {
     return null;
   }
 
-  const rootDomain = stripPort(new URL(process.env.NEXT_PUBLIC_APP_URL || "https://wedu-pay.vercel.app").hostname);
+  const rootDomain = stripPort(new URL(process.env.NEXT_PUBLIC_APP_URL || "https://wedupay.com").hostname);
   if (normalizedHost.endsWith(`.${rootDomain}`)) {
     const subdomain = normalizedHost.slice(0, -(rootDomain.length + 1));
     if (!subdomain || RESERVED_SUBDOMAINS.has(subdomain)) {

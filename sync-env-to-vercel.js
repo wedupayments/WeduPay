@@ -31,7 +31,7 @@ const ENV_VARS = {
   SUPABASE_JWT_SECRET: 'yJShGAwdkXF93eif2GwkjokUibbEMYDh4WCPUT7e6UzJIJj47BxUmmBMkdw+8jFwX6UZHHsUr1h732m9VOhLfw==',
   
   // Application
-  NEXT_PUBLIC_APP_URL: 'https://wedu-pay.vercel.app',
+  NEXT_PUBLIC_APP_URL: 'https://wedupay.com',
   NODE_ENV: 'production',
   
   // Additional Supabase variables

@@ -100,10 +100,10 @@ The template files use generic placeholders like `{{verificationUrl}}`. Replace 
 
 In Supabase Dashboard → **Authentication** → **Settings**:
 
-1. **Site URL**: Set to `https://wedu-pay.vercel.app`
+1. **Site URL**: Set to `https://wedupay.com`
 2. **Redirect URLs**: Add:
-   - `https://wedu-pay.vercel.app/auth/callback`
-   - `https://wedu-pay.vercel.app/auth/reset-password`
+   - `https://wedupay.com/auth/callback`
+   - `https://wedupay.com/auth/reset-password`
    - `http://localhost:3000/auth/callback` (for local dev)
 3. **Email Auth**:
    - Enable email confirmations (toggle ON)
@@ -115,7 +115,7 @@ By default, Supabase sends emails via their shared service. For production:
 
 1. Go to **Project Settings** → **Email Templates** → **SMTP Configuration**
 2. Configure your own SMTP provider (SendGrid, Postmark, Resend, etc.)
-3. Set "Sender Email" to `noreply@wedu-pay.vercel.app` or your domain
+3. Set "Sender Email" to `noreply@wedupay.com` or your domain
 
 ## Quick Copy Commands
 
