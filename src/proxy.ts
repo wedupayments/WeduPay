@@ -182,7 +182,7 @@ export async function proxy(request: NextRequest) {
   const bearerToken = request.headers.get("authorization");
   const apiKey = request.headers.get("x-api-key");
 
-  if (isPublicPath(strippedPathname)) {
+  if (isPublicPath(strippedPathname) || (process.env.NODE_ENV === "development" && (strippedPathname === "/api/docs" || strippedPathname === "/api/docs.json"))) {
     const response = NextResponse.next();
     addSecurityHeaders(response);
     return applyTenantCookie(response);
