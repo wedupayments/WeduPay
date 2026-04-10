@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { createErrorResponse } from "@/lib/api-response";
 
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
@@ -81,26 +80,12 @@ export function rateLimitExceededResponse(result: RateLimitResult): NextResponse
 }
 
 export async function persistRateLimit(
-  identifier: string,
-  endpoint: string,
-  result: RateLimitResult
+  _identifier: string,
+  _endpoint: string,
+  _result: RateLimitResult
 ): Promise<void> {
-  try {
-    await prisma.auditLog.create({
-      data: {
-        action: "RATE_LIMIT_CHECK",
-        resource: endpoint,
-        details: JSON.stringify({
-          identifier,
-          allowed: result.allowed,
-          remaining: result.remaining,
-        }),
-        requestId: crypto.randomUUID(),
-      },
-    });
-  } catch {
-    // Silent fail - logging should not break requests
-  }
+  // Database logging is disabled in the Edge/Proxy layer for performance and security
+  return;
 }
 
 export function getClientIdentifier(request: Request): string {
