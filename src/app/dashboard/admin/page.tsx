@@ -20,13 +20,31 @@ interface AdminStats {
   providerHealth: Array<{ provider: string; status: string; uptime: number }>;
 }
 
+interface FXAdminStatus {
+  provider: string;
+  configured: boolean;
+  refreshed?: boolean;
+  trackedSymbols?: string[];
+  count: number;
+  latest: {
+    updatedAt: string;
+    validUntil: string | null;
+    baseCurrency: string;
+    targetCurrency: string;
+    rate: number;
+  } | null;
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats | null>(null);
+  const [fxStatus, setFxStatus] = useState<FXAdminStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshingFx, setIsRefreshingFx] = useState(false);
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
     loadStats();
+    loadFxStatus();
   }, []);
 
   const loadStats = async () => {
@@ -45,6 +63,41 @@ export default function AdminDashboard() {
       setError('Network error. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadFxStatus = async () => {
+    try {
+      const response = await fetch('/api/v1/admin/fx/refresh', { credentials: 'include' });
+      const data = await response.json();
+
+      if (data.success) {
+        setFxStatus(data.fx);
+      }
+    } catch (err) {
+      console.error('Load FX status error:', err);
+    }
+  };
+
+  const handleRefreshFx = async () => {
+    try {
+      setIsRefreshingFx(true);
+      const response = await fetch('/api/v1/admin/fx/refresh', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        setFxStatus(data.fx);
+      } else {
+        setError(data.error || 'Failed to refresh FX rates');
+      }
+    } catch (err) {
+      console.error('Refresh FX error:', err);
+      setError('Failed to refresh FX rates');
+    } finally {
+      setIsRefreshingFx(false);
     }
   };
 
@@ -143,6 +196,77 @@ export default function AdminDashboard() {
             </Link>
           </div>
         </div>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold mb-1">FX Rate Sync</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Warm Open Exchange Rates into the database for customer FX displays and transfer quotes.
+            </p>
+          </div>
+          <button
+            onClick={handleRefreshFx}
+            disabled={isRefreshingFx || !fxStatus?.configured}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-background-dark hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            <span className="material-symbols-outlined text-base">
+              {isRefreshingFx ? 'progress_activity' : 'sync'}
+            </span>
+            {isRefreshingFx ? 'Refreshing...' : 'Refresh FX Rates'}
+          </button>
+        </div>
+
+        <div className="mt-5 grid md:grid-cols-3 gap-4">
+          <div className="rounded-lg bg-slate-50 dark:bg-gray-700 p-4">
+            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Provider</p>
+            <p className="mt-2 font-semibold text-gray-900 dark:text-white">
+              {fxStatus?.provider || 'Open Exchange Rates'}
+            </p>
+          </div>
+          <div className="rounded-lg bg-slate-50 dark:bg-gray-700 p-4">
+            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Configuration</p>
+            <p className="mt-2 font-semibold text-gray-900 dark:text-white">
+              {fxStatus?.configured ? 'Configured' : 'Missing App ID'}
+            </p>
+          </div>
+          <div className="rounded-lg bg-slate-50 dark:bg-gray-700 p-4">
+            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Stored Live Pairs</p>
+            <p className="mt-2 font-semibold text-gray-900 dark:text-white">
+              {fxStatus?.count || 0}
+            </p>
+          </div>
+        </div>
+
+        {fxStatus?.latest && (
+          <div className="mt-4 rounded-lg border border-slate-200 dark:border-gray-700 p-4">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Latest stored pair:{" "}
+              <span className="font-semibold text-gray-900 dark:text-white">
+                {fxStatus.latest.baseCurrency}/{fxStatus.latest.targetCurrency}
+              </span>{" "}
+              at{" "}
+              <span className="font-semibold text-gray-900 dark:text-white">
+                {fxStatus.latest.rate.toFixed(4)}
+              </span>
+            </p>
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              Updated {new Date(fxStatus.latest.updatedAt).toLocaleString()}
+              {fxStatus.latest.validUntil
+                ? ` • Valid until ${new Date(fxStatus.latest.validUntil).toLocaleString()}`
+                : ''}
+            </p>
+          </div>
+        )}
+
+        {!fxStatus?.configured && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm text-amber-800">
+              Add <code>OPEN_EXCHANGE_RATES_APP_ID</code> to your environment before using live FX refresh.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Provider Health */}

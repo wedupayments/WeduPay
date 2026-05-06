@@ -7,6 +7,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { MoneyRoutingEngine, RoutingContext, RoutingDecision } from './money-routing-engine';
+import { ensureOpenExchangeRatesFresh, getOpenExchangeRatePair } from '@/lib/open-exchange-rates';
 
 const prisma = new PrismaClient();
 
@@ -376,11 +377,10 @@ export class CrossBorderRoutingEngine {
    * Fetch market exchange rate (placeholder - integrate with FX API)
    */
   private async fetchMarketRate(baseCurrency: string, targetCurrency: string): Promise<number> {
-    // In production, integrate with:
-    // - Fixer.io
-    // - ExchangeRate-API
-    // - Open Exchange Rates
-    // - Central bank APIs
+    const liveRate = await getOpenExchangeRatePair(baseCurrency, targetCurrency);
+    if (liveRate) {
+      return liveRate.rate;
+    }
 
     // Placeholder rates (should be fetched from real API)
     const rates: Record<string, number> = {
@@ -412,45 +412,24 @@ export class CrossBorderRoutingEngine {
   async updateExchangeRates(apiKey?: string): Promise<void> {
     console.log('[CrossBorderRouting] Updating exchange rates...');
 
-    // In production, fetch from FX API and update database
-    // Example with Fixer.io:
-    // const response = await fetch(`https://data.fixer.io/api/latest?access_key=${apiKey}`);
-    // const data = await response.json();
+    const synced = await ensureOpenExchangeRatesFresh([
+      'USD',
+      'EUR',
+      'KES',
+      'NGN',
+      'GHS',
+      'ZAR',
+      'TZS',
+      'UGX',
+      'ZMW',
+      'XOF',
+      'XAF',
+      'MZN',
+      'ZWL',
+    ]);
 
-    // For now, update with placeholder rates
-    const currencies = ['USD', 'EUR', 'KES', 'NGN', 'GHS', 'ZAR', 'TZS', 'UGX', 'ZMW', 'XOF'];
-
-    for (const currency of currencies) {
-      if (currency === 'USD') continue;
-
-      const rate = await this.fetchMarketRate('USD', currency);
-
-      await prisma.exchangeRate.upsert({
-        where: {
-          baseCurrency_targetCurrency_source_provider: {
-            baseCurrency: 'USD',
-            targetCurrency: currency,
-            source: 'market',
-            provider: '',
-          },
-        },
-        update: {
-          rate,
-          inverseRate: 1 / rate,
-          isValid: true,
-          updatedAt: new Date(),
-        },
-        create: {
-          baseCurrency: 'USD',
-          targetCurrency: currency,
-          rate,
-          inverseRate: 1 / rate,
-          source: 'market',
-          provider: '',
-          spread: 0.02,
-          margin: 0.01,
-        },
-      });
+    if (!synced) {
+      console.warn('[CrossBorderRouting] Open Exchange Rates is not configured, keeping fallback market rates');
     }
 
     console.log('[CrossBorderRouting] Exchange rates updated');

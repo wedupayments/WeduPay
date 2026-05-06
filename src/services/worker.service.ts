@@ -2,10 +2,31 @@ import { prisma } from "@/lib/prisma";
 import { exportService } from "./export.service";
 import { webhookService } from "./webhook.service";
 import { analyticsService } from "./analytics.service";
+import { ensureOpenExchangeRatesFresh } from "@/lib/open-exchange-rates";
+
+const FX_TRACKED_SYMBOLS = [
+  "USD",
+  "EUR",
+  "GBP",
+  "KES",
+  "NGN",
+  "GHS",
+  "ZAR",
+  "TZS",
+  "UGX",
+  "ZMW",
+  "XOF",
+  "XAF",
+  "MZN",
+  "ZWL",
+];
 
 export class WorkerService {
   private isRunning = false;
   private pollInterval = 5000; // 5 seconds
+  private lastFxRefreshCheckAt = 0;
+  private readonly fxRefreshCheckIntervalMs =
+    Number(process.env.FX_AUTO_REFRESH_INTERVAL_MINUTES || "30") * 60 * 1000;
 
   async start() {
     if (this.isRunning) return;
@@ -16,6 +37,7 @@ export class WorkerService {
       try {
         await this.processNextTask();
         await this.processWebhookRetries();
+        await this.refreshFxRatesIfNeeded();
         await new Promise(resolve => setTimeout(resolve, this.pollInterval));
       } catch (error) {
         console.error("[Worker] Loop error:", error);
@@ -80,6 +102,32 @@ export class WorkerService {
     for (const delivery of deliveries) {
       console.log(`[Worker] Retrying webhook delivery ${delivery.id} (Attempt ${delivery.attemptNumber})`);
       await webhookService.attemptDelivery(delivery.id);
+    }
+  }
+
+  async refreshFxRatesIfNeeded() {
+    if (process.env.FX_AUTO_REFRESH_ENABLED === "false") {
+      return;
+    }
+
+    const now = Date.now();
+    if (now - this.lastFxRefreshCheckAt < this.fxRefreshCheckIntervalMs) {
+      return;
+    }
+
+    this.lastFxRefreshCheckAt = now;
+
+    if (!process.env.OPEN_EXCHANGE_RATES_APP_ID) {
+      return;
+    }
+
+    try {
+      const refreshed = await ensureOpenExchangeRatesFresh(FX_TRACKED_SYMBOLS);
+      if (refreshed) {
+        console.log("[Worker] FX refresh check completed");
+      }
+    } catch (error) {
+      console.error("[Worker] FX auto-refresh failed:", error);
     }
   }
 

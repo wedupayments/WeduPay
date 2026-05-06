@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
+import { QuickFXCalculator } from "@/components/fx/QuickFXCalculator";
 
 interface MerchantLayoutProps {
   children: React.ReactNode;
@@ -118,6 +119,7 @@ export function MerchantLayout({ children, userName = "Merchant", userId = "0000
             <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">{title}</h1>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
+            <QuickFXCalculator compact className="hover:text-emerald-600" />
             <PWAInstallButton compact className="flex size-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:bg-slate-100 hover:text-emerald-600 dark:border-primary/20 dark:hover:bg-primary/10" />
             <button className="p-1.5 sm:p-2 rounded-full hover:bg-slate-100 dark:hover:bg-primary/10 text-slate-600 dark:text-slate-400 relative">
               <span className="material-symbols-outlined text-xl sm:text-2xl">notifications</span>

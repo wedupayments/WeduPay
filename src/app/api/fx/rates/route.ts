@@ -8,12 +8,15 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { ensureOpenExchangeRatesFresh, getOpenExchangeRatePair } from '@/lib/open-exchange-rates';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const from = searchParams.get('from');
     const to = searchParams.get('to');
+
+    await ensureOpenExchangeRatesFresh([from || "", to || ""]);
 
     // If specific currencies requested
     if (from && to) {
@@ -27,17 +30,37 @@ export async function GET(request: NextRequest) {
             { validUntil: { gte: new Date() } },
           ],
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: [
+          { updatedAt: 'desc' },
+          { createdAt: 'desc' },
+        ],
       });
 
       if (!rate) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: `Exchange rate not found for ${from}/${to}`,
+        const livePair = await getOpenExchangeRatePair(from, to);
+
+        if (!livePair) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `Exchange rate not found for ${from}/${to}`,
+            },
+            { status: 404 }
+          );
+        }
+
+        return NextResponse.json({
+          success: true,
+          rate: {
+            from: livePair.baseCurrency,
+            to: livePair.targetCurrency,
+            rate: livePair.rate,
+            inverseRate: livePair.inverseRate,
+            source: livePair.source,
+            provider: livePair.provider,
+            updatedAt: livePair.timestamp,
           },
-          { status: 404 }
-        );
+        });
       }
 
       return NextResponse.json({
@@ -48,6 +71,7 @@ export async function GET(request: NextRequest) {
           rate: rate.rate,
           inverseRate: rate.inverseRate,
           source: rate.source,
+          provider: rate.provider,
           updatedAt: rate.updatedAt,
         },
       });
@@ -76,6 +100,7 @@ export async function GET(request: NextRequest) {
           rate: rate.rate,
           inverseRate: rate.inverseRate,
           source: rate.source,
+          provider: rate.provider,
           updatedAt: rate.updatedAt,
         });
       }

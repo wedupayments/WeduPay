@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { ensureOpenExchangeRatesFresh, getOpenExchangeRatePair } from '@/lib/open-exchange-rates';
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,6 +41,8 @@ export async function GET(request: NextRequest) {
     const fromCurrency = from.toUpperCase();
     const toCurrency = to.toUpperCase();
 
+    await ensureOpenExchangeRatesFresh([fromCurrency, toCurrency]);
+
     // Same currency, no conversion needed
     if (fromCurrency === toCurrency) {
       return NextResponse.json({
@@ -67,17 +70,44 @@ export async function GET(request: NextRequest) {
           { validUntil: { gte: new Date() } },
         ],
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [
+        { updatedAt: 'desc' },
+        { createdAt: 'desc' },
+      ],
     });
 
     if (!rate) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Exchange rate not available for ${fromCurrency}/${toCurrency}`,
+      const livePair = await getOpenExchangeRatePair(fromCurrency, toCurrency);
+
+      if (!livePair) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Exchange rate not available for ${fromCurrency}/${toCurrency}`,
+          },
+          { status: 404 }
+        );
+      }
+
+      const convertedAmount = amount * livePair.rate;
+      const fee = convertedAmount * 0.015;
+      const totalAmount = convertedAmount + fee;
+
+      return NextResponse.json({
+        success: true,
+        conversion: {
+          from: fromCurrency,
+          to: toCurrency,
+          amount,
+          convertedAmount: parseFloat(convertedAmount.toFixed(2)),
+          rate: livePair.rate,
+          fee: parseFloat(fee.toFixed(2)),
+          totalAmount: parseFloat(totalAmount.toFixed(2)),
+          source: livePair.source,
+          provider: livePair.provider,
+          updatedAt: livePair.timestamp,
         },
-        { status: 404 }
-      );
+      });
     }
 
     // Calculate conversion
@@ -96,6 +126,7 @@ export async function GET(request: NextRequest) {
         fee: parseFloat(fee.toFixed(2)),
         totalAmount: parseFloat(totalAmount.toFixed(2)),
         source: rate.source,
+        provider: rate.provider,
         updatedAt: rate.updatedAt,
       },
     });

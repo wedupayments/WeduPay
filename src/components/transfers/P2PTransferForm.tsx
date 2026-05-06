@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { QuickFXCalculator } from '@/components/fx/QuickFXCalculator';
 
 interface Quote {
   sendAmount: number;
@@ -186,6 +187,7 @@ export default function P2PTransferForm() {
   const getCountryByCode = (code: string) => COUNTRIES.find(c => c.code === code);
   const getSendCountry = () => getCountryByCode('KE'); // Default sender country (would be from user profile)
   const getRecipientCountry = () => getCountryByCode(recipientCountry);
+  const recipientCurrency = getRecipientCountry()?.currency || 'USD';
 
   return (
     <div className="max-w-2xl mx-auto p-6">
@@ -234,7 +236,15 @@ export default function P2PTransferForm() {
 
           {/* Send Amount */}
           <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">Amount to Send</label>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <label className="block text-sm font-medium">Amount to Send</label>
+              <QuickFXCalculator
+                initialFromCurrency={sendCurrency}
+                initialToCurrency={recipientCurrency}
+                initialAmount={sendAmount}
+                triggerLabel="Preview FX"
+              />
+            </div>
             <div className="flex gap-2">
               <input
                 type="number"

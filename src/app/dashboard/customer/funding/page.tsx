@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { MobileMoneyPayment, PaymentProvider } from "@/components/MobileMoneyPayment";
+import { FXSnapshot } from "@/components/fx/FXSnapshot";
+import { QuickFXCalculator } from "@/components/fx/QuickFXCalculator";
 import { useToast } from "@/components/ui/Toast";
 
 interface Wallet {
@@ -200,6 +202,11 @@ export default function WalletFundingPage() {
         </p>
       </div>
 
+      <FXSnapshot
+        title={`${selectedCurrency} FX Guide`}
+        subtitle={`Current exchange rates for quick reference while funding your ${selectedCurrency} wallet. Rates in the final payment flow can still vary slightly at confirmation time.`}
+      />
+
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         <div className="bg-white dark:bg-background-dark rounded-xl sm:rounded-2xl border border-slate-200 dark:border-primary/10 p-4 sm:p-6 space-y-4 sm:space-y-6 shadow-sm">
           <div>
@@ -310,6 +317,14 @@ export default function WalletFundingPage() {
                   {preset} {selectedCurrency}
                 </button>
               ))}
+            </div>
+            <div className="mt-3 flex justify-end">
+              <QuickFXCalculator
+                initialFromCurrency="USD"
+                initialToCurrency={selectedCurrency}
+                initialAmount={amount || "100"}
+                triggerLabel={`Quick FX to ${selectedCurrency}`}
+              />
             </div>
           </div>
         </div>

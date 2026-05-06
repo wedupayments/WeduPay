@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { StatsGrid } from "@/components/dashboard/StatsGrid";
 import { PaymentReferencesSection } from "@/components/dashboard/PaymentReferences";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
+import { FXSnapshot } from "@/components/fx/FXSnapshot";
 import Link from "next/link";
 
 interface DashboardData {
@@ -84,6 +85,8 @@ export default function CustomerDashboardPage() {
       </div>
 
       <StatsGrid stats={data?.stats} />
+
+      <FXSnapshot />
 
       <PaymentReferencesSection references={data?.references} />
 
