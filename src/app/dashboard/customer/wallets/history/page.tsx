@@ -7,10 +7,15 @@ import { useToast } from "@/components/ui/Toast";
 interface WalletTransaction {
   id: string;
   type: string;
+  description?: string | null;
   amount: number;
   currency: string;
   status: string;
+  provider?: string | null;
   reference: string;
+  sourceReference?: string | null;
+  providerReference?: string | null;
+  walletCredited?: boolean;
   createdAt: string;
 }
 
@@ -101,16 +106,35 @@ export default function WalletHistoryPage() {
               <tbody className="divide-y divide-slate-100 dark:divide-primary/5">
                 {transactions.map((transaction) => (
                   <tr key={transaction.id} className="text-sm text-slate-700 dark:text-slate-300">
-                    <td className="px-4 py-4 font-medium">{transaction.type.replace("_", " ")}</td>
-                    <td className="px-4 py-4">{transaction.reference}</td>
+                    <td className="px-4 py-4 font-medium">
+                      <div className="flex flex-col">
+                        <span>{transaction.description || transaction.type.replaceAll("_", " ")}</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">{transaction.provider || "Manual"}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex flex-col">
+                        <span>{transaction.reference}</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {transaction.providerReference || transaction.sourceReference || "No provider ref yet"}
+                        </span>
+                      </div>
+                    </td>
                     <td className="px-4 py-4">{new Date(transaction.createdAt).toLocaleString()}</td>
                     <td className="px-4 py-4 text-right font-semibold">
                       {transaction.amount.toFixed(2)} {transaction.currency}
                     </td>
                     <td className="px-4 py-4 text-right">
-                      <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                        {transaction.status}
-                      </span>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                          {transaction.status}
+                        </span>
+                        {transaction.provider === "ECOCASH" && (
+                          <span className={`text-[11px] ${transaction.walletCredited ? "text-primary" : "text-slate-500 dark:text-slate-400"}`}>
+                            {transaction.walletCredited ? "Wallet credited" : "Not credited yet"}
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

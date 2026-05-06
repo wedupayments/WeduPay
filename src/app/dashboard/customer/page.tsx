@@ -26,6 +26,7 @@ interface DashboardData {
     date: string;
     amount: string;
     status: "Verified" | "Pending" | "Processing" | "Failed";
+    detail?: string | null;
   }>;
   user: {
     name: string;

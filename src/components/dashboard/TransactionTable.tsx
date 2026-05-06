@@ -8,6 +8,7 @@ interface Transaction {
   date: string;
   amount: string;
   status: "Verified" | "Pending" | "Processing" | "Failed";
+  detail?: string | null;
 }
 
 interface TransactionRowProps {
@@ -33,7 +34,10 @@ function TransactionRow({ transaction }: TransactionRowProps) {
       <td className="px-6 py-4">
         <div className="flex flex-col">
           <span className="font-bold text-sm text-slate-900 dark:text-white">{transaction.merchant}</span>
-          <span className="text-xs text-slate-500 dark:text-slate-400">{transaction.purpose} • {transaction.term}</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {transaction.purpose} • {transaction.term}
+            {transaction.detail ? ` • ${transaction.detail}` : ""}
+          </span>
         </div>
       </td>
       <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{transaction.date}</td>

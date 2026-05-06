@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateRequest, requireAuth, requireAppUser } from "@/lib/auth";
 
+type TransactionMetadata = {
+  provider?: string;
+  description?: string;
+  sourceReference?: string;
+  ecocashReference?: string;
+  credited?: boolean;
+};
+
 /**
  * @swagger
  * /api/transactions:
@@ -120,16 +128,24 @@ export async function GET(request: Request) {
       prisma.transaction.count({ where }),
     ]);
 
-    const formattedTransactions = transactions.map((tx) => ({
-      id: tx.id,
-      amount: tx.amount,
-      currency: tx.currency,
-      status: tx.status,
-      type: tx.type,
-      reference: tx.reference,
-      createdAt: tx.createdAt,
-      user: tx.user,
-    }));
+    const formattedTransactions = transactions.map((tx) => {
+      const metadata = (tx.metadata || {}) as TransactionMetadata;
+      return {
+        id: tx.id,
+        amount: tx.amount,
+        currency: tx.currency,
+        status: tx.status,
+        type: tx.type,
+        description: metadata.description || null,
+        provider: metadata.provider || null,
+        reference: tx.reference,
+        sourceReference: metadata.sourceReference || null,
+        providerReference: metadata.ecocashReference || null,
+        walletCredited: metadata.credited === true,
+        createdAt: tx.createdAt,
+        user: tx.user,
+      };
+    });
 
     return NextResponse.json({
       transactions: formattedTransactions,

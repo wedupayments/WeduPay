@@ -53,6 +53,14 @@ import { authenticateRequest, requireAuth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
+type TransactionMetadata = {
+  provider?: string;
+  description?: string;
+  sourceReference?: string;
+  ecocashReference?: string;
+  credited?: boolean;
+};
+
 /**
  * Query validation schema
  */
@@ -142,10 +150,15 @@ export async function GET(request: NextRequest) {
       transactions: transactions.map(t => ({
         id: t.id,
         type: t.type,
+        description: ((t.metadata || {}) as TransactionMetadata).description || null,
         amount: t.amount,
         currency: t.currency,
         status: t.status,
+        provider: ((t.metadata || {}) as TransactionMetadata).provider || null,
         reference: t.reference,
+        sourceReference: ((t.metadata || {}) as TransactionMetadata).sourceReference || null,
+        providerReference: ((t.metadata || {}) as TransactionMetadata).ecocashReference || null,
+        walletCredited: ((t.metadata || {}) as TransactionMetadata).credited === true,
         createdAt: t.createdAt,
       })),
       pagination: {

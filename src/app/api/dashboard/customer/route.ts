@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateRequest, requireAuth, requireAppUser } from "@/lib/auth";
 
+type TransactionMetadata = {
+  provider?: string;
+  description?: string;
+  sourceReference?: string;
+  ecocashReference?: string;
+  credited?: boolean;
+};
+
 export async function GET(request: Request) {
   try {
     const auth = await authenticateRequest(request);
@@ -43,15 +51,25 @@ export async function GET(request: Request) {
       ? user.transactions[0].reference
       : "None";
 
-    const transactions = user.transactions.map((tx) => ({
+    const transactions = user.transactions.map((tx) => {
+      const metadata = (tx.metadata || {}) as TransactionMetadata;
+      return {
       id: tx.id,
       merchant: tx.reference,
-      purpose: tx.type,
+      purpose: metadata.description || tx.type,
       term: new Date(tx.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
       date: new Date(tx.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
       amount: `$${tx.amount.toFixed(2)}`,
       status: tx.status === "COMPLETED" ? "Verified" : tx.status === "PENDING" ? "Pending" : tx.status === "FAILED" ? "Failed" : "Processing",
-    }));
+      provider: metadata.provider || null,
+      sourceReference: metadata.sourceReference || null,
+      providerReference: metadata.ecocashReference || null,
+      walletCredited: metadata.credited === true,
+      detail: metadata.provider
+        ? `${metadata.provider}${metadata.credited === true ? " • Wallet credited" : tx.status === "PENDING" ? " • Awaiting confirmation" : ""}`
+        : null,
+      };
+    });
 
     const references = user.references.map((ref) => ({
       id: ref.id,
