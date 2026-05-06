@@ -46,6 +46,7 @@ export const PROVIDERS: PaymentProviderConfig[] = [
 
 interface MobileMoneyPaymentProps {
   amount: number;
+  currency?: string;
   walletId?: string | null;
   provider?: PaymentProvider;
   onSuccess: (transactionId: string, provider: PaymentProvider) => void;
@@ -55,6 +56,7 @@ interface MobileMoneyPaymentProps {
 
 export function MobileMoneyPayment({
   amount,
+  currency = "USD",
   walletId,
   provider: initialProvider = "ecocash",
   onSuccess,
@@ -104,7 +106,7 @@ export function MobileMoneyPayment({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount,
-          currency: "USD",
+          currency,
           phoneNumber: digits,
           walletId,
           description: "WeduPay Wallet Funding",
@@ -210,7 +212,9 @@ export function MobileMoneyPayment({
         <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 space-y-3 border border-slate-200 dark:border-slate-700">
           <div className="flex justify-between text-sm">
             <span className="text-slate-500 dark:text-slate-400">Amount</span>
-            <span className="font-bold text-slate-900 dark:text-white">${amount.toFixed(2)}</span>
+            <span className="font-bold text-slate-900 dark:text-white">
+              {amount.toFixed(2)} {currency}
+            </span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-slate-500 dark:text-slate-400">Phone</span>
@@ -354,7 +358,7 @@ export function MobileMoneyPayment({
             <div className="flex justify-between items-center">
               <span className="text-slate-600 dark:text-slate-400 font-medium">Amount to Pay</span>
               <span className="text-2xl font-black text-slate-900 dark:text-white">
-                ${amount.toFixed(2)}
+                {amount.toFixed(2)} {currency}
               </span>
             </div>
           </div>
@@ -394,7 +398,7 @@ export function MobileMoneyPayment({
               ) : (
                 <>
                   <span className="material-symbols-outlined">send</span>
-                  Pay ${amount.toFixed(2)}
+                  Pay {amount.toFixed(2)} {currency}
                 </>
               )}
             </button>

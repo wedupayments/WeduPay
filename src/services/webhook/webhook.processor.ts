@@ -568,6 +568,9 @@ async function updateTransactionStatus(
           { reference },
           { metadata: { path: ['sourceReference'], equals: reference } },
           { metadata: { path: ['ecocashReference'], equals: reference } },
+          { metadata: { path: ['checkoutRequestId'], equals: reference } },
+          { metadata: { path: ['merchantRequestId'], equals: reference } },
+          { metadata: { path: ['transactionReceipt'], equals: reference } },
         ],
       },
     });

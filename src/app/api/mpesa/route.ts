@@ -1,12 +1,111 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { mpesaAPI } from "@/lib/mpesa";
 import { createErrorResponse } from "@/lib/api-response";
+import { authenticateRequest, requireAuth, requireAppUser } from "@/lib/auth";
+
+type MpesaTransactionMetadata = {
+  provider: "MPESA";
+  phoneNumber: string;
+  walletId?: string;
+  description?: string;
+  merchantRequestId?: string;
+  checkoutRequestId?: string;
+  transactionReceipt?: string;
+  credited?: boolean;
+  providerResponse?: unknown;
+};
+
+function toJson(value: unknown): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(value ?? {})) as Prisma.InputJsonValue;
+}
+
+async function completeTransactionAndCreditWallet(transactionId: string, metadata: MpesaTransactionMetadata) {
+  await prisma.$transaction(async (tx) => {
+    const current = await tx.transaction.findUnique({
+      where: { id: transactionId },
+    });
+
+    if (!current) {
+      return;
+    }
+
+    const currentMetadata = (current.metadata || {}) as MpesaTransactionMetadata;
+    if (currentMetadata.credited || !currentMetadata.walletId) {
+      await tx.transaction.update({
+        where: { id: transactionId },
+        data: {
+          status: "COMPLETED",
+          metadata: toJson({
+            ...currentMetadata,
+            ...metadata,
+            credited: currentMetadata.credited || false,
+          }),
+        },
+      });
+      return;
+    }
+
+    const wallet = await tx.wallet.findFirst({
+      where: {
+        id: currentMetadata.walletId,
+        userId: current.userId,
+        currency: current.currency,
+      },
+    });
+
+    if (!wallet) {
+      await tx.transaction.update({
+        where: { id: transactionId },
+        data: {
+          status: "COMPLETED",
+          metadata: toJson({
+            ...currentMetadata,
+            ...metadata,
+            credited: false,
+            creditError: "Wallet not found for completed M-Pesa transaction",
+          }),
+        },
+      });
+      return;
+    }
+
+    await tx.wallet.update({
+      where: { id: wallet.id },
+      data: { balance: { increment: current.amount } },
+    });
+
+    await tx.transaction.update({
+      where: { id: transactionId },
+      data: {
+        status: "COMPLETED",
+        metadata: toJson({
+          ...currentMetadata,
+          ...metadata,
+          credited: true,
+          creditedAt: new Date().toISOString(),
+        }),
+      },
+    });
+  });
+}
 
 export async function POST(request: Request) {
   try {
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) {
+      return authError;
+    }
+    const profileError = requireAppUser(auth);
+    if (profileError) {
+      return profileError;
+    }
+    const userId = auth.userId!;
+
     const body = await request.json();
-    const { amount, phoneNumber, description } = body;
+    const { amount, currency = "KES", phoneNumber, description, walletId } = body;
 
     if (!amount || amount <= 0) {
       const error = createErrorResponse(
@@ -28,17 +127,52 @@ export async function POST(request: Request) {
       return NextResponse.json(error.body, { status: error.status });
     }
 
+    if (currency !== "KES") {
+      const error = createErrorResponse(
+        "INVALID_CURRENCY",
+        "Safaricom M-Pesa wallet funding currently supports KES only",
+        undefined,
+        400
+      );
+      return NextResponse.json(error.body, { status: error.status });
+    }
+
+    let wallet = null;
+    if (walletId) {
+      wallet = await prisma.wallet.findFirst({
+        where: { id: walletId, userId, currency },
+      });
+
+      if (!wallet) {
+        const error = createErrorResponse(
+          "WALLET_NOT_FOUND",
+          "Wallet not found for this user and currency",
+          undefined,
+          404
+        );
+        return NextResponse.json(error.body, { status: error.status });
+      }
+    }
+
     const transactionReference = `MP-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/webhooks/mpesa`;
+    const callbackUrl = mpesaAPI.getCallbackUrl();
+    const formattedPhone = mpesaAPI.formatPhoneNumber(phoneNumber);
 
     const transaction = await prisma.transaction.create({
       data: {
-        userId: "system",
+        userId,
         amount,
-        currency: "USD",
+        currency,
         status: "PENDING",
-        type: "PAYMENT",
+        type: wallet ? "WALLET_FUNDING" : "PAYMENT",
         reference: transactionReference,
+        metadata: toJson({
+          provider: "MPESA",
+          phoneNumber: formattedPhone,
+          walletId: wallet?.id,
+          description: description || "WeduPay Wallet Funding",
+          credited: false,
+        } satisfies MpesaTransactionMetadata),
       },
     });
 
@@ -65,6 +199,24 @@ export async function POST(request: Request) {
       return NextResponse.json(error.body, { status: error.status });
     }
 
+    const nextMetadata: MpesaTransactionMetadata = {
+      provider: "MPESA",
+      phoneNumber: formattedPhone,
+      walletId: wallet?.id,
+      description: description || "WeduPay Wallet Funding",
+      merchantRequestId: mpesaResponse.merchantRequestId,
+      checkoutRequestId: mpesaResponse.checkoutRequestId,
+      credited: false,
+      providerResponse: mpesaResponse.raw,
+    };
+
+    await prisma.transaction.update({
+      where: { id: transaction.id },
+      data: {
+        metadata: toJson(nextMetadata),
+      },
+    });
+
     await prisma.webhookEvent.create({
       data: {
         provider: "MPESA",
@@ -87,6 +239,7 @@ export async function POST(request: Request) {
           reference: transaction.reference,
           checkoutRequestId: mpesaResponse.checkoutRequestId,
           merchantRequestId: mpesaResponse.merchantRequestId,
+          walletId: wallet?.id,
           createdAt: transaction.createdAt,
         },
         _links: {
@@ -129,7 +282,7 @@ export async function GET(request: Request) {
             type: "provider-info",
             attributes: {
               name: "M-Pesa",
-              supportedCurrencies: ["USD", "KES"],
+              supportedCurrencies: ["KES"],
               minAmount: 1,
               maxAmount: 150000,
               description: "M-Pesa is a mobile money service by Safaricom Kenya",

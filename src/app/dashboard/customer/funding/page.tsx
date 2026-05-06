@@ -16,11 +16,12 @@ interface PaymentModalProps {
   onClose: () => void;
   provider: PaymentProvider;
   amount: number;
+  currency: string;
   walletId: string | null;
   onSuccess: () => void;
 }
 
-function PaymentModal({ isOpen, onClose, provider, amount, walletId, onSuccess }: PaymentModalProps) {
+function PaymentModal({ isOpen, onClose, provider, amount, currency, walletId, onSuccess }: PaymentModalProps) {
   if (!isOpen) return null;
 
   const handleSuccess = (transactionId: string) => {
@@ -38,6 +39,7 @@ function PaymentModal({ isOpen, onClose, provider, amount, walletId, onSuccess }
       <div className="w-full max-w-md">
         <MobileMoneyPayment
           amount={amount}
+          currency={currency}
           walletId={walletId}
           provider={provider}
           onSuccess={handleSuccess}
@@ -83,6 +85,10 @@ export default function WalletFundingPage() {
     },
   ];
 
+  const selectedWalletDetails = wallets.find((wallet) => wallet.id === selectedWallet) || null;
+  const selectedCurrency = selectedWalletDetails?.currency || "USD";
+  const selectedProviderDetails = providers.find((provider) => provider.id === selectedProvider) || null;
+
   useEffect(() => {
     fetch("/api/wallets")
       .then((res) => {
@@ -113,7 +119,15 @@ export default function WalletFundingPage() {
     }
 
     if (amountNum > 100000) {
-      toast.error("Amount Too Large", "Maximum amount is $100,000");
+      toast.error("Amount Too Large", `Maximum amount is 100,000 ${selectedCurrency}`);
+      return;
+    }
+
+    if (selectedProvider === "mpesa" && selectedCurrency !== "KES") {
+      toast.error(
+        "Unsupported Wallet Currency",
+        "Safaricom M-Pesa funding is currently available for KES wallets only."
+      );
       return;
     }
 
@@ -124,7 +138,10 @@ export default function WalletFundingPage() {
     if (!selectedWallet || !selectedProvider) return;
     try {
       setSubmitting(true);
-      toast.success("Payment Successful", `EcoCash confirmed and funded your wallet with $${amount}`);
+      toast.success(
+        "Payment Successful",
+        `${selectedProviderDetails?.name || "Mobile money"} confirmed and funded your wallet with ${amount} ${selectedCurrency}`
+      );
       setAmount("");
       setSelectedProvider(null);
       setShowPaymentModal(false);
@@ -268,8 +285,8 @@ export default function WalletFundingPage() {
               Amount to Fund
             </label>
             <div className="relative">
-              <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-base sm:text-lg">
-                $
+              <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-sm sm:text-base">
+                {selectedCurrency}
               </span>
               <input
                 type="number"
@@ -279,7 +296,7 @@ export default function WalletFundingPage() {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="w-full pl-8 sm:pl-10 pr-4 py-2.5 sm:py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-background-dark text-slate-900 dark:text-white text-base sm:text-lg font-bold focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                className="w-full pl-14 sm:pl-16 pr-4 py-2.5 sm:py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-background-dark text-slate-900 dark:text-white text-base sm:text-lg font-bold focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
               />
             </div>
             <div className="flex gap-2 mt-3">
@@ -290,7 +307,7 @@ export default function WalletFundingPage() {
                   onClick={() => setAmount(preset.toString())}
                   className="flex-1 px-3 sm:px-4 py-2 rounded-lg bg-slate-100 dark:bg-primary/10 text-slate-700 dark:text-slate-300 text-sm font-bold hover:bg-primary/20 transition-colors"
                 >
-                  ${preset}
+                  {preset} {selectedCurrency}
                 </button>
               ))}
             </div>
@@ -307,6 +324,17 @@ export default function WalletFundingPage() {
           </p>
         </div>
 
+        {selectedProvider === "mpesa" && selectedCurrency !== "KES" && (
+          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3 sm:p-4 flex items-start gap-2 sm:gap-3 border border-amber-200 dark:border-amber-800">
+            <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 shrink-0 text-lg sm:text-xl">
+              warning
+            </span>
+            <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-200">
+              Safaricom M-Pesa wallet funding currently supports KES wallets only. Select a KES wallet or choose another provider.
+            </p>
+          </div>
+        )}
+
         <button
           type="submit"
           disabled={!selectedProvider || !amount || submitting}
@@ -322,6 +350,7 @@ export default function WalletFundingPage() {
         onClose={() => setShowPaymentModal(false)}
         provider={selectedProvider || "ecocash"}
         amount={parseFloat(amount) || 0}
+        currency={selectedCurrency}
         walletId={selectedWallet}
         onSuccess={handlePaymentSuccess}
       />

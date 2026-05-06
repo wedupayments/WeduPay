@@ -51,6 +51,21 @@ export async function POST(request: NextRequest) {
   console.log(`[MpesaWebhook] ${requestId} - Received webhook`);
 
   try {
+    const configuredSecret = process.env.MPESA_WEBHOOK_SECRET;
+    const signature =
+      request.headers.get('x-mpesa-signature') ||
+      request.headers.get('x-signature') ||
+      request.headers.get('authorization') ||
+      undefined;
+
+    if (configuredSecret && signature !== configuredSecret && signature !== `Bearer ${configuredSecret}`) {
+      console.error(`[MpesaWebhook] ${requestId} - Invalid webhook secret`);
+      return NextResponse.json(
+        { received: false, error: 'Invalid webhook signature' },
+        { status: 401 }
+      );
+    }
+
     // Parse request body
     const body = await request.json();
 
