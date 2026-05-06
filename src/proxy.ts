@@ -68,7 +68,10 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-XSS-Protection", "1; mode=block");
-  response.headers.set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://wedupay.com; connect-src 'self' https://*.supabase.co;");
+  response.headers.set(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://*.supabase.co https:;"
+  );
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
   response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
@@ -219,6 +222,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|images|icons).*)",
+    // Exclude Next.js internals and common static asset file extensions so public assets
+    // (e.g. /logo.svg, /images/*) are served without going through the auth/rate-limit proxy.
+    "/((?!_next/static|_next/image|favicon.ico|images|icons|.*\\.(?:png|jpg|jpeg|svg|webp|avif|gif|css|js|map)).*)",
   ],
 };

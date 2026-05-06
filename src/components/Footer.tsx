@@ -12,6 +12,7 @@ export function Footer() {
               alt="WeduPay"
               width={164}
               height={48}
+              loading="eager"
               className="h-10 w-auto"
             />
           </div>

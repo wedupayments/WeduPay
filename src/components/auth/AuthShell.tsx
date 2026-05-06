@@ -35,6 +35,7 @@ export function AuthShell({
               width={184}
               height={54}
               priority
+              loading="eager"
               className="h-12 w-auto"
             />
           </div>
