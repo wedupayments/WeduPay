@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { VercelAnalytics } from "@/components/VercelAnalytics";
 import { Providers } from "@/app/providers";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 
 // Force dynamic rendering to avoid static generation issues with context
 export const dynamic = 'force-dynamic';
@@ -18,6 +20,7 @@ const metadataBase = new URL(appUrl);
 export const metadata: Metadata = {
   metadataBase,
   applicationName: "WeduPay",
+  manifest: "/manifest.webmanifest",
   title: "WeduPay | Secure Payment Routing for Africa and Beyond",
   description: "Secure payment routing for mobile wallets in Africa and beyond",
   keywords: [
@@ -58,6 +61,12 @@ export const metadata: Metadata = {
   other: {
     "msapplication-TileImage": "/logo-slack.png",
     "msapplication-TileColor": "#102219",
+    "mobile-web-app-capable": "yes",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "WeduPay",
   },
 };
 
@@ -69,13 +78,16 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="theme-color" content="#102219" />
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
       </head>
       <body className={`${inter.variable} bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display`}>
         <Providers>
           {children}
+          <PWAInstallPrompt />
+          <ServiceWorkerRegistration />
           <VercelAnalytics />
         </Providers>
       </body>

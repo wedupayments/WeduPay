@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { PWAInstallButton } from "@/components/PWAInstallButton";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -74,6 +75,7 @@ export function Navbar() {
       {/* Desktop actions */}
       <div className="hidden md:flex gap-3 items-center">
         <ThemeToggle />
+        <PWAInstallButton />
         <Link href="/auth/login" className="flex items-center justify-center rounded-lg h-10 px-4 bg-primary/10 text-primary border border-primary/20 text-sm font-bold hover:bg-primary/20 transition-colors">
           Login
         </Link>
@@ -113,6 +115,7 @@ export function Navbar() {
           </nav>
           <div className="flex flex-col gap-3 p-4 border-t border-slate-200 dark:border-primary/20">
             <ThemeToggle />
+            <PWAInstallButton className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-base font-black text-background-dark shadow-lg shadow-primary/20" />
             <Link 
               href="/auth/login" 
               className="flex items-center justify-center rounded-lg h-12 px-4 bg-slate-100 dark:bg-primary/10 text-slate-700 dark:text-primary text-base font-semibold hover:bg-slate-200 dark:hover:bg-primary/20 transition-colors"
