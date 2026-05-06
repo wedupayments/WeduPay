@@ -46,6 +46,7 @@ export const PROVIDERS: PaymentProviderConfig[] = [
 
 interface MobileMoneyPaymentProps {
   amount: number;
+  walletId?: string | null;
   provider?: PaymentProvider;
   onSuccess: (transactionId: string, provider: PaymentProvider) => void;
   onError: (error: string) => void;
@@ -54,6 +55,7 @@ interface MobileMoneyPaymentProps {
 
 export function MobileMoneyPayment({
   amount,
+  walletId,
   provider: initialProvider = "ecocash",
   onSuccess,
   onError,
@@ -66,6 +68,7 @@ export function MobileMoneyPayment({
   const [success, setSuccess] = useState(false);
   const [instructions, setInstructions] = useState<string[]>([]);
   const [transactionId, setTransactionId] = useState<string | null>(null);
+  const [statusUrl, setStatusUrl] = useState<string | null>(null);
   const [showProviderSelector, setShowProviderSelector] = useState(false);
 
   const currentProvider = PROVIDERS.find((p) => p.id === selectedProvider)!;
@@ -103,6 +106,7 @@ export function MobileMoneyPayment({
           amount,
           currency: "USD",
           phoneNumber: digits,
+          walletId,
           description: "WeduPay Wallet Funding",
         }),
       });
@@ -120,13 +124,16 @@ export function MobileMoneyPayment({
         "Wait for confirmation",
       ]);
       setTransactionId(data.data?.id);
+      setStatusUrl(data.data?._links?.status?.href || null);
 
       if (data.data?.attributes?.status === "COMPLETED") {
         onSuccess(data.data.id, selectedProvider);
       } else {
-        setTimeout(() => {
-          onSuccess(data.data?.id, selectedProvider);
-        }, 3000);
+        void pollPaymentStatus(
+          data.data?._links?.status?.href,
+          data.data?.id,
+          selectedProvider
+        );
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Payment failed";
@@ -135,6 +142,45 @@ export function MobileMoneyPayment({
     } finally {
       setLoading(false);
     }
+  };
+
+  const pollPaymentStatus = async (
+    href: string | undefined,
+    initiatedTransactionId: string | undefined,
+    provider: PaymentProvider
+  ) => {
+    if (!href || !initiatedTransactionId) {
+      return;
+    }
+
+    for (let attempt = 0; attempt < 24; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+
+      try {
+        const response = await fetch(href);
+        const data = await response.json();
+        const status = data.data?.attributes?.status;
+
+        if (status === "COMPLETED") {
+          onSuccess(initiatedTransactionId, provider);
+          return;
+        }
+
+        if (status === "FAILED" || status === "CANCELLED") {
+          const errorMessage = data.data?.attributes?.providerStatus || "Payment was not completed";
+          setError(errorMessage);
+          onError(errorMessage);
+          return;
+        }
+      } catch (err) {
+        console.error("Payment status polling failed:", err);
+      }
+    }
+
+    setInstructions((current) => [
+      ...current,
+      "Confirmation is taking longer than usual. You can close this and check your wallet history shortly.",
+    ]);
   };
 
   const handleProviderChange = (newProvider: PaymentProvider) => {
@@ -196,6 +242,11 @@ export function MobileMoneyPayment({
         {transactionId && (
           <p className="text-xs text-slate-400 dark:text-slate-500 text-center font-mono">
             ID: {transactionId}
+          </p>
+        )}
+        {statusUrl && (
+          <p className="text-xs text-slate-400 dark:text-slate-500 text-center">
+            This screen will update when the provider confirms payment.
           </p>
         )}
 

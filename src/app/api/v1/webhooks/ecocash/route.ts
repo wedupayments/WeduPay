@@ -42,10 +42,25 @@ export async function POST(request: NextRequest) {
   console.log(`[EcoCashWebhook] ${requestId} - Received webhook`);
 
   try {
+    const configuredSecret = process.env.ECOCASH_WEBHOOK_SECRET;
+    const signature =
+      request.headers.get('x-ecocash-signature') ||
+      request.headers.get('x-signature') ||
+      request.headers.get('authorization') ||
+      undefined;
+
+    if (configuredSecret && signature !== configuredSecret && signature !== `Bearer ${configuredSecret}`) {
+      console.error(`[EcoCashWebhook] ${requestId} - Invalid webhook secret`);
+      return NextResponse.json(
+        { received: false, error: 'Invalid webhook signature' },
+        { status: 401 }
+      );
+    }
+
     // Parse request body
     const body = await request.json();
 
-    if (!body || !body.transactionId) {
+    if (!body || !(body.transactionId || body.reference || body.ecocashReference)) {
       console.error(`[EcoCashWebhook] ${requestId} - Invalid payload structure`);
       return NextResponse.json(
         { received: false, error: 'Invalid payload' },

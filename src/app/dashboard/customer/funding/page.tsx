@@ -16,10 +16,11 @@ interface PaymentModalProps {
   onClose: () => void;
   provider: PaymentProvider;
   amount: number;
+  walletId: string | null;
   onSuccess: () => void;
 }
 
-function PaymentModal({ isOpen, onClose, provider, amount, onSuccess }: PaymentModalProps) {
+function PaymentModal({ isOpen, onClose, provider, amount, walletId, onSuccess }: PaymentModalProps) {
   if (!isOpen) return null;
 
   const handleSuccess = (transactionId: string) => {
@@ -37,6 +38,7 @@ function PaymentModal({ isOpen, onClose, provider, amount, onSuccess }: PaymentM
       <div className="w-full max-w-md">
         <MobileMoneyPayment
           amount={amount}
+          walletId={walletId}
           provider={provider}
           onSuccess={handleSuccess}
           onError={handleError}
@@ -122,14 +124,7 @@ export default function WalletFundingPage() {
     if (!selectedWallet || !selectedProvider) return;
     try {
       setSubmitting(true);
-      const res = await fetch("/api/wallets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletId: selectedWallet, amount: parseFloat(amount), provider: selectedProvider })
-      });
-      if (!res.ok) throw new Error("Failed to fund on backend");
-      
-      toast.success("Payment Successful", `Successfully funded wallet with $${amount}`);
+      toast.success("Payment Successful", `EcoCash confirmed and funded your wallet with $${amount}`);
       setAmount("");
       setSelectedProvider(null);
       setShowPaymentModal(false);
@@ -327,6 +322,7 @@ export default function WalletFundingPage() {
         onClose={() => setShowPaymentModal(false)}
         provider={selectedProvider || "ecocash"}
         amount={parseFloat(amount) || 0}
+        walletId={selectedWallet}
         onSuccess={handlePaymentSuccess}
       />
     </div>

@@ -1,7 +1,94 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ecocashAPI } from "@/lib/ecocash";
 import { createErrorResponse } from "@/lib/api-response";
+
+type EcoCashTransactionMetadata = {
+  provider?: string;
+  phoneNumber?: string;
+  sourceReference?: string;
+  ecocashReference?: string;
+  walletId?: string;
+  credited?: boolean;
+  providerResponse?: unknown;
+};
+
+function toJson(value: unknown): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(value ?? {})) as Prisma.InputJsonValue;
+}
+
+async function completeTransactionAndCreditWallet(
+  transactionId: string,
+  lookupMetadata: EcoCashTransactionMetadata
+) {
+  await prisma.$transaction(async (tx) => {
+    const current = await tx.transaction.findUnique({
+      where: { id: transactionId },
+    });
+
+    if (!current) {
+      return;
+    }
+
+    const currentMetadata = (current.metadata || {}) as EcoCashTransactionMetadata;
+    const nextMetadata = {
+      ...currentMetadata,
+      ...lookupMetadata,
+    };
+
+    if (current.status === "COMPLETED" || currentMetadata.credited || !currentMetadata.walletId) {
+      await tx.transaction.update({
+        where: { id: transactionId },
+        data: {
+          status: "COMPLETED",
+          metadata: toJson(nextMetadata),
+        },
+      });
+      return;
+    }
+
+    const wallet = await tx.wallet.findFirst({
+      where: {
+        id: currentMetadata.walletId,
+        userId: current.userId,
+        currency: current.currency,
+      },
+    });
+
+    if (!wallet) {
+      await tx.transaction.update({
+        where: { id: transactionId },
+        data: {
+          status: "COMPLETED",
+          metadata: toJson({
+            ...nextMetadata,
+            credited: false,
+            creditError: "Wallet not found for completed EcoCash transaction",
+          }),
+        },
+      });
+      return;
+    }
+
+    await tx.wallet.update({
+      where: { id: wallet.id },
+      data: { balance: { increment: current.amount } },
+    });
+
+    await tx.transaction.update({
+      where: { id: transactionId },
+      data: {
+        status: "COMPLETED",
+        metadata: toJson({
+          ...nextMetadata,
+          credited: true,
+          creditedAt: new Date().toISOString(),
+        }),
+      },
+    });
+  });
+}
 
 export async function GET(
   request: Request,
@@ -42,7 +129,9 @@ export async function GET(
       }, { status: 200 });
     }
 
-    const lookupResult = await ecocashAPI.lookupTransaction("", reference);
+    const metadata = (transaction.metadata || {}) as EcoCashTransactionMetadata;
+    const providerReference = metadata.sourceReference || reference;
+    const lookupResult = await ecocashAPI.lookupTransaction(metadata.phoneNumber || "", providerReference);
 
     let newStatus = transaction.status;
     if (lookupResult.paymentSuccess) {
@@ -52,11 +141,32 @@ export async function GET(
     }
 
     if (newStatus !== transaction.status) {
-      await prisma.transaction.update({
-        where: { id: transaction.id },
-        data: { status: newStatus },
-      });
+      if (newStatus === "COMPLETED") {
+        await completeTransactionAndCreditWallet(transaction.id, {
+          provider: "ECOCASH",
+          ecocashReference: lookupResult.ecocashReference,
+          sourceReference: lookupResult.reference || providerReference,
+          providerResponse: lookupResult.raw,
+        });
+      } else {
+        await prisma.transaction.update({
+          where: { id: transaction.id },
+          data: {
+            status: newStatus,
+            metadata: toJson({
+              ...metadata,
+              providerResponse: lookupResult.raw,
+              ecocashReference: lookupResult.ecocashReference,
+            }),
+          },
+        });
+      }
     }
+
+    const refreshed = await prisma.transaction.findUnique({
+      where: { id: transaction.id },
+    });
+    const refreshedMetadata = (refreshed?.metadata || metadata) as EcoCashTransactionMetadata;
 
     return NextResponse.json({
       data: {
@@ -64,12 +174,13 @@ export async function GET(
         type: "transaction-status",
         attributes: {
           reference: transaction.reference,
-          status: newStatus,
+          status: refreshed?.status || newStatus,
           amount: transaction.amount,
           currency: transaction.currency,
           providerStatus: lookupResult.status,
           ecocashReference: lookupResult.ecocashReference,
           transactionDateTime: lookupResult.transactionDateTime,
+          walletCredited: refreshedMetadata.credited === true,
         },
         _links: {
           self: { href: `/api/ecocash/status/${reference}` },

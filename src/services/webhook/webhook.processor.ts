@@ -16,9 +16,14 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { createHash } from 'crypto';
 
 const prisma = new PrismaClient();
+
+function toJson(value: unknown): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(value ?? {})) as Prisma.InputJsonValue;
+}
 
 /**
  * Webhook payload structure (common fields)
@@ -201,7 +206,7 @@ export async function processWebhook(
     });
 
     // Step 10: Trigger notifications (async, non-blocking)
-    if (transactionUpdate.transaction?.userId) {
+    if (transactionUpdate.transaction?.userId && transactionUpdate.transaction?.transferRef) {
       // Don't await - send asynchronously
       triggerNotifications(
         transactionUpdate.transaction.userId,
@@ -343,29 +348,39 @@ const ecocashHandler: WebhookHandler = {
 
   parsePayload(payload: any): WebhookPayload {
     return {
-      transactionId: payload.transactionId,
-      reference: payload.reference,
-      providerReference: payload.ecocashReference,
-      status: payload.status,
-      amount: payload.amount,
+      transactionId: payload.transactionId || payload.ecocashReference || payload.sourceReference,
+      reference: payload.reference || payload.clientCorrelator || payload.sourceReference,
+      providerReference: payload.ecocashReference || payload.providerReference || payload.transactionId,
+      status: payload.status || payload.transactionStatus,
+      amount: typeof payload.amount === 'object' ? payload.amount?.amount : payload.amount,
       currency: payload.currency || 'USD',
-      timestamp: payload.timestamp,
+      timestamp: payload.timestamp || payload.transactionDateTime || payload.paidAt,
       metadata: {
-        customerMsisdn: payload.customerMsisdn,
+        customerMsisdn: payload.customerMsisdn || payload.mobileNumber || payload.sourceMobileNumber,
       },
     };
   },
 
   mapStatus(providerStatus: string): 'PENDING' | 'SUCCESS' | 'FAILED' | 'CANCELLED' {
+    if (typeof providerStatus === 'number') {
+      return providerStatus === 0 ? 'SUCCESS' : providerStatus === 17 ? 'CANCELLED' : 'FAILED';
+    }
+
     const statusMap: Record<string, any> = {
       'SUCCESS': 'SUCCESS',
       'COMPLETED': 'SUCCESS',
+      'SUCCESSFUL': 'SUCCESS',
+      'PAID': 'SUCCESS',
+      'APPROVED': 'SUCCESS',
       'PENDING': 'PENDING',
+      'PENDING_VALIDATION': 'PENDING',
+      'PROCESSING': 'PENDING',
       'FAILED': 'FAILED',
+      'DECLINED': 'FAILED',
       'CANCELLED': 'CANCELLED',
     };
     
-    return statusMap[providerStatus.toUpperCase()] || 'PENDING';
+    return statusMap[String(providerStatus || 'PENDING').toUpperCase()] || 'PENDING';
   },
 };
 
@@ -547,7 +562,79 @@ async function updateTransactionStatus(
   error?: string;
 }> {
   try {
-    // Find transaction by reference
+    const appTransaction = await prisma.transaction.findFirst({
+      where: {
+        OR: [
+          { reference },
+          { metadata: { path: ['sourceReference'], equals: reference } },
+          { metadata: { path: ['ecocashReference'], equals: reference } },
+        ],
+      },
+    });
+
+    if (appTransaction) {
+      const metadata = (appTransaction.metadata || {}) as Record<string, any>;
+      const nextMetadata = {
+        ...metadata,
+        providerReference,
+        webhookAmount: amount,
+        webhookProvider: provider,
+      };
+
+      if (status === 'SUCCESS' && metadata.walletId && !metadata.credited) {
+        const wallet = await prisma.wallet.findFirst({
+          where: {
+            id: metadata.walletId,
+            userId: appTransaction.userId,
+            currency: appTransaction.currency,
+          },
+        });
+
+        if (wallet) {
+          await prisma.$transaction([
+            prisma.wallet.update({
+              where: { id: wallet.id },
+              data: { balance: { increment: appTransaction.amount } },
+            }),
+            prisma.transaction.update({
+              where: { id: appTransaction.id },
+              data: {
+                status: 'COMPLETED',
+                metadata: toJson({
+                  ...nextMetadata,
+                  credited: true,
+                  creditedAt: new Date().toISOString(),
+                }),
+              },
+            }),
+          ]);
+
+          return {
+            found: true,
+            transaction: {
+              ...appTransaction,
+              status: 'COMPLETED',
+              completedAt: new Date(),
+            },
+          };
+        }
+      }
+
+      const updated = await prisma.transaction.update({
+        where: { id: appTransaction.id },
+        data: {
+          status: status === 'SUCCESS' ? 'COMPLETED' : status,
+          metadata: toJson(nextMetadata),
+        },
+      });
+
+      return {
+        found: true,
+        transaction: updated,
+      };
+    }
+
+    // Find P2P transfer by reference
     const transaction = await prisma.p2PTransfer.findFirst({
       where: {
         OR: [
@@ -594,6 +681,19 @@ async function updateTransactionStatus(
  */
 async function createLedgerEntries(transaction: any): Promise<void> {
   try {
+    if (!transaction.transferRef) {
+      await prisma.ledgerEntry.create({
+        data: {
+          transactionId: transaction.id,
+          accountId: transaction.userId,
+          entryType: 'credit',
+          amount: transaction.amount,
+          currency: transaction.currency,
+        },
+      });
+      return;
+    }
+
     // Debit entry (sender's account)
     await prisma.ledgerEntry.create({
       data: {

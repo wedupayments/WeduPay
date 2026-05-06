@@ -15,7 +15,11 @@ const customJestConfig = {
   ],
   testPathIgnorePatterns: [
     '/node_modules/',
+    '<rootDir>/.next/',
     '<rootDir>/src/app/api/auth/create-user/role.test.ts',
+  ],
+  modulePathIgnorePatterns: [
+    '<rootDir>/.next/',
   ],
 }
 

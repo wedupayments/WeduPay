@@ -1,8 +1,95 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ecocashAPI } from "@/lib/ecocash";
 import { createErrorResponse } from "@/lib/api-response";
 import { authenticateRequest, requireAuth, requireAppUser } from "@/lib/auth";
+
+type EcoCashTransactionMetadata = {
+  provider: "ECOCASH";
+  phoneNumber: string;
+  sourceReference?: string;
+  ecocashReference?: string;
+  transactionId?: string;
+  walletId?: string;
+  description?: string;
+  credited?: boolean;
+  providerResponse?: unknown;
+};
+
+function toJson(value: unknown): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(value ?? {})) as Prisma.InputJsonValue;
+}
+
+async function completeTransactionAndCreditWallet(transactionId: string, metadata: EcoCashTransactionMetadata) {
+  await prisma.$transaction(async (tx) => {
+    const current = await tx.transaction.findUnique({
+      where: { id: transactionId },
+    });
+
+    if (!current) {
+      return;
+    }
+
+    const currentMetadata = (current.metadata || {}) as EcoCashTransactionMetadata;
+    if (currentMetadata.credited || !currentMetadata.walletId) {
+      await tx.transaction.update({
+        where: { id: transactionId },
+        data: {
+          status: "COMPLETED",
+          metadata: toJson({
+            ...currentMetadata,
+            ...metadata,
+            credited: currentMetadata.credited || false,
+          }),
+        },
+      });
+      return;
+    }
+
+    const wallet = await tx.wallet.findFirst({
+      where: {
+        id: currentMetadata.walletId,
+        userId: current.userId,
+        currency: current.currency,
+      },
+    });
+
+    if (!wallet) {
+      await tx.transaction.update({
+        where: { id: transactionId },
+        data: {
+          status: "COMPLETED",
+          metadata: toJson({
+            ...currentMetadata,
+            ...metadata,
+            credited: false,
+            creditError: "Wallet not found for completed EcoCash transaction",
+          }),
+        },
+      });
+      return;
+    }
+
+    await tx.wallet.update({
+      where: { id: wallet.id },
+      data: { balance: { increment: current.amount } },
+    });
+
+    await tx.transaction.update({
+      where: { id: transactionId },
+      data: {
+        status: "COMPLETED",
+        metadata: toJson({
+          ...currentMetadata,
+          ...metadata,
+          credited: true,
+          creditedAt: new Date().toISOString(),
+        }),
+      },
+    });
+  });
+}
 
 export async function POST(request: Request) {
   try {
@@ -18,7 +105,7 @@ export async function POST(request: Request) {
     const userId = auth.userId!;
 
     const body = await request.json();
-    const { amount, currency, phoneNumber, description } = body;
+    const { amount, currency = "USD", phoneNumber, description, walletId } = body;
 
     if (!amount || amount <= 0) {
       const error = createErrorResponse("INVALID_AMOUNT", "Amount must be greater than 0", undefined, 400);
@@ -35,16 +122,41 @@ export async function POST(request: Request) {
       return NextResponse.json(error.body, { status: error.status });
     }
 
+    if (!["USD", "ZWL", "ZiG"].includes(currency)) {
+      const error = createErrorResponse("INVALID_CURRENCY", "EcoCash supports USD, ZWL, and ZiG", undefined, 400);
+      return NextResponse.json(error.body, { status: error.status });
+    }
+
+    let wallet = null;
+    if (walletId) {
+      wallet = await prisma.wallet.findFirst({
+        where: { id: walletId, userId, currency },
+      });
+
+      if (!wallet) {
+        const error = createErrorResponse("WALLET_NOT_FOUND", "Wallet not found for this user and currency", undefined, 404);
+        return NextResponse.json(error.body, { status: error.status });
+      }
+    }
+
     const transactionReference = `EC-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const formattedPhone = ecocashAPI.formatPhoneNumber(phoneNumber);
 
     const transaction = await prisma.transaction.create({
       data: {
         userId,
         amount,
-        currency: currency || "USD",
+        currency,
         status: "PENDING",
-        type: "PAYMENT",
+        type: wallet ? "WALLET_FUNDING" : "PAYMENT",
         reference: transactionReference,
+        metadata: toJson({
+          provider: "ECOCASH",
+          phoneNumber: formattedPhone,
+          walletId: wallet?.id,
+          description: description || "WeduPay Wallet Funding",
+          credited: false,
+        } satisfies EcoCashTransactionMetadata),
       },
     });
 
@@ -52,7 +164,8 @@ export async function POST(request: Request) {
       phoneNumber,
       amount,
       description || "WeduPay Wallet Funding",
-      transactionReference
+      transactionReference,
+      currency
     );
 
     if (ecocashResponse.status === "FAILED") {
@@ -68,6 +181,27 @@ export async function POST(request: Request) {
         400
       );
       return NextResponse.json(error.body, { status: error.status });
+    }
+
+    const nextMetadata: EcoCashTransactionMetadata = {
+      provider: "ECOCASH",
+      phoneNumber: formattedPhone,
+      walletId: wallet?.id,
+      description: description || "WeduPay Wallet Funding",
+      sourceReference: ecocashResponse.sourceReference,
+      ecocashReference: ecocashResponse.ecocashReference,
+      transactionId: ecocashResponse.transactionId,
+      credited: false,
+      providerResponse: ecocashResponse.raw,
+    };
+
+    if (ecocashResponse.status === "SUCCESS") {
+      await completeTransactionAndCreditWallet(transaction.id, nextMetadata);
+    } else {
+      await prisma.transaction.update({
+        where: { id: transaction.id },
+        data: { metadata: toJson(nextMetadata) },
+      });
     }
 
     await prisma.webhookEvent.create({
@@ -91,6 +225,7 @@ export async function POST(request: Request) {
           phoneNumber: phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, "$1 $2 $3"),
           reference: transaction.reference,
           sourceReference: ecocashResponse.sourceReference,
+          walletId: wallet?.id,
           createdAt: transaction.createdAt,
         },
         _links: {
@@ -130,7 +265,7 @@ export async function GET(request: Request) {
             type: "provider-info",
             attributes: {
               name: "EcoCash",
-              supportedCurrencies: ["USD", "ZMW", "ZWL"],
+              supportedCurrencies: ["USD", "ZWL", "ZiG"],
               minAmount: 0.01,
               maxAmount: 10000,
               description: "EcoCash is a mobile money service by Econet Wireless Zimbabwe",
