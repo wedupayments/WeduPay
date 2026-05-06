@@ -27,8 +27,10 @@ const bottomNavItems = [
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const displayName = user?.email?.split("@")[0] || "Admin";
+  const displayRole = user?.role || "ADMIN";
 
   useEffect(() => {
     setIsDrawerOpen(false);
@@ -77,11 +79,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <div className="p-4 border-t border-slate-200 dark:border-primary/10 space-y-2">
           <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-100 dark:bg-primary/5">
             <div className="size-10 rounded-full bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center text-background-dark font-bold text-sm shrink-0">
-              A
+              {displayName.slice(0, 1).toUpperCase()}
             </div>
             <div className="overflow-hidden">
-              <p className="text-sm font-bold truncate text-slate-900 dark:text-white">Admin User</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Administrator</p>
+              <p className="text-sm font-bold truncate text-slate-900 dark:text-white">{displayName}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{displayRole}</p>
             </div>
           </div>
           <button

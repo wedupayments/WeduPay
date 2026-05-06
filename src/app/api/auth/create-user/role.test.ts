@@ -1,16 +1,29 @@
 import { determineUserRole, resolveExistingUserRole } from "./route";
 
 describe("User Role Determination", () => {
+  const originalDemoAdminEmail = process.env.DEMO_ADMIN_EMAIL;
+  const originalDemoMerchantEmail = process.env.DEMO_MERCHANT_EMAIL;
+
+  beforeEach(() => {
+    process.env.DEMO_ADMIN_EMAIL = "admin@example.com";
+    process.env.DEMO_MERCHANT_EMAIL = "merchant@example.com";
+  });
+
+  afterAll(() => {
+    process.env.DEMO_ADMIN_EMAIL = originalDemoAdminEmail;
+    process.env.DEMO_MERCHANT_EMAIL = originalDemoMerchantEmail;
+  });
+
   describe("determineUserRole", () => {
-    it("should return ADMIN for admin@wedupay.test regardless of requested role", () => {
-      expect(determineUserRole("admin@wedupay.test")).toBe("ADMIN");
-      expect(determineUserRole("admin@wedupay.test", "USER")).toBe("ADMIN");
-      expect(determineUserRole("admin@wedupay.test", "MERCHANT")).toBe("ADMIN");
+    it("should return ADMIN for the configured demo admin regardless of requested role", () => {
+      expect(determineUserRole("admin@example.com")).toBe("ADMIN");
+      expect(determineUserRole("admin@example.com", "USER")).toBe("ADMIN");
+      expect(determineUserRole("admin@example.com", "MERCHANT")).toBe("ADMIN");
     });
 
-    it("should return MERCHANT for merchant@wedupay.test regardless of requested role", () => {
-      expect(determineUserRole("merchant@wedupay.test")).toBe("MERCHANT");
-      expect(determineUserRole("merchant@wedupay.test", "USER")).toBe("MERCHANT");
+    it("should return MERCHANT for the configured demo merchant regardless of requested role", () => {
+      expect(determineUserRole("merchant@example.com")).toBe("MERCHANT");
+      expect(determineUserRole("merchant@example.com", "USER")).toBe("MERCHANT");
     });
 
     it("should return the requested role if valid for a normal email", () => {
@@ -43,9 +56,9 @@ describe("User Role Determination", () => {
       expect(resolveExistingUserRole("normal@example.com", "USER", "MERCHANT")).toBe("MERCHANT");
     });
 
-    it("should correctly handle dummy accounts", () => {
-      expect(resolveExistingUserRole("merchant@wedupay.test", "USER")).toBe("MERCHANT");
-      expect(resolveExistingUserRole("admin@wedupay.test", "USER")).toBe("ADMIN");
+    it("should correctly handle configured demo accounts", () => {
+      expect(resolveExistingUserRole("merchant@example.com", "USER")).toBe("MERCHANT");
+      expect(resolveExistingUserRole("admin@example.com", "USER")).toBe("ADMIN");
     });
   });
 });

@@ -381,29 +381,7 @@ export class CrossBorderRoutingEngine {
     if (liveRate) {
       return liveRate.rate;
     }
-
-    // Placeholder rates (should be fetched from real API)
-    const rates: Record<string, number> = {
-      USD: 1,
-      EUR: 0.92,
-      GBP: 0.79,
-      KES: 129.5,
-      NGN: 1545,
-      GHS: 15.2,
-      ZAR: 18.5,
-      TZS: 2520,
-      UGX: 3720,
-      ZMW: 26.5,
-      XOF: 605,
-      XAF: 605,
-      MZN: 63.5,
-      ZWL: 322,
-    };
-
-    const baseRate = rates[baseCurrency] || 1;
-    const targetRate = rates[targetCurrency] || 1;
-
-    return targetRate / baseRate;
+    throw new Error(`No exchange rate available for ${baseCurrency}/${targetCurrency}`);
   }
 
   /**

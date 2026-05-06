@@ -69,7 +69,7 @@ export default function CustomerDashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
         <div>
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-            Welcome back, {data?.user?.name || "Customer"}
+            Welcome back{data?.user?.name ? `, ${data.user.name}` : ""}
           </h2>
           <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm sm:text-base">
             Ready to manage your payments?

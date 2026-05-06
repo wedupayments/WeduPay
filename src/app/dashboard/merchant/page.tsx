@@ -64,7 +64,7 @@ export default function MerchantDashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
         <div>
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-            Welcome back, {data?.user?.name || "Merchant"}
+            Welcome back{data?.user?.name ? `, ${data.user.name}` : ""}
           </h2>
           <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm sm:text-base">
             Here's what's happening with your business today
@@ -85,8 +85,6 @@ export default function MerchantDashboardPage() {
           label="Total Revenue" 
           value={data?.stats.totalRevenue || "$0.00"} 
           icon="payments"
-          trend="+12.5%"
-          trendUp
         />
         <MetricCard 
           label="Today's Revenue" 
@@ -107,8 +105,6 @@ export default function MerchantDashboardPage() {
           label="Success Rate" 
           value={data?.stats.successRate || "0%"} 
           icon="trending_up"
-          trend="+2.3%"
-          trendUp
         />
         <MetricCard 
           label="Active Links" 
@@ -279,4 +275,3 @@ function StatusBadge({ status }: { status: string }) {
     </span>
   );
 }
-

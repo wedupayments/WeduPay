@@ -49,7 +49,7 @@ export async function GET(request: Request) {
 
     const primaryMerchant = user.transactions.length > 0
       ? user.transactions[0].reference
-      : "None";
+      : "";
 
     const transactions = user.transactions.map((tx) => {
       const metadata = (tx.metadata || {}) as TransactionMetadata;

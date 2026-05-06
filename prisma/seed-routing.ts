@@ -360,29 +360,6 @@ const routingRules = [
 ];
 
 // ============================================
-// EXCHANGE RATES (Initial)
-// ============================================
-
-const exchangeRates = [
-  { base: 'USD', target: 'KES', rate: 129.5 },
-  { base: 'USD', target: 'NGN', rate: 1545 },
-  { base: 'USD', target: 'GHS', rate: 15.2 },
-  { base: 'USD', target: 'ZAR', rate: 18.5 },
-  { base: 'USD', target: 'TZS', rate: 2520 },
-  { base: 'USD', target: 'UGX', rate: 3720 },
-  { base: 'USD', target: 'ZMW', rate: 26.5 },
-  { base: 'USD', target: 'XOF', rate: 605 },
-  { base: 'USD', target: 'XAF', rate: 605 },
-  { base: 'USD', target: 'MZN', rate: 63.5 },
-  { base: 'USD', target: 'EUR', rate: 0.92 },
-  { base: 'USD', target: 'GBP', rate: 0.79 },
-  { base: 'EUR', target: 'XOF', rate: 655.957 },
-  { base: 'EUR', target: 'XAF', rate: 655.957 },
-  { base: 'GBP', target: 'KES', rate: 164.0 },
-  { base: 'GBP', target: 'NGN', rate: 1955.0 },
-];
-
-// ============================================
 // SEED FUNCTION
 // ============================================
 
@@ -421,29 +398,13 @@ async function seed() {
     }
   }
 
-  // Seed Exchange Rates
-  console.log('\n💱 Seeding Exchange Rates...');
-  for (const rateData of exchangeRates) {
-    const rate = await prisma.exchangeRate.create({
-      data: {
-        baseCurrency: rateData.base,
-        targetCurrency: rateData.target,
-        rate: rateData.rate,
-        inverseRate: 1 / rateData.rate,
-        source: 'market',
-        spread: 0.02,
-        margin: 0.01,
-        isValid: true,
-      },
-    });
-    console.log(`  ✓ 1 ${rateData.base} = ${rateData.rate} ${rateData.target}`);
-  }
+  console.log('\n💱 Exchange rate seeding skipped here. Use `npm run seed:fx` with OPEN_EXCHANGE_RATES_APP_ID for live FX data.');
 
   console.log('\n✅ Routing network seed completed!');
   console.log('\n📊 Summary:');
   console.log(`  - Payment Providers: ${paymentProviders.length}`);
   console.log(`  - Routing Rules: ${routingRules.length}`);
-  console.log(`  - Exchange Rates: ${exchangeRates.length}`);
+  console.log('  - Exchange Rates: managed separately via live FX seed');
 
   // Seed Transfer Limits
   console.log('\n💰 Seeding Transfer Limits...');

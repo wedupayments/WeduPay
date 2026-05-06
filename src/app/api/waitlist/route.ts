@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { emailTemplates } from "@/lib/email-templates";
 
 // Admin email address - configure in environment variables
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@wedupay.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
 
 export async function POST(request: Request) {
   try {

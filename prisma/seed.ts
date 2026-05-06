@@ -2,8 +2,22 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+const enableDemoSeedData = process.env.ENABLE_DEMO_SEED_DATA === "true";
+const demoCustomerEmail = process.env.DEMO_CUSTOMER_EMAIL;
+const demoMerchantEmail = process.env.DEMO_MERCHANT_EMAIL;
+const demoAdminEmail = process.env.DEMO_ADMIN_EMAIL;
+
 async function main() {
-  console.log("🌱 Seeding test accounts...");
+  if (!enableDemoSeedData) {
+    console.log("⏭️ Demo seed data disabled. Set ENABLE_DEMO_SEED_DATA=true to create demo accounts.");
+    return;
+  }
+
+  if (!demoCustomerEmail || !demoMerchantEmail || !demoAdminEmail) {
+    throw new Error("Missing demo seed emails. Set DEMO_CUSTOMER_EMAIL, DEMO_MERCHANT_EMAIL, and DEMO_ADMIN_EMAIL.");
+  }
+
+  console.log("🌱 Seeding configured demo accounts...");
 
   // Delete existing test accounts first (in correct order for foreign keys)
   await prisma.ledgerEntry.deleteMany({});
@@ -24,14 +38,14 @@ async function main() {
   });
   await prisma.user.deleteMany({
     where: {
-      email: { in: ["customer@wedupay.test", "merchant@wedupay.test", "admin@wedupay.test"] }
+      email: { in: [demoCustomerEmail, demoMerchantEmail, demoAdminEmail] }
     }
   });
 
   // Demo Customer Account
   const customer = await prisma.user.create({
     data: {
-      email: "customer@wedupay.test",
+      email: demoCustomerEmail,
       phoneNumber: "+263771234567",
       country: "ZW",
       kycStatus: "VERIFIED",
@@ -105,7 +119,7 @@ async function main() {
   // Merchant Account
   await prisma.user.create({
     data: {
-      email: "merchant@wedupay.test",
+      email: demoMerchantEmail,
       phoneNumber: "+2348012345678",
       country: "NG",
       kycStatus: "VERIFIED",
@@ -149,7 +163,7 @@ async function main() {
   // Admin Account
   await prisma.user.create({
     data: {
-      email: "admin@wedupay.test",
+      email: demoAdminEmail,
       phoneNumber: "+263772000000",
       country: "ZW",
       kycStatus: "VERIFIED",
@@ -167,9 +181,11 @@ async function main() {
 
   console.log("✅ Test accounts created:");
   console.log(`   👤 Customer: ${customer.email}`);
-  console.log(`   🏪 Merchant: merchant@wedupay.test`);
-  console.log(`   👑 Admin: admin@wedupay.test`);
-  console.log("\n🔐 Default password for all accounts: password123");
+  console.log(`   🏪 Merchant: ${demoMerchantEmail}`);
+  console.log(`   👑 Admin: ${demoAdminEmail}`);
+  if (process.env.DEMO_ACCOUNT_PASSWORD) {
+    console.log(`\n🔐 Configured demo password: ${process.env.DEMO_ACCOUNT_PASSWORD}`);
+  }
 }
 
 main()

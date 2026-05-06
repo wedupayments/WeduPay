@@ -37,8 +37,14 @@ const bottomNavItems = [
 
 export function CustomerLayout({ children, userName = "Customer", userId = "00000", title = "Dashboard" }: CustomerLayoutProps) {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const displayName = userName !== "Customer"
+    ? userName
+    : user?.email?.split("@")[0] || "User";
+  const displayId = userId !== "00000"
+    ? userId
+    : user?.id?.slice(-5) || "";
 
   useEffect(() => {
     setIsDrawerOpen(false);
@@ -88,11 +94,13 @@ export function CustomerLayout({ children, userName = "Customer", userId = "0000
         <div className="p-3 sm:p-4 border-t border-slate-200 dark:border-primary/10 space-y-2">
           <div className="flex items-center gap-2 sm:gap-3 p-2 rounded-xl bg-slate-100 dark:bg-primary/5">
             <div className="size-8 sm:size-10 rounded-full bg-linear-to-br from-primary to-emerald-600 flex items-center justify-center text-background-dark font-bold text-xs sm:text-sm shrink-0">
-              {userName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+              {displayName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
             </div>
             <div className="hidden sm:block overflow-hidden">
-              <p className="text-sm font-bold truncate text-slate-900 dark:text-white">{userName}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">ID: {userId}</p>
+              <p className="text-sm font-bold truncate text-slate-900 dark:text-white">{displayName}</p>
+              {displayId && (
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">ID: {displayId}</p>
+              )}
             </div>
           </div>
           <button

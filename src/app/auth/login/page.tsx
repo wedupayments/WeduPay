@@ -12,10 +12,22 @@ import { PasswordField } from '@/components/auth/PasswordField';
 import { buildTenantPath } from '@/lib/tenant';
 
 const TEST_ACCOUNTS = [
-  { label: 'Customer', email: 'customer@wedupay.test', password: 'password123' },
-  { label: 'Merchant', email: 'merchant@wedupay.test', password: 'password123' },
-  { label: 'Admin', email: 'admin@wedupay.test', password: 'password123' },
-];
+  {
+    label: 'Customer',
+    email: process.env.NEXT_PUBLIC_DEMO_CUSTOMER_EMAIL || '',
+    password: process.env.NEXT_PUBLIC_DEMO_ACCOUNT_PASSWORD || '',
+  },
+  {
+    label: 'Merchant',
+    email: process.env.NEXT_PUBLIC_DEMO_MERCHANT_EMAIL || '',
+    password: process.env.NEXT_PUBLIC_DEMO_ACCOUNT_PASSWORD || '',
+  },
+  {
+    label: 'Admin',
+    email: process.env.NEXT_PUBLIC_DEMO_ADMIN_EMAIL || '',
+    password: process.env.NEXT_PUBLIC_DEMO_ACCOUNT_PASSWORD || '',
+  },
+].filter((account) => account.email && account.password);
 const showDemoAccounts = process.env.NEXT_PUBLIC_ENABLE_DEMO_ACCOUNTS === 'true';
 
 function LoginForm() {

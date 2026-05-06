@@ -96,11 +96,15 @@ function normalizeCountry(country?: string): string | null {
 }
 
 export function determineUserRole(email: string, requestedRole?: string): 'USER' | 'MERCHANT' | 'ADMIN' {
-  if (email === 'admin@wedupay.test') {
+  const normalizedEmail = email.trim().toLowerCase();
+  const configuredAdminEmail = process.env.DEMO_ADMIN_EMAIL?.trim().toLowerCase();
+  const configuredMerchantEmail = process.env.DEMO_MERCHANT_EMAIL?.trim().toLowerCase();
+
+  if (configuredAdminEmail && normalizedEmail === configuredAdminEmail) {
     return 'ADMIN';
   }
 
-  if (email === 'merchant@wedupay.test') {
+  if (configuredMerchantEmail && normalizedEmail === configuredMerchantEmail) {
     return 'MERCHANT';
   }
 

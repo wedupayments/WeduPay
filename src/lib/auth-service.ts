@@ -145,14 +145,25 @@ export interface SessionData {
 }
 
 function getDemoProfileDefaults(email: string): { phoneNumber: string; country: string } | null {
-  const demoProfiles: Record<string, { phoneNumber: string; country: string }> = {
-    'customer@wedupay.test': { phoneNumber: '+263771234567', country: 'ZW' },
-    'merchant@wedupay.test': { phoneNumber: '+2348012345678', country: 'NG' },
-    'admin@wedupay.test': { phoneNumber: '+263772000000', country: 'ZW' },
-    'wedupay@gmail.com': { phoneNumber: '+263771234567', country: 'ZW' },
-  };
+  const demoProfiles = [
+    {
+      email: process.env.NEXT_PUBLIC_DEMO_CUSTOMER_EMAIL?.trim().toLowerCase(),
+      phoneNumber: '+263771234567',
+      country: 'ZW',
+    },
+    {
+      email: process.env.NEXT_PUBLIC_DEMO_MERCHANT_EMAIL?.trim().toLowerCase(),
+      phoneNumber: '+2348012345678',
+      country: 'NG',
+    },
+    {
+      email: process.env.NEXT_PUBLIC_DEMO_ADMIN_EMAIL?.trim().toLowerCase(),
+      phoneNumber: '+263772000000',
+      country: 'ZW',
+    },
+  ].filter((profile): profile is { email: string; phoneNumber: string; country: string } => Boolean(profile.email));
 
-  return demoProfiles[email] ?? null;
+  return demoProfiles.find((profile) => profile.email === email) ?? null;
 }
 
 function getProfileSeedData(user: {
@@ -184,7 +195,7 @@ export function getDashboardPathForUser(user: Pick<UserProfile, 'role' | 'email'
     return '/dashboard/admin';
   }
 
-  if (user.role === 'MERCHANT' || user.email === 'merchant@wedupay.test') {
+  if (user.role === 'MERCHANT') {
     return '/dashboard/merchant';
   }
 
@@ -440,7 +451,15 @@ export async function signInUser({
     if (authError) {
       // Map common auth errors to user-friendly messages
       if (authError.message.includes('Invalid login credentials')) {
-        if (normalizedEmail.endsWith('@wedupay.test')) {
+        const configuredDemoEmails = [
+          process.env.NEXT_PUBLIC_DEMO_CUSTOMER_EMAIL,
+          process.env.NEXT_PUBLIC_DEMO_MERCHANT_EMAIL,
+          process.env.NEXT_PUBLIC_DEMO_ADMIN_EMAIL,
+        ]
+          .map((value) => value?.trim().toLowerCase())
+          .filter((value): value is string => Boolean(value));
+
+        if (configuredDemoEmails.includes(normalizedEmail)) {
           return {
             success: false,
             error:

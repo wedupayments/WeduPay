@@ -30,13 +30,11 @@ interface StatsGridProps {
 }
 
 export function StatsGrid({ stats }: StatsGridProps) {
-  const defaultStats = {
+  const data = stats || {
     pendingApprovals: 0,
-    totalSpent: "$0.00",
-    primaryMerchant: "None",
+    totalSpent: "",
+    primaryMerchant: "",
   };
-
-  const data = stats || defaultStats;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -48,13 +46,13 @@ export function StatsGrid({ stats }: StatsGridProps) {
       />
       <StatCard
         title="Total Spent"
-        value={data.totalSpent}
+        value={data.totalSpent || "--"}
         icon="payments"
         colorClass="text-blue-500 bg-blue-500"
       />
       <StatCard
         title="Primary Merchant"
-        value={data.primaryMerchant}
+        value={data.primaryMerchant || "--"}
         icon="account_balance"
         colorClass="text-orange-500 bg-orange-500"
       />
