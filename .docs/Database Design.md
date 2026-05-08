@@ -105,6 +105,13 @@ Wallet types:
 - ecocash
 - mtn_momo
 - airtel_money
+- pawapay
+
+Provider policy:
+
+- `ecocash` is the direct official EcoCash rail for Zimbabwe.
+- `pawapay` is the regional aggregator rail for supported non-Zimbabwe countries.
+- Paynow is not modeled as an active provider because the platform uses official EcoCash API access directly.
 
 Example:
 
@@ -230,7 +237,8 @@ Example providers:
 
 mpesa  
 ecocash  
-mtn_momo
+mtn_momo  
+pawapay
 
 This helps with:
 

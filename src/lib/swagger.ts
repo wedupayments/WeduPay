@@ -6,7 +6,7 @@ const options: swaggerJsdoc.Options = {
     info: {
       title: "WeduPay API",
       version: "1.0.0",
-      description: "Complete mobile money payment API for WeduPay platform supporting EcoCash, M-Pesa, MTN, and more",
+      description: "Complete mobile money payment API for WeduPay platform supporting direct EcoCash for Zimbabwe and PawaPay-supported regional rails",
       contact: {
         name: "WeduPay Support",
       },
@@ -93,7 +93,7 @@ const options: swaggerJsdoc.Options = {
           properties: {
             id: { type: "string", format: "uuid" },
             userId: { type: "string", format: "uuid" },
-            walletType: { type: "string", enum: ["EcoCash", "M-Pesa", "MTN", "mobile_wallet"] },
+            walletType: { type: "string", enum: ["EcoCash", "M-Pesa", "MTN", "PawaPay", "mobile_wallet"] },
             currency: { type: "string", example: "USD" },
             balance: { type: "number" },
             availableBalance: { type: "number" },
@@ -155,7 +155,7 @@ const options: swaggerJsdoc.Options = {
           properties: {
             amount: { type: "number", minimum: 0.01, description: "Payment amount" },
             currency: { type: "string", example: "USD", description: "Currency code" },
-            provider: { type: "string", enum: ["EcoCash", "M-Pesa", "MTN"], description: "Mobile money provider" },
+            provider: { type: "string", enum: ["EcoCash", "M-Pesa", "MTN", "PawaPay"], description: "Mobile money provider" },
             phoneNumber: { type: "string", description: "Customer phone number" },
             reference: { type: "string", description: "Optional payment reference" },
             description: { type: "string", description: "Optional payment description" },
@@ -168,7 +168,7 @@ const options: swaggerJsdoc.Options = {
             toUserId: { type: "string", format: "uuid", description: "Recipient user ID" },
             amount: { type: "number", minimum: 0.01, description: "Transfer amount" },
             currency: { type: "string", example: "USD" },
-            walletType: { type: "string", enum: ["EcoCash", "M-Pesa", "MTN"] },
+            walletType: { type: "string", enum: ["EcoCash", "M-Pesa", "MTN", "PawaPay"] },
             description: { type: "string", description: "Optional transfer note" },
           },
         },
@@ -341,6 +341,9 @@ const options: swaggerJsdoc.Options = {
       },
       "/webhooks/mtn": {
         post: { tags: ["System"], summary: "MTN Webhook", description: "Incoming callback from MTN Mobile Money", responses: { 200: { description: "Acknowledged" } } }
+      },
+      "/webhooks/pawapay": {
+        post: { tags: ["System"], summary: "PawaPay Webhook", description: "Incoming callback from PawaPay deposits, payouts, and refunds", responses: { 200: { description: "Acknowledged" } } }
       },
       "/webhooks/endpoints": {
         get: { tags: ["Merchants"], summary: "List Webhook Endpoints", description: "List configured merchant webhook endpoints", security: [{ cookieAuth: [] }, { apiKeyAuth: [] }], responses: { 200: { description: "Endpoints retrieved" } } },

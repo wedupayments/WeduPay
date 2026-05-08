@@ -264,6 +264,20 @@ const paymentProviders = [
     successRate: 96.0,
     avgResponseTime: 4000,
   },
+  {
+    name: 'pawapay',
+    displayName: 'PawaPay',
+    region: 'pan-african',
+    supportedCountries: ['BJ', 'BF', 'CM', 'CD', 'CG', 'CI', 'GA', 'GH', 'KE', 'MW', 'MZ', 'NG', 'RW', 'SN', 'SL', 'TZ', 'UG', 'ZM'],
+    supportedCurrencies: ['XOF', 'XAF', 'GHS', 'KES', 'MWK', 'MZN', 'NGN', 'RWF', 'SLL', 'TZS', 'UGX', 'ZMW', 'USD'],
+    priority: 2,
+    feeType: 'percentage',
+    feePercentage: 2.0,
+    minTransactionAmount: 1,
+    maxTransactionAmount: 1000000,
+    successRate: 96.5,
+    avgResponseTime: 4000,
+  },
 ];
 
 // ============================================
@@ -356,6 +370,16 @@ const routingRules = [
     providerTypes: ['flutterwave'],
     strategy: 'best_rate',
     maxRetries: 2,
+  },
+  {
+    name: 'Regional Mobile Money - PawaPay Primary',
+    description: 'Use PawaPay as the primary regional aggregator where available',
+    priority: 9,
+    countries: ['BJ', 'BF', 'CM', 'CD', 'CG', 'CI', 'GA', 'GH', 'KE', 'MW', 'MZ', 'NG', 'RW', 'SN', 'SL', 'TZ', 'UG', 'ZM'],
+    currencies: ['XOF', 'XAF', 'GHS', 'KES', 'MWK', 'MZN', 'NGN', 'RWF', 'SLL', 'TZS', 'UGX', 'ZMW', 'USD'],
+    providerTypes: ['pawapay'],
+    strategy: 'primary_first',
+    maxRetries: 3,
   },
 ];
 

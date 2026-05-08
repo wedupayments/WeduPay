@@ -8,8 +8,8 @@ export async function GET() {
       properties: {
         id: { type: "string", format: "uuid" },
         amount: { type: "number", minimum: 0.01 },
-        currency: { type: "string", enum: ["USD", "ZMW", "ZWL"] },
-        provider: { type: "string", enum: ["EcoCash", "M-Pesa", "MTN"] },
+        currency: { type: "string", enum: ["USD", "ZMW", "ZWL", "KES", "GHS", "NGN", "TZS", "UGX", "MWK", "MZN", "RWF", "SLL", "XOF", "XAF"] },
+        provider: { type: "string", enum: ["EcoCash", "M-Pesa", "MTN", "PawaPay"] },
         phoneNumber: { type: "string", pattern: "^\\+?[0-9]{9,15}$" },
         status: { type: "string", enum: ["PENDING", "COMPLETED", "FAILED", "CANCELLED"] },
         reference: { type: "string" },
@@ -24,7 +24,7 @@ export async function GET() {
         toUserId: { type: "string", format: "uuid" },
         amount: { type: "number", minimum: 0.01 },
         currency: { type: "string" },
-        walletType: { type: "string", enum: ["EcoCash", "M-Pesa", "MTN"] },
+        walletType: { type: "string", enum: ["EcoCash", "M-Pesa", "MTN", "PawaPay"] },
         status: { type: "string", enum: ["PENDING", "COMPLETED", "FAILED"] },
         reference: { type: "string" },
         description: { type: "string" },
@@ -49,7 +49,7 @@ export async function GET() {
       properties: {
         id: { type: "string", format: "uuid" },
         userId: { type: "string", format: "uuid" },
-        walletType: { type: "string", enum: ["EcoCash", "M-Pesa", "MTN"] },
+        walletType: { type: "string", enum: ["EcoCash", "M-Pesa", "MTN", "PawaPay"] },
         currency: { type: "string" },
         balance: { type: "number" },
         createdAt: { type: "string", format: "date-time" },

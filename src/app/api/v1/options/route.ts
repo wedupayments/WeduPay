@@ -70,6 +70,10 @@ export async function OPTIONS(request: Request) {
       methods: ["GET", "POST", "OPTIONS"],
       allowHeaders: ["Content-Type", "X-Signature"],
     },
+    "/api/v1/webhooks/pawapay": {
+      methods: ["GET", "POST", "OPTIONS"],
+      allowHeaders: ["Content-Type", "Authorization", "X-Signature", "X-PawaPay-Signature"],
+    },
   };
 
   let endpointConfig = endpoints[path];

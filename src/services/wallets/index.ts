@@ -37,6 +37,7 @@ export * from '../../lib/halopesa';
 
 // New adapters - Pan-African Aggregators
 export * from '../../lib/africas-talking';
+export * from '../../lib/pawapay';
 
 // Wallet type enumeration
 export enum WalletType {
@@ -67,6 +68,7 @@ export enum WalletType {
   
   // Pan-African Aggregators
   AFRICAS_TALKING = 'africas_talking',
+  PAWAPAY = 'pawapay',
 }
 
 // Country to wallet providers mapping
@@ -75,10 +77,12 @@ export const COUNTRY_WALLETS: Record<string, WalletType[]> = {
   KE: [WalletType.MPESA, WalletType.AIRTEL, WalletType.MTN],
   TZ: [WalletType.MPESA_TANZANIA, WalletType.TIGO_PESA, WalletType.AIRTEL, WalletType.MTN],
   UG: [WalletType.MTN, WalletType.AIRTEL],
+  RW: [WalletType.PAWAPAY, WalletType.MTN, WalletType.AIRTEL],
+  MW: [WalletType.PAWAPAY, WalletType.AIRTEL],
   
   // West Africa - Anglophone
-  NG: [WalletType.PAYSTACK, WalletType.FLUTTERWAVE, WalletType.OPAY, WalletType.PALMPAY],
-  GH: [WalletType.PAYSTACK, WalletType.FLUTTERWAVE, WalletType.MTN, WalletType.MOOV_MONEY],
+  NG: [WalletType.PAWAPAY, WalletType.PAYSTACK, WalletType.FLUTTERWAVE, WalletType.OPAY, WalletType.PALMPAY],
+  GH: [WalletType.PAWAPAY, WalletType.PAYSTACK, WalletType.FLUTTERWAVE, WalletType.MTN, WalletType.MOOV_MONEY],
   
   // West Africa - Francophone
   SN: [WalletType.ORANGE_MONEY, WalletType.WAVE],
@@ -91,8 +95,8 @@ export const COUNTRY_WALLETS: Record<string, WalletType[]> = {
   
   // Southern Africa
   ZW: [WalletType.ECOCASH, WalletType.TELECEL],
-  ZM: [WalletType.AIRTEL, WalletType.ZAMTEL, WalletType.MTN],
-  MZ: [WalletType.MPESA, WalletType.HALOPESA],
+  ZM: [WalletType.PAWAPAY, WalletType.AIRTEL, WalletType.ZAMTEL, WalletType.MTN],
+  MZ: [WalletType.PAWAPAY, WalletType.MPESA, WalletType.HALOPESA],
   
   // Central Africa
   CM: [WalletType.MTN, WalletType.ORANGE_MONEY],
@@ -131,6 +135,7 @@ export const WALLET_METADATA: Record<WalletType, { name: string; region: string;
   
   // Pan-African Aggregators
   [WalletType.AFRICAS_TALKING]: { name: "Africa's Talking", region: 'Pan-African', countries: ['KE', 'UG', 'TZ', 'NG', 'GH'] },
+  [WalletType.PAWAPAY]: { name: 'PawaPay', region: 'Pan-African', countries: ['BJ', 'BF', 'CM', 'CD', 'CG', 'CI', 'GA', 'GH', 'KE', 'MW', 'MZ', 'NG', 'RW', 'SN', 'SL', 'TZ', 'UG', 'ZM'] },
 };
 
 /**
@@ -169,8 +174,9 @@ export function isWalletAvailableInCountry(walletType: WalletType, countryCode: 
 import { MpesaAPI } from './mpesa.adapter';
 import { EcoCashAPI } from './ecocash.adapter';
 import { MTNAPI } from './mtn.adapter';
+import { PawaPayAPI } from '../../lib/pawapay';
 
-export type WalletProvider = "ecocash" | "mpesa" | "mtn" | "airtel";
+export type WalletProvider = "ecocash" | "mpesa" | "mtn" | "airtel" | "pawapay";
 
 export interface PaymentResult {
   success: boolean;
@@ -395,6 +401,65 @@ export class MTNAdapter implements WalletAdapter {
   }
 }
 
+export class PawaPayAdapter implements WalletAdapter {
+  private api: PawaPayAPI;
+
+  constructor(config: { apiToken: string; baseUrl?: string; environment: "sandbox" | "live" }) {
+    this.api = new PawaPayAPI(config);
+  }
+
+  async initiatePayment(
+    phoneNumber: string,
+    amount: number,
+    reference: string,
+    description: string
+  ): Promise<PaymentResult> {
+    const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/v1/webhooks/pawapay`;
+    const result = await this.api.initiateDeposit({
+      phoneNumber,
+      amount,
+      currency: process.env.PAWAPAY_CURRENCY || "USD",
+      reference,
+      description,
+      callbackUrl,
+    });
+
+    return {
+      success: result.status !== "FAILED",
+      status: result.status,
+      reference,
+      providerReference: result.providerReference || result.transactionId,
+      message: result.message,
+    };
+  }
+
+  async lookupTransaction(reference: string): Promise<TransactionLookupResult> {
+    const result = await this.api.getDepositStatus(reference);
+
+    return {
+      success: result.success,
+      status: result.status,
+      amount: result.amount,
+      currency: result.currency,
+      reference,
+      providerReference: result.providerReference,
+      timestamp: result.transactionDate,
+    };
+  }
+
+  validatePhoneNumber(phone: string): boolean {
+    return this.api.validatePhoneNumber(phone);
+  }
+
+  formatPhoneNumber(phone: string): string {
+    return this.api.formatPhoneNumber(phone);
+  }
+
+  getProviderName(): string {
+    return "PawaPay";
+  }
+}
+
 export class WalletAdapterFactory {
   static getAdapter(provider: WalletProvider): WalletAdapter {
     switch (provider) {
@@ -425,13 +490,20 @@ export class WalletAdapterFactory {
           currency: process.env.MTN_CURRENCY || "USD",
         });
 
+      case "pawapay":
+        return new PawaPayAdapter({
+          apiToken: process.env.PAWAPAY_API_TOKEN || "",
+          baseUrl: process.env.PAWAPAY_BASE_URL,
+          environment: process.env.PAWAPAY_MODE === "live" || process.env.NODE_ENV === "production" ? "live" : "sandbox",
+        });
+
       default:
         throw new Error(`Unsupported wallet provider: ${provider}`);
     }
   }
 
   static getSupportedProviders(): WalletProvider[] {
-    return ["ecocash", "mpesa", "mtn"];
+    return ["ecocash", "mpesa", "mtn", "pawapay"];
   }
 
   static isProviderSupported(provider: string): boolean {

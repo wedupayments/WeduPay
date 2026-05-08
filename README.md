@@ -24,6 +24,20 @@ Wallet integrations include:
 - EcoCash
 - MTN MoMo
 - Airtel Money
+- PawaPay
+
+---
+
+# Payment Rail Strategy
+
+WeduPay uses direct official EcoCash API access for Zimbabwe and PawaPay for supported regional mobile-money markets outside Zimbabwe.
+
+Active routing policy:
+
+- Zimbabwe: WeduPay -> official EcoCash API
+- Regional Africa: WeduPay -> PawaPay -> supported mobile-money providers
+
+Paynow is not part of the active architecture because official EcoCash API access is available.
 
 ---
 
@@ -247,6 +261,7 @@ Webhook endpoints:
 
 /api/webhooks/mpesa  
 /api/webhooks/ecocash  
+/api/v1/webhooks/pawapay  
 
 Webhook responsibilities:
 

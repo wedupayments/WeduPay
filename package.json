@@ -12,6 +12,7 @@
     "test:watch": "jest --testPathPatterns=\"src/.*\\.test\\.(ts|tsx)$\" --watch",
     "seed": "tsx prisma/seed.ts",
     "seed:fx": "tsx prisma/seed-fx-rates.ts",
+    "check:rails": "tsx scripts/check-payment-rails.ts",
     "fix-auth": "tsx scripts/fix-auth-issues.ts",
     "postinstall": "prisma generate"
   },

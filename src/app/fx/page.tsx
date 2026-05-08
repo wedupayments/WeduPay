@@ -1,6 +1,17 @@
 import { CurrencyConverter } from '@/components/fx/CurrencyConverter';
+import { getSession } from '@/lib/supabase-server';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
-export default function FXConverterPage() {
+export default async function FXConverterPage() {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get('sb-access-token')?.value;
+  const session = accessToken ? await getSession(accessToken) : null;
+
+  if (!session) {
+    redirect('/auth/login');
+  }
+
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark py-12 px-4">
       <div className="max-w-4xl mx-auto">

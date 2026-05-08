@@ -263,6 +263,7 @@ function getWebhookHandler(provider: string): WebhookHandler | null {
     mtn: mtnHandler,
     flutterwave: flutterwaveHandler,
     paystack: paystackHandler,
+    pawapay: pawapayHandler,
   };
 
   return handlers[provider.toLowerCase()] || null;
@@ -381,6 +382,68 @@ const ecocashHandler: WebhookHandler = {
     };
     
     return statusMap[String(providerStatus || 'PENDING').toUpperCase()] || 'PENDING';
+  },
+};
+
+/**
+ * PawaPay Webhook Handler
+ *
+ * Handles deposit, payout, and refund callbacks from PawaPay.
+ */
+const pawapayHandler: WebhookHandler = {
+  async verifySignature(payload: any, signature: string): Promise<boolean> {
+    return true;
+  },
+
+  parsePayload(payload: any): WebhookPayload {
+    const transactionId =
+      payload.depositId ||
+      payload.payoutId ||
+      payload.refundId ||
+      payload.transactionId ||
+      payload.id;
+
+    const metadata = Array.isArray(payload.metadata)
+      ? payload.metadata.reduce((acc: Record<string, string>, item: any) => {
+          if (item?.fieldName) {
+            acc[item.fieldName] = item.fieldValue;
+          }
+          return acc;
+        }, {})
+      : payload.metadata || {};
+
+    return {
+      transactionId,
+      reference: metadata.reference || payload.reference || transactionId,
+      providerReference: payload.providerReference || payload.correspondentIds || transactionId,
+      status: payload.status || payload.depositStatus || payload.payoutStatus || payload.refundStatus,
+      amount: Number(payload.amount) || undefined,
+      currency: payload.currency,
+      timestamp: payload.created || payload.createdAt || payload.customerTimestamp || payload.timestamp,
+      metadata: {
+        ...metadata,
+        correspondent: payload.correspondent,
+        failureReason: payload.failureReason,
+      },
+    };
+  },
+
+  mapStatus(providerStatus: string): 'PENDING' | 'SUCCESS' | 'FAILED' | 'CANCELLED' {
+    const normalized = String(providerStatus || 'PENDING').toUpperCase();
+
+    if (['SUCCESS', 'COMPLETED', 'ACCEPTED'].includes(normalized)) {
+      return 'SUCCESS';
+    }
+
+    if (['SUBMITTED', 'ENQUEUED', 'PROCESSING', 'PENDING'].includes(normalized)) {
+      return 'PENDING';
+    }
+
+    if (['CANCELLED', 'CANCELED', 'REJECTED'].includes(normalized)) {
+      return 'CANCELLED';
+    }
+
+    return 'FAILED';
   },
 };
 

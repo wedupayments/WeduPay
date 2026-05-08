@@ -7,7 +7,11 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { QuickFXCalculator } from "@/components/fx/QuickFXCalculator";
 
-export function Navbar() {
+interface NavbarProps {
+  showQuickFx?: boolean;
+}
+
+export function Navbar({ showQuickFx = true }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -75,7 +79,7 @@ export function Navbar() {
 
       {/* Desktop actions */}
       <div className="hidden md:flex gap-3 items-center">
-        <QuickFXCalculator />
+        {showQuickFx && <QuickFXCalculator />}
         <ThemeToggle />
         <PWAInstallButton />
         <Link href="/auth/login" className="flex items-center justify-center rounded-lg h-10 px-4 bg-primary/10 text-primary border border-primary/20 text-sm font-bold hover:bg-primary/20 transition-colors">
@@ -116,7 +120,7 @@ export function Navbar() {
             </Link>
           </nav>
           <div className="flex flex-col gap-3 p-4 border-t border-slate-200 dark:border-primary/20">
-            <QuickFXCalculator className="w-full justify-center min-h-12 rounded-xl" />
+            {showQuickFx && <QuickFXCalculator className="w-full justify-center min-h-12 rounded-xl" />}
             <ThemeToggle />
             <PWAInstallButton className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-base font-black text-background-dark shadow-lg shadow-primary/20" />
             <Link 

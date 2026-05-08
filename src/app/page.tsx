@@ -7,7 +7,7 @@ import Link from "next/link";
 export default function Home() {
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden">
-<Navbar />
+<Navbar showQuickFx={false} />
 {/* Hero Section off the app */}
 <main className="flex-1">
 <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-20">

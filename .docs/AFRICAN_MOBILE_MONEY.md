@@ -4,6 +4,15 @@
 
 WeduPay now supports **20+ African mobile money providers** across **30+ African countries**, enabling seamless cross-border payments throughout the continent.
 
+## Rail Strategy
+
+WeduPay uses two primary mobile-money rails:
+
+- **Zimbabwe:** direct official EcoCash API access for EcoCash collections, status checks, refunds, and callbacks.
+- **Regional Africa:** PawaPay as the aggregator rail for supported non-Zimbabwe mobile-money markets.
+
+Paynow is not part of the active architecture because WeduPay has access to the official EcoCash API.
+
 ---
 
 ## Supported Regions & Providers
@@ -57,6 +66,7 @@ WeduPay now supports **20+ African mobile money providers** across **30+ African
 
 | Provider | Coverage | Status |
 |----------|----------|--------|
+| **PawaPay** | Regional mobile money markets outside Zimbabwe | ✅ Complete |
 | **Flutterwave** | 15+ countries | ✅ Complete |
 | **Africa's Talking** | 5+ countries | ✅ Complete |
 
@@ -281,8 +291,8 @@ PAYSTACK_PUBLIC_KEY="your-public-key"
 | **Kenya** | KE | M-Pesa, Airtel Money, MTN |
 | **Tanzania** | TZ | M-Pesa Tanzania, Tigo Pesa, Airtel, MTN |
 | **Uganda** | UG | MTN, Airtel Money |
-| **Nigeria** | NG | Paystack, Flutterwave, OPay, PalmPay |
-| **Ghana** | GH | Paystack, Flutterwave, MTN, Moov Money |
+| **Nigeria** | NG | PawaPay, Paystack, Flutterwave, OPay, PalmPay |
+| **Ghana** | GH | PawaPay, Paystack, Flutterwave, MTN, Moov Money |
 | **Senegal** | SN | Orange Money, Wave |
 | **Ivory Coast** | CI | Orange Money, Wave, MTN, Moov Money |
 | **Mali** | ML | Orange Money, Wave |
@@ -291,16 +301,16 @@ PAYSTACK_PUBLIC_KEY="your-public-key"
 | **Togo** | TG | Moov Money, MTN |
 | **Niger** | NE | Orange Money, Moov Money |
 | **Zimbabwe** | ZW | EcoCash, Telecel Cash |
-| **Zambia** | ZM | Airtel Money, Zamtel, MTN |
-| **Mozambique** | MZ | M-Pesa, Halopesa |
+| **Zambia** | ZM | PawaPay, Airtel Money, Zamtel, MTN |
+| **Mozambique** | MZ | PawaPay, M-Pesa, Halopesa |
 | **Cameroon** | CM | MTN, Orange Money |
 | **DRC** | CD | Orange Money, Airtel Money |
 | **Gabon** | GA | Moov Money, MTN |
 | **Central African Republic** | CF | Moov Money |
 | **Chad** | TD | Moov Money |
 | **South Africa** | ZA | Paystack, Flutterwave |
-| **Rwanda** | RW | MTN, Airtel Money, Flutterwave |
-| **Malawi** | MW | Airtel Money, Flutterwave |
+| **Rwanda** | RW | PawaPay, MTN, Airtel Money, Flutterwave |
+| **Malawi** | MW | PawaPay, Airtel Money, Flutterwave |
 | **Egypt** | EG | OPay |
 
 ---
@@ -514,6 +524,7 @@ const result = await wallet.initiatePayment({
 
 | Provider | Official Documentation | Support Email |
 |----------|----------------------|---------------|
+| PawaPay | https://docs.pawapay.io/v2/docs/welcome | PawaPay support portal |
 | M-Pesa | https://developer.safaricom.co.ke | apisupport@safaricom.co.ke |
 | Flutterwave | https://developer.flutterwave.com | support@flutterwave.com |
 | Paystack | https://paystack.com/docs | support@paystack.com |

@@ -22,7 +22,7 @@ export async function GET(request: Request) {
       id: "wedupay-v1",
       attributes: {
         name: "WeduPay API",
-        description: "Mobile money payment API supporting EcoCash, M-Pesa, and MTN",
+        description: "Mobile money payment API supporting direct EcoCash for Zimbabwe and PawaPay-supported regional rails",
         version: "1.0.0",
         status: "stable",
       },
@@ -96,6 +96,11 @@ export async function GET(request: Request) {
         href: `${baseUrl}/api/v1/webhooks/mtn`,
         methods: ["GET", "POST"],
         description: "MTN collection callback handler",
+      },
+      pawapay: {
+        href: `${baseUrl}/api/v1/webhooks/pawapay`,
+        methods: ["GET", "POST"],
+        description: "PawaPay deposit, payout, and refund callback handler",
       },
     },
     supportedHttpMethods: {

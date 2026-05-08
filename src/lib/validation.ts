@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-export const WALLET_PROVIDERS = ["ecocash", "mpesa", "mtn", "airtel"] as const;
-export const CURRENCIES = ["USD", "EUR", "KES", "ZAR", "ZWL", "ZiG"] as const;
+export const WALLET_PROVIDERS = ["ecocash", "mpesa", "mtn", "airtel", "pawapay"] as const;
+export const CURRENCIES = ["USD", "EUR", "KES", "ZAR", "ZWL", "ZiG", "GHS", "NGN", "TZS", "UGX", "ZMW", "MWK", "MZN", "RWF", "SLL", "XOF", "XAF"] as const;
 export const TRANSACTION_TYPES = ["PAYMENT", "TRANSFER", "WITHDRAWAL", "DEPOSIT"] as const;
 export const TRANSACTION_STATUSES = ["PENDING", "PROCESSING", "COMPLETED", "FAILED"] as const;
 export const USER_ROLES = ["USER", "ADMIN", "MERCHANT"] as const;

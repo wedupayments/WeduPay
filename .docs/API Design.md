@@ -58,9 +58,16 @@ For individual customers managing personal finances, mobile wallets, and P2P tra
 For merchants, developers, and businesses collecting payments and managing revenue.
 
 ## Payment Collection
-- `POST /payments` - Initiate payment request (M-Pesa, MTN, EcoCash)
+- `POST /payments` - Initiate payment request (M-Pesa, MTN, EcoCash, PawaPay-supported regional rails)
+- `POST /routing/payment` - Initiate routed mobile-money payment through the best available rail
 - `GET /payments/{id}` - Retrieve payment status and metadata
 - `GET /merchant/payment-links` - Manage reusable "No-Code" payment links
+
+Payment rail policy:
+
+- Zimbabwe transactions use the direct official EcoCash API.
+- Supported non-Zimbabwe regional transactions may route through PawaPay.
+- Paynow is intentionally excluded from the active architecture.
 
 ## Financial Analytics
 - `GET /analytics/revenue` - Real-time revenue aggregation

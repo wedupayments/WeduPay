@@ -25,6 +25,7 @@ import {
   OPayAPI,
   PalmPayAPI,
   AfricasTalkingAPI,
+  PawaPayAPI,
   WalletType,
   COUNTRY_WALLETS,
   WALLET_METADATA,
@@ -237,6 +238,13 @@ export class UnifiedWalletAdapter {
         return new AfricasTalkingAPI({
           apiKey: process.env.AFRICAS_TALKING_API_KEY || '',
           username: process.env.AFRICAS_TALKING_USERNAME || '',
+          environment: env,
+        });
+
+      case WalletType.PAWAPAY:
+        return new PawaPayAPI({
+          apiToken: process.env.PAWAPAY_API_TOKEN || '',
+          baseUrl: process.env.PAWAPAY_BASE_URL,
           environment: env,
         });
 
@@ -542,6 +550,25 @@ export class UnifiedWalletAdapter {
             message: result.message,
           };
 
+        // PawaPay
+        case WalletType.PAWAPAY:
+          result = await this.adapter.initiateDeposit({
+            phoneNumber: request.phoneNumber,
+            amount: request.amount,
+            currency: request.currency,
+            reference: request.reference,
+            description: request.description,
+            callbackUrl: request.callbackUrl,
+            country: this.config.country,
+          });
+          return {
+            success: result.status !== 'FAILED',
+            status: result.status,
+            transactionId: result.transactionId,
+            providerReference: result.providerReference,
+            message: result.message,
+          };
+
         default:
           return {
             success: false,
@@ -642,6 +669,10 @@ export class UnifiedWalletAdapter {
           result = await this.adapter.fetchTransactionStatus(reference);
           return result;
 
+        case WalletType.PAWAPAY:
+          result = await this.adapter.getDepositStatus(reference);
+          return result;
+
         default:
           return {
             success: false,
@@ -690,6 +721,19 @@ export class UnifiedWalletAdapter {
             success: result.status === 'SUCCESS',
             status: result.status,
             refundId: result.refundId,
+            message: result.message,
+          };
+
+        case WalletType.PAWAPAY:
+          result = await this.adapter.refundDeposit({
+            depositId: request.transactionId,
+            amount: request.amount,
+            reason: request.reason,
+          });
+          return {
+            success: result.status === 'SUCCESS',
+            status: result.status,
+            refundId: result.transactionId,
             message: result.message,
           };
 
