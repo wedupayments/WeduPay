@@ -247,6 +247,14 @@ export class LedgerService {
     return this.ledgerRepo.findByTransactionId(transactionId);
   }
 
+  async createDoubleEntry(
+    transactionId: string,
+    debits: Array<{ accountId: string; amount: number; currency: string }>,
+    credits: Array<{ accountId: string; amount: number; currency: string }>
+  ) {
+    return this.ledgerRepo.createDoubleEntry(transactionId, debits, credits);
+  }
+
   async verifyDoubleEntry(transactionId: string) {
     const entries = await this.ledgerRepo.findByTransactionId(transactionId);
     

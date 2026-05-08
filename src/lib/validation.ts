@@ -102,6 +102,18 @@ export const webhookPayloadSchema = z.object({
   timestamp: z.string().optional(),
 });
 
+export const ledgerEntryLineSchema = z.object({
+  accountId: z.string().min(1, "Account ID is required"),
+  amount: z.number().positive("Amount must be positive"),
+  currency: currencySchema.optional().default("USD"),
+});
+
+export const ledgerCreateSchema = z.object({
+  transactionId: z.string().uuid("Invalid transactionId format"),
+  debits: z.array(ledgerEntryLineSchema).min(1, "At least one debit required"),
+  credits: z.array(ledgerEntryLineSchema).min(1, "At least one credit required"),
+});
+
 export const apiKeySchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   permissions: z.array(z.string()).optional(),

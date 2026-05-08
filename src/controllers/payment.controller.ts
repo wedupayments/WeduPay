@@ -60,6 +60,19 @@ export class PaymentController {
         result.status === "SUCCESS" ? "COMPLETED" : "PENDING"
       );
 
+      // On successful immediate confirmation, record ledger entries and update wallet balance
+      if (result.status === "SUCCESS") {
+        try {
+          const wallet = await walletService.getOrCreateWallet(userId, walletType, currencyValue);
+          if (wallet && wallet.id) {
+            await paymentService.recordPaymentToLedger(transaction.id, wallet.id, amount, currencyValue);
+            await walletService.updateBalance(wallet.id, -amount);
+          }
+        } catch (err) {
+          console.error("Failed to record ledger entry after payment success:", err);
+        }
+      }
+
       const response = {
         data: {
           id: transaction.id,

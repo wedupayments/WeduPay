@@ -15,11 +15,12 @@
  * @module services/webhook
  */
 
-import { PrismaClient } from '@prisma/client';
+import { ledgerService } from '@/services';
+import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
 import { createHash } from 'crypto';
 
-const prisma = new PrismaClient();
+// Use shared prisma client from `src/lib/prisma`
 
 function toJson(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value ?? {})) as Prisma.InputJsonValue;
@@ -747,40 +748,27 @@ async function updateTransactionStatus(
  */
 async function createLedgerEntries(transaction: any): Promise<void> {
   try {
+    // Prefer metadata.walletId when present (wallet-based payment). Fall back to userId.
+    const walletId = (transaction.metadata && transaction.metadata.walletId) || transaction.userId;
+
     if (!transaction.transferRef) {
-      await prisma.ledgerEntry.create({
-        data: {
-          transactionId: transaction.id,
-          accountId: transaction.userId,
-          entryType: 'credit',
-          amount: transaction.amount,
-          currency: transaction.currency,
-        },
-      });
+      // Standard payment: debit user's wallet, credit platform settlement
+      const debits = [{ accountId: walletId, amount: transaction.amount, currency: transaction.currency || 'USD' }];
+      const credits = [{ accountId: 'PLATFORM_SETTLEMENT', amount: transaction.amount, currency: transaction.currency || 'USD' }];
+
+      await ledgerService.createDoubleEntry(transaction.id, debits, credits);
+      console.log('Ledger entries created for transaction:', transaction.id);
       return;
     }
 
-    // Debit entry (sender's account)
-    await prisma.ledgerEntry.create({
-      data: {
-        transactionId: transaction.id,
-        accountId: transaction.userId,
-        entryType: 'debit',
-        amount: transaction.sendAmount,
-        currency: transaction.sendCurrency,
-      },
-    });
+    // P2P transfer: debit sender, credit platform (or recipient)
+    const sendAmount = transaction.sendAmount || transaction.amount;
+    const sendCurrency = transaction.sendCurrency || transaction.currency || 'USD';
 
-    // Credit entry (recipient's account or platform settlement)
-    await prisma.ledgerEntry.create({
-      data: {
-        transactionId: transaction.id,
-        accountId: 'PLATFORM_SETTLEMENT',
-        entryType: 'credit',
-        amount: transaction.sendAmount,
-        currency: transaction.sendCurrency,
-      },
-    });
+    const debits = [{ accountId: transaction.userId, amount: sendAmount, currency: sendCurrency }];
+    const credits = [{ accountId: 'PLATFORM_SETTLEMENT', amount: sendAmount, currency: sendCurrency }];
+
+    await ledgerService.createDoubleEntry(transaction.id, debits, credits);
 
     console.log('Ledger entries created for transaction:', transaction.id);
   } catch (error) {

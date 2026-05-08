@@ -63,6 +63,18 @@ const options: swaggerJsdoc.Options = {
         },
       },
       schemas: {
+        LedgerEntry: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+            transactionId: { type: "string", format: "uuid" },
+            accountId: { type: "string" },
+            entryType: { type: "string", enum: ["DEBIT", "CREDIT"] },
+            amount: { type: "number" },
+            currency: { type: "string", example: "USD" },
+            createdAt: { type: "string", format: "date-time" },
+          },
+        },
         User: {
           type: "object",
           properties: {
@@ -326,6 +338,50 @@ const options: swaggerJsdoc.Options = {
       },
       "/wallets/withdraw": {
         post: { tags: ["Users"], summary: "Withdraw from Wallet", description: "Withdraw funds from your wallet to a mobile money account", security: [{ cookieAuth: [] }], responses: { 200: { description: "Withdrawal initiated" } } }
+      },
+      "/ledger/entries": {
+        post: {
+          tags: ["System"],
+          summary: "Create Ledger Entries",
+          description: "Create double-entry ledger lines for a transaction",
+          security: [{ apiKeyAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    transactionId: { type: "string", format: "uuid" },
+                    debits: { type: "array", items: { $ref: "#/components/schemas/LedgerEntry" } },
+                    credits: { type: "array", items: { $ref: "#/components/schemas/LedgerEntry" } },
+                  },
+                },
+              },
+            },
+          },
+          responses: { 201: { description: "Ledger entries created" } },
+        },
+      },
+      "/ledger/transactions/{id}": {
+        get: {
+          tags: ["System"],
+          summary: "Get Transaction Ledger",
+          description: "Retrieve ledger entries for a transaction and verification status",
+          security: [{ apiKeyAuth: [] }],
+          parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+          responses: { 200: { description: "Ledger entries", content: { "application/json": { schema: { type: "object", properties: { data: { type: "array", items: { $ref: "#/components/schemas/LedgerEntry" } }, verification: { type: "object" } } } } } } },
+        },
+      },
+      "/ledger/accounts/{accountId}": {
+        get: {
+          tags: ["System"],
+          summary: "Get Account Statement",
+          description: "Get account ledger statement for a specific account and currency",
+          security: [{ cookieAuth: [] }],
+          parameters: [{ name: "accountId", in: "path", required: true, schema: { type: "string" } }, { name: "currency", in: "query", required: false, schema: { type: "string" } }],
+          responses: { 200: { description: "Account statement" } },
+        },
       },
       "/users/{id}/transactions": {
         get: { tags: ["Users"], summary: "User Transactions", description: "Get transaction history scoped to a specific user", security: [{ cookieAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "User transactions retrieved" } } }
