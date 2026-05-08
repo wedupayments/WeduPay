@@ -35,16 +35,51 @@ interface FXAdminStatus {
   } | null;
 }
 
+interface RailProviderHealth {
+  id: string;
+  name: string;
+  displayName: string;
+  region: string;
+  status: string;
+  isReachable: boolean;
+  responseTime: number;
+  successRate: number;
+  avgResponseTime: number;
+  uptime: number;
+  lastHealthCheck: string | null;
+  transactionCount: number;
+  healthCheckCount: number;
+  supportedCountries: string[];
+  supportedCurrencies: string[];
+  feePercentage: number;
+  feeFixed: number;
+}
+
+interface RailHealthResponse {
+  summary: {
+    total: number;
+    healthy: number;
+    degraded: number;
+    unhealthy: number;
+    unknown: number;
+  };
+  providers: RailProviderHealth[];
+  timestamp: string;
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [fxStatus, setFxStatus] = useState<FXAdminStatus | null>(null);
+  const [railHealth, setRailHealth] = useState<RailHealthResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshingFx, setIsRefreshingFx] = useState(false);
+  const [isRefreshingRails, setIsRefreshingRails] = useState(false);
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
     loadStats();
     loadFxStatus();
+    loadRailHealth();
   }, []);
 
   const loadStats = async () => {
@@ -79,6 +114,23 @@ export default function AdminDashboard() {
     }
   };
 
+  const loadRailHealth = async () => {
+    try {
+      const response = await fetch('/api/v1/routing/health', { credentials: 'include' });
+      const data = await response.json();
+
+      if (data.success) {
+        setRailHealth({
+          summary: data.summary,
+          providers: data.providers,
+          timestamp: data.timestamp,
+        });
+      }
+    } catch (err) {
+      console.error('Load payment rails health error:', err);
+    }
+  };
+
   const handleRefreshFx = async () => {
     try {
       setIsRefreshingFx(true);
@@ -100,6 +152,36 @@ export default function AdminDashboard() {
       setIsRefreshingFx(false);
     }
   };
+
+  const handleRefreshRails = async () => {
+    try {
+      setIsRefreshingRails(true);
+      const response = await fetch('/api/v1/routing/health', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await response.json();
+
+      if (!data.success) {
+        setError(data.error || 'Failed to refresh provider health');
+        return;
+      }
+
+      await loadRailHealth();
+    } catch (err) {
+      console.error('Refresh payment rails health error:', err);
+      setError('Failed to refresh provider health');
+    } finally {
+      setIsRefreshingRails(false);
+    }
+  };
+
+  const trackedRailNames = ['ecocash', 'pawapay'];
+  const trackedRails = trackedRailNames.map((name) =>
+    railHealth?.providers.find((provider) => provider.name === name) || null
+  );
 
   if (isLoading) {
     return (
@@ -196,6 +278,54 @@ export default function AdminDashboard() {
             </Link>
           </div>
         </div>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold mb-1">Payment Rails</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Operational view for Zimbabwe EcoCash and regional PawaPay routing.
+            </p>
+          </div>
+          <button
+            onClick={handleRefreshRails}
+            disabled={isRefreshingRails}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-background-dark hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            <span className="material-symbols-outlined text-base">
+              {isRefreshingRails ? 'progress_activity' : 'sync'}
+            </span>
+            {isRefreshingRails ? 'Refreshing...' : 'Refresh Rails'}
+          </button>
+        </div>
+
+        <div className="mt-5 grid md:grid-cols-2 gap-4">
+          <PaymentRailCard
+            title="Zimbabwe Rail"
+            expectedProvider="ecocash"
+            provider={trackedRails[0]}
+            description="Direct official EcoCash API"
+            fallbackCountries={['ZW']}
+          />
+          <PaymentRailCard
+            title="Regional Rail"
+            expectedProvider="pawapay"
+            provider={trackedRails[1]}
+            description="PawaPay aggregator for supported non-Zimbabwe markets"
+            fallbackCountries={['ZM', 'UG', 'TZ', 'GH', 'NG']}
+          />
+        </div>
+
+        {railHealth && (
+          <div className="mt-5 grid grid-cols-2 md:grid-cols-5 gap-3">
+            <RailSummary label="Total" value={railHealth.summary.total} />
+            <RailSummary label="Healthy" value={railHealth.summary.healthy} tone="green" />
+            <RailSummary label="Degraded" value={railHealth.summary.degraded} tone="yellow" />
+            <RailSummary label="Unhealthy" value={railHealth.summary.unhealthy} tone="red" />
+            <RailSummary label="Unknown" value={railHealth.summary.unknown} />
+          </div>
+        )}
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-8">
@@ -343,5 +473,133 @@ function StatCard({
     <Link href={link}>{content}</Link>
   ) : (
     content
+  );
+}
+
+function PaymentRailCard({
+  title,
+  expectedProvider,
+  provider,
+  description,
+  fallbackCountries,
+}: {
+  title: string;
+  expectedProvider: string;
+  provider: RailProviderHealth | null;
+  description: string;
+  fallbackCountries: string[];
+}) {
+  const status = provider?.status || 'MISSING';
+  const statusClass =
+    status === 'HEALTHY'
+      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+      : status === 'DEGRADED'
+        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+        : status === 'MISSING' || status === 'UNHEALTHY'
+          ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+          : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200';
+
+  const countries = provider?.supportedCountries?.length ? provider.supportedCountries : fallbackCountries;
+  const currencies = provider?.supportedCurrencies || [];
+
+  return (
+    <div className="rounded-xl border border-slate-200 dark:border-gray-700 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{title}</p>
+          <h4 className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
+            {provider?.displayName || expectedProvider}
+          </h4>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
+        </div>
+        <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${statusClass}`}>
+          {status}
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="rounded-lg bg-slate-50 dark:bg-gray-700 p-3">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Success Rate</p>
+          <p className="mt-1 font-semibold text-gray-900 dark:text-white">
+            {provider ? `${provider.successRate.toFixed(1)}%` : 'Not seeded'}
+          </p>
+        </div>
+        <div className="rounded-lg bg-slate-50 dark:bg-gray-700 p-3">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Uptime</p>
+          <p className="mt-1 font-semibold text-gray-900 dark:text-white">
+            {provider ? `${provider.uptime.toFixed(1)}%` : 'Not seeded'}
+          </p>
+        </div>
+        <div className="rounded-lg bg-slate-50 dark:bg-gray-700 p-3">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Transactions</p>
+          <p className="mt-1 font-semibold text-gray-900 dark:text-white">
+            {provider?.transactionCount ?? 0}
+          </p>
+        </div>
+        <div className="rounded-lg bg-slate-50 dark:bg-gray-700 p-3">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Last Check</p>
+          <p className="mt-1 font-semibold text-gray-900 dark:text-white">
+            {provider?.lastHealthCheck ? new Date(provider.lastHealthCheck).toLocaleDateString() : 'None'}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Countries</p>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {countries.slice(0, 12).map((country) => (
+            <span key={country} className="rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
+              {country}
+            </span>
+          ))}
+          {countries.length > 12 && (
+            <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 dark:bg-gray-700 dark:text-slate-300">
+              +{countries.length - 12}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {currencies.length > 0 && (
+        <div className="mt-4">
+          <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Currencies</p>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+            {currencies.join(', ')}
+          </p>
+        </div>
+      )}
+
+      {!provider && (
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <p className="text-sm text-amber-800">
+            Run <code>npx tsx prisma/seed-routing.ts</code> to add this provider to the database.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RailSummary({
+  label,
+  value,
+  tone = 'slate',
+}: {
+  label: string;
+  value: number;
+  tone?: 'slate' | 'green' | 'yellow' | 'red';
+}) {
+  const tones = {
+    slate: 'bg-slate-50 text-slate-900 dark:bg-gray-700 dark:text-white',
+    green: 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300',
+    yellow: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300',
+    red: 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300',
+  };
+
+  return (
+    <div className={`rounded-lg p-3 ${tones[tone]}`}>
+      <p className="text-xs uppercase tracking-wide opacity-70">{label}</p>
+      <p className="mt-1 text-xl font-bold">{value}</p>
+    </div>
   );
 }

@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { ProviderHealthMonitor } from '@/services/routing/provider-health-monitor';
 import { ProviderStatus } from '@/services/routing/money-routing-engine';
+import { authenticateRequest, requireAuth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 const healthMonitor = new ProviderHealthMonitor();
@@ -21,6 +22,14 @@ export async function GET(request: NextRequest) {
   console.log(`[HealthAPI] ${requestId} - Health status request`);
 
   try {
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) return authError;
+
+    if (auth.role !== 'ADMIN') {
+      return NextResponse.json({ success: false, requestId, error: 'Admin access required' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') as ProviderStatus | null;
     const region = searchParams.get('region');
@@ -120,6 +129,14 @@ export async function POST(request: NextRequest) {
   console.log(`[HealthAPI] ${requestId} - Refresh health request`);
 
   try {
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) return authError;
+
+    if (auth.role !== 'ADMIN') {
+      return NextResponse.json({ success: false, requestId, error: 'Admin access required' }, { status: 403 });
+    }
+
     const body = await request.json();
     const { providerId } = body;
 

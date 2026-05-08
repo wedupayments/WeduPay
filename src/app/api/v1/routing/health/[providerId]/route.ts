@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { ProviderStatus } from '@/services/routing/money-routing-engine';
+import { authenticateRequest, requireAuth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
@@ -24,6 +25,14 @@ export async function GET(
   console.log(`[HealthAPI] ${requestId} - Provider status request for ${providerId}`);
 
   try {
+    const auth = await authenticateRequest(request);
+    const authError = requireAuth(auth);
+    if (authError) return authError;
+
+    if (auth.role !== 'ADMIN') {
+      return NextResponse.json({ success: false, requestId, error: 'Admin access required' }, { status: 403 });
+    }
+
     // Get provider info
     const provider = await prisma.paymentProvider.findUnique({
       where: { id: providerId },
