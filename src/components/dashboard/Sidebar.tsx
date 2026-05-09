@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { QuickFXCalculator } from "@/components/fx/QuickFXCalculator";
 
 const navItems = [
   { label: "Dashboard", icon: "dashboard", href: "/dashboard" },
@@ -77,6 +78,19 @@ export function Sidebar({ userType = "MERCHANT" }: SidebarProps) {
           </Link>
         ))}
       </nav>
+
+      {/* Quick FX Calculator trigger */}
+      <div className="p-3">
+        {collapsed ? (
+          <div className="flex justify-center">
+            <QuickFXCalculator compact />
+          </div>
+        ) : (
+          <div className="px-1">
+            <QuickFXCalculator className="w-full justify-center rounded-xl" triggerLabel="View FX" />
+          </div>
+        )}
+      </div>
 
       {/* System Status */}
       {!collapsed && (

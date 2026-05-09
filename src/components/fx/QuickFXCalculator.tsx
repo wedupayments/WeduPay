@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { getOpenExchangeRatesProviderLabel } from "@/lib/open-exchange-rates";
 
 const CURRENCIES = [
@@ -120,6 +121,20 @@ export function QuickFXCalculator({
     setResult(null);
   };
 
+  // Create a portal root attached to document.body so the modal
+  // is not affected by transformed ancestors (ensures true viewport centering)
+  const [portalEl, setPortalEl] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const el = document.createElement("div");
+    el.setAttribute("data-quick-fx-portal", "");
+    document.body.appendChild(el);
+    setPortalEl(el);
+    return () => {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    };
+  }, []);
+
   return (
     <>
       <button
@@ -132,139 +147,141 @@ export function QuickFXCalculator({
         <span className="material-symbols-outlined text-[20px]">currency_exchange</span>
         {!compact && <span>{triggerLabel}</span>}
       </button>
-
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-primary/10 dark:bg-background-dark">
-            <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 dark:border-primary/10">
-              <div>
-                <h3 className="text-lg font-black text-slate-900 dark:text-white">
-                  Quick FX Calculator
-                </h3>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                  Check a live conversion without leaving this page.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="flex size-10 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-primary/10"
-                aria-label="Close FX calculator"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-
-            <div className="space-y-4 p-5">
-              <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
-                  From
-                </label>
-                <div className="grid grid-cols-[1fr_auto] gap-2">
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-                    placeholder="Enter amount"
-                  />
-                  <select
-                    value={fromCurrency}
-                    onChange={(e) => setFromCurrency(e.target.value)}
-                    className="min-w-[132px] rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+      {isOpen && portalEl
+        ? createPortal(
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
+              <div className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-primary/10 dark:bg-background-dark">
+                <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 dark:border-primary/10">
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                      Quick FX Calculator
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                      Check a live conversion without leaving this page.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsOpen(false)}
+                    className="flex size-10 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-primary/10"
+                    aria-label="Close FX calculator"
                   >
-                    {CURRENCIES.map((currency) => (
-                      <option key={currency.code} value={currency.code}>
-                        {currency.code}
-                      </option>
-                    ))}
-                  </select>
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </div>
+
+                <div className="space-y-4 p-5">
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
+                      From
+                    </label>
+                    <div className="grid grid-cols-[1fr_auto] gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                        placeholder="Enter amount"
+                      />
+                      <select
+                        value={fromCurrency}
+                        onChange={(e) => setFromCurrency(e.target.value)}
+                        className="min-w-[132px] rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                      >
+                        {CURRENCIES.map((currency) => (
+                          <option key={currency.code} value={currency.code}>
+                            {currency.code}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-center">
+                    <button
+                      type="button"
+                      onClick={handleSwap}
+                      className="flex size-11 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:bg-slate-100 dark:border-primary/20 dark:text-slate-300 dark:hover:bg-primary/10"
+                      aria-label="Swap currencies"
+                    >
+                      <span className="material-symbols-outlined">swap_vert</span>
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
+                      To
+                    </label>
+                    <div className="grid grid-cols-[1fr_auto] gap-2">
+                      <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+                        {result ? result.convertedAmount.toFixed(2) : "0.00"}
+                      </div>
+                      <select
+                        value={toCurrency}
+                        onChange={(e) => setToCurrency(e.target.value)}
+                        className="min-w-[132px] rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                      >
+                        {CURRENCIES.map((currency) => (
+                          <option key={currency.code} value={currency.code}>
+                            {currency.code}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {error && (
+                    <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-200">
+                      {error}
+                    </div>
+                  )}
+
+                  {loading ? (
+                    <div className="flex justify-center py-4">
+                      <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+                    </div>
+                  ) : result ? (
+                    <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-primary/10 dark:bg-primary/5">
+                      <div className="flex items-center justify-between gap-3 text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">Rate</span>
+                        <span className="font-semibold text-slate-900 dark:text-white">
+                          1 {result.from} = {result.rate.toFixed(4)} {result.to}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3 text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">Converted</span>
+                        <span className="font-semibold text-slate-900 dark:text-white">
+                          {result.convertedAmount.toFixed(2)} {result.to}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3 text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">Fee estimate</span>
+                        <span className="font-semibold text-slate-900 dark:text-white">
+                          {result.fee.toFixed(2)} {result.to}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3 border-t border-slate-200 pt-3 text-sm dark:border-primary/10">
+                        <span className="font-bold text-slate-700 dark:text-slate-300">Total</span>
+                        <span className="text-lg font-black text-primary">
+                          {result.totalAmount.toFixed(2)} {result.to}
+                        </span>
+                      </div>
+                      <div className="space-y-1 pt-1 text-xs text-slate-500 dark:text-slate-400">
+                        <p>{providerLabel}</p>
+                        {result.updatedAt && (
+                          <p>Updated {new Date(result.updatedAt).toLocaleString()}</p>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
-
-              <div className="flex justify-center">
-                <button
-                  type="button"
-                  onClick={handleSwap}
-                  className="flex size-11 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:bg-slate-100 dark:border-primary/20 dark:text-slate-300 dark:hover:bg-primary/10"
-                  aria-label="Swap currencies"
-                >
-                  <span className="material-symbols-outlined">swap_vert</span>
-                </button>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
-                  To
-                </label>
-                <div className="grid grid-cols-[1fr_auto] gap-2">
-                  <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
-                    {result ? result.convertedAmount.toFixed(2) : "0.00"}
-                  </div>
-                  <select
-                    value={toCurrency}
-                    onChange={(e) => setToCurrency(e.target.value)}
-                    className="min-w-[132px] rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-                  >
-                    {CURRENCIES.map((currency) => (
-                      <option key={currency.code} value={currency.code}>
-                        {currency.code}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {error && (
-                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-200">
-                  {error}
-                </div>
-              )}
-
-              {loading ? (
-                <div className="flex justify-center py-4">
-                  <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-                </div>
-              ) : result ? (
-                <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-primary/10 dark:bg-primary/5">
-                  <div className="flex items-center justify-between gap-3 text-sm">
-                    <span className="text-slate-600 dark:text-slate-400">Rate</span>
-                    <span className="font-semibold text-slate-900 dark:text-white">
-                      1 {result.from} = {result.rate.toFixed(4)} {result.to}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 text-sm">
-                    <span className="text-slate-600 dark:text-slate-400">Converted</span>
-                    <span className="font-semibold text-slate-900 dark:text-white">
-                      {result.convertedAmount.toFixed(2)} {result.to}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 text-sm">
-                    <span className="text-slate-600 dark:text-slate-400">Fee estimate</span>
-                    <span className="font-semibold text-slate-900 dark:text-white">
-                      {result.fee.toFixed(2)} {result.to}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 border-t border-slate-200 pt-3 text-sm dark:border-primary/10">
-                    <span className="font-bold text-slate-700 dark:text-slate-300">Total</span>
-                    <span className="text-lg font-black text-primary">
-                      {result.totalAmount.toFixed(2)} {result.to}
-                    </span>
-                  </div>
-                  <div className="space-y-1 pt-1 text-xs text-slate-500 dark:text-slate-400">
-                    <p>{providerLabel}</p>
-                    {result.updatedAt && (
-                      <p>Updated {new Date(result.updatedAt).toLocaleString()}</p>
-                    )}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      )}
+            </div>,
+            portalEl
+          )
+        : null}
     </>
   );
 }

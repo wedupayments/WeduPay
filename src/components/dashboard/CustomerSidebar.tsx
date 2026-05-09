@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { QuickFXCalculator } from "@/components/fx/QuickFXCalculator";
 
 const navItems = [
   { label: "Dashboard", icon: "dashboard", href: "/dashboard/customer", active: false },
@@ -49,6 +50,14 @@ export function CustomerSidebar({ userName = "Alex Johnson", userId = "88291" }:
             {item.label}
           </Link>
         ))}
+
+        {/* FX calculator as nav item */}
+        <div className="pt-2">
+          <QuickFXCalculator 
+            className="w-full px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-primary/5 justify-start gap-3"
+            triggerLabel="View FX" 
+          />
+        </div>
       </nav>
 
       <div className="p-4 border-t border-slate-200 dark:border-primary/10">
