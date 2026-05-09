@@ -33,9 +33,62 @@ For individual customers managing personal finances, mobile wallets, and P2P tra
 
 ## Wallet & Funds Management
 - `GET /wallets/balance` - Get balances across all mobile wallets
-- `POST /wallets/fund` - Deposit funds into personal wallet
+- `POST /wallets/fund` - Deposit funds into personal wallet (simple, no MNO routing)
 - `POST /wallets/withdraw` - Withdraw funds to linked mobile account
 - `GET /wallets/history` - Comprehensive transaction audit logs
+
+## Mobile Money Deposits (PawaPay)
+Deposits routed through PawaPay's aggregator across 18 African countries. The flow is asynchronous: the API returns `202` immediately and the wallet is credited when PawaPay fires the webhook.
+
+- `POST /deposits/predict` - Detect MNO (mobile network operator) for a phone number before depositing
+- `POST /deposits` - Initiate a mobile money deposit; returns `depositId` and `PENDING` status
+- `GET /deposits/{depositId}` - Poll deposit status (fallback when webhook is delayed)
+
+### Deposit flow
+```
+1. POST /deposits/predict        → confirm detected MNO (e.g. MPESA_KE)
+2. POST /deposits                → PawaPay initiates push to customer's phone
+3. Customer approves on phone    → PawaPay fires POST /webhooks/pawapay
+4. Webhook processor credits wallet and updates Transaction to COMPLETED
+5. GET /deposits/{id}            → optional polling for status confirmation
+```
+
+### Supported countries
+BJ, BF, CM, CD, CG, CI, GA, GH, KE, MW, MZ, NG, RW, SN, SL, TZ, UG, ZM
+
+### Request — POST /deposits
+```json
+{
+  "phoneNumber": "254712345678",
+  "amount": 500,
+  "currency": "KES",
+  "description": "WeduPay deposit",
+  "provider": "MPESA_KE",
+  "country": "KE",
+  "walletId": "wallet-uuid"
+}
+```
+`provider` and `country` are optional — PawaPay auto-detects the MNO when omitted.
+
+### Response — 202 Accepted
+```json
+{
+  "success": true,
+  "requestId": "DEP-1746789012-abc",
+  "depositId": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "PENDING",
+  "provider": "MPESA_KE",
+  "message": "Deposit initiated. Funds will be credited to your wallet upon confirmation."
+}
+```
+
+### Status values
+| Status | Meaning |
+|--------|---------|
+| `PENDING` | Awaiting customer approval on phone |
+| `SUCCESS` | Payment confirmed; wallet credited |
+| `FAILED` | Payment rejected or timed out |
+| `CANCELLED` | Customer cancelled on device |
 
 ## P2P Payments & Transfers
 - `GET /wallets/balance?currency=KES` - Check available balance for a currency before sending

@@ -569,6 +569,137 @@ const options: swaggerJsdoc.Options = {
       "/wallets/fund": {
         post: { tags: ["Users"], summary: "Fund Wallet", description: "Deposit funds into your wallet using mobile money/card", security: [{ cookieAuth: [] }], responses: { 200: { description: "Deposit request initiated" } } }
       },
+
+      // ── PawaPay Deposits ──────────────────────────────────────────────────
+      "/deposits": {
+        post: {
+          tags: ["Users"],
+          summary: "Initiate Mobile Money Deposit",
+          description: "Initiate a mobile money deposit via PawaPay. Returns 202 immediately; the wallet is credited asynchronously when PawaPay sends the webhook callback.",
+          security: [{ cookieAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["phoneNumber", "amount", "currency"],
+                  properties: {
+                    phoneNumber: { type: "string", description: "Sender's phone number with country code (min 9 digits)", example: "254712345678" },
+                    amount: { type: "number", description: "Deposit amount (positive)", example: 500 },
+                    currency: { type: "string", description: "3-letter ISO currency code", example: "KES" },
+                    description: { type: "string", description: "Statement description (max 22 chars)", example: "WeduPay deposit" },
+                    provider: { type: "string", description: "MNO corridor code (e.g. MPESA_KE). Auto-detected if omitted.", example: "MPESA_KE" },
+                    country: { type: "string", description: "ISO 3166-1 alpha-2 country code for provider auto-detection", example: "KE" },
+                    walletId: { type: "string", description: "Target wallet ID. Defaults to the currency-matched wallet." },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            202: {
+              description: "Deposit initiated — awaiting MNO confirmation",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean", example: true },
+                      requestId: { type: "string", example: "DEP-1746789012-abc" },
+                      depositId: { type: "string", description: "PawaPay depositId (UUID)", example: "550e8400-e29b-41d4-a716-446655440000" },
+                      status: { type: "string", enum: ["PENDING", "SUCCESS", "FAILED"], example: "PENDING" },
+                      provider: { type: "string", description: "Resolved MNO corridor", example: "MPESA_KE" },
+                      message: { type: "string" },
+                    },
+                  },
+                },
+              },
+            },
+            400: { $ref: "#/components/responses/BadRequest" },
+            401: { $ref: "#/components/responses/Unauthorized" },
+            502: { description: "PawaPay rejected the deposit request" },
+          },
+        },
+      },
+      "/deposits/{depositId}": {
+        get: {
+          tags: ["Users"],
+          summary: "Get Deposit Status",
+          description: "Poll PawaPay for the current status of a deposit. Use this as a fallback when the webhook has not yet been received.",
+          security: [{ cookieAuth: [] }],
+          parameters: [
+            { name: "depositId", in: "path", required: true, schema: { type: "string" }, description: "PawaPay depositId (UUID)" },
+          ],
+          responses: {
+            200: {
+              description: "Deposit status",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean" },
+                      depositId: { type: "string" },
+                      status: { type: "string", enum: ["PENDING", "SUCCESS", "FAILED", "CANCELLED"] },
+                      amount: { type: "number" },
+                      currency: { type: "string" },
+                      provider: { type: "string" },
+                      providerReference: { type: "string" },
+                      transactionDate: { type: "string", format: "date-time" },
+                    },
+                  },
+                },
+              },
+            },
+            401: { $ref: "#/components/responses/Unauthorized" },
+            500: { $ref: "#/components/responses/InternalError" },
+          },
+        },
+      },
+      "/deposits/predict": {
+        post: {
+          tags: ["Users"],
+          summary: "Predict MNO Provider",
+          description: "Predict the mobile network operator for a phone number before initiating a deposit. Use this to show the user their detected provider (e.g. M-Pesa) for confirmation.",
+          security: [{ cookieAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["phoneNumber"],
+                  properties: {
+                    phoneNumber: { type: "string", example: "254712345678" },
+                    country: { type: "string", example: "KE" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: "Provider detected",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean" },
+                      provider: { type: "string", example: "MPESA_KE" },
+                      country: { type: "string", example: "KE" },
+                    },
+                  },
+                },
+              },
+            },
+            400: { $ref: "#/components/responses/BadRequest" },
+            401: { $ref: "#/components/responses/Unauthorized" },
+            422: { description: "Unable to determine provider for this phone number" },
+          },
+        },
+      },
       "/wallets/withdraw": {
         post: { tags: ["Users"], summary: "Withdraw from Wallet", description: "Withdraw funds from your wallet to a mobile money account", security: [{ cookieAuth: [] }], responses: { 200: { description: "Withdrawal initiated" } } }
       },
