@@ -106,32 +106,79 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const accessToken = request.cookies.get("sb-access-token")?.value;
-    
-    if (!accessToken) {
+    const refreshToken = request.cookies.get("sb-refresh-token")?.value;
+
+    if (!accessToken && !refreshToken) {
       return NextResponse.json({ success: false, session: null }, { status: 200 });
     }
 
-    const user = await getSession(accessToken);
-
-    if (!user) {
-      const response = NextResponse.json({ success: false, session: null }, { status: 200 });
-      clearLegacyCookies(response);
-      return response;
+    // Try the access token first
+    if (accessToken) {
+      const user = await getSession(accessToken);
+      if (user) {
+        return NextResponse.json({
+          success: true,
+          user: { id: user.id, email: user.email ?? null },
+          session: {
+            userId: user.id,
+            email: user.email ?? null,
+            expiresAt: Date.now() + 60 * 60 * 1000,
+          }
+        });
+      }
     }
 
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email ?? null,
-      },
-      session: {
-        userId: user.id,
-        email: user.email ?? null,
-        // We don't have the exact expiry from the cookie easily, so we estimate or rely on the cookie itself
-        expiresAt: Date.now() + 60 * 60 * 1000, 
+    // Access token missing or expired — try refreshing with the refresh token
+    if (refreshToken) {
+      try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+        // Call Supabase token endpoint directly — works even when access token is expired/absent
+        const tokenResponse = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": supabaseAnonKey,
+          },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+
+        if (tokenResponse.ok) {
+          const tokenData = await tokenResponse.json();
+
+          if (tokenData.access_token && tokenData.user) {
+            const accessMaxAge = tokenData.expires_in ?? 3600;
+            const expiresAt = Date.now() + accessMaxAge * 1000;
+
+            const response = NextResponse.json({
+              success: true,
+              user: { id: tokenData.user.id, email: tokenData.user.email ?? null },
+              session: {
+                userId: tokenData.user.id,
+                email: tokenData.user.email ?? null,
+                expiresAt,
+              }
+            });
+
+            response.cookies.set("sb-access-token", tokenData.access_token, getCookieOptions(accessMaxAge));
+            if (tokenData.refresh_token) {
+              response.cookies.set("sb-refresh-token", tokenData.refresh_token, getCookieOptions(60 * 60 * 24 * 30));
+            }
+            return response;
+          }
+        }
+      } catch (refreshErr) {
+        console.error('[Session API] Token refresh failed:', refreshErr);
       }
-    });
+    }
+
+    // Both tokens invalid — clear cookies
+    const response = NextResponse.json({ success: false, session: null }, { status: 200 });
+    response.cookies.set("sb-access-token", "", getCookieOptions(0));
+    response.cookies.set("sb-refresh-token", "", getCookieOptions(0));
+    clearLegacyCookies(response);
+    return response;
   } catch (error) {
     console.error('[Session API] GET Error:', error);
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
