@@ -25,7 +25,8 @@ jest.mock('@/services/routing/p2p-transfer-service', () => {
   const getTransferHistory = jest.fn();
   const getTransferLimits = jest.fn();
 
-  const MockP2PTransferService = jest.fn().mockImplementation(() => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const MockP2PTransferService: any = jest.fn().mockImplementation(() => ({
     getTransferQuote,
     executeTransfer,
     getTransferHistory,

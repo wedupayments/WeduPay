@@ -29,7 +29,8 @@ function makeRequest(opts: {
   url?: string;
 }) {
   const url = opts.url ?? 'http://localhost/api/auth/session';
-  const init: RequestInit = { method: opts.method ?? 'GET' };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const init: any = { method: opts.method ?? 'GET' };
   if (opts.body) {
     init.body = JSON.stringify(opts.body);
     init.headers = { 'Content-Type': 'application/json' };

@@ -15,7 +15,7 @@ import { authenticateRequest, requireAuth } from '@/lib/auth';
 
 const predictSchema = z.object({
   phoneNumber: z.string().min(9, 'Phone number too short'),
-  country: z.string().length(2).optional(),
+  country: z.string().min(2).max(3).optional(),
 });
 
 export async function POST(request: NextRequest) {

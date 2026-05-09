@@ -1,0 +1,26 @@
+
+> temp@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.211:3000
+- Environments: .env.local, .env
+
+✓ Starting...
+✓ Ready in 3.2s
+ POST /api/v1/deposits/predict 200 in 12.0s (compile: 450ms, proxy.ts: 10ms, render: 11.5s)
+[DepositsAPI] DEP-1778338768159-87pqlok - Received deposit request
+ POST /api/v1/deposits 400 in 5.9s (compile: 160ms, proxy.ts: 6ms, render: 5.8s)
+ POST /api/v1/deposits/predict 200 in 7.0s (compile: 73ms, proxy.ts: 6ms, render: 6.9s)
+[DepositsAPI] DEP-1778338870360-b80moz8 - Received deposit request
+ POST /api/v1/deposits 502 in 4.8s (compile: 85ms, proxy.ts: 5ms, render: 4.7s)
+ POST /api/v1/deposits/predict 200 in 10.2s (compile: 84ms, proxy.ts: 7ms, render: 10.1s)
+[DepositsAPI] DEP-1778339564358-ay90l0n - Received deposit request
+ POST /api/v1/deposits 502 in 5.6s (compile: 71ms, proxy.ts: 5ms, render: 5.5s)
+ POST /api/v1/deposits/predict 200 in 5.1s (compile: 4ms, proxy.ts: 5ms, render: 5.1s)
+[DepositsAPI] DEP-1778339613925-4hp4pok - Received deposit request
+ POST /api/v1/deposits 502 in 5.3s (compile: 4ms, proxy.ts: 5ms, render: 5.3s)
+ POST /api/v1/deposits/predict 200 in 4.9s (compile: 89ms, proxy.ts: 5ms, render: 4.8s)
+[DepositsAPI] DEP-1778339718012-zmcr0ce - Received deposit request
+ POST /api/v1/deposits 502 in 5.8s (compile: 74ms, proxy.ts: 5ms, render: 5.7s)

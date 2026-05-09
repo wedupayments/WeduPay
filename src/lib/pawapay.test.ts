@@ -25,7 +25,7 @@ describe("PawaPayAPI", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     global.fetch = mockFetch;
-    global.crypto.randomUUID = jest.fn(() => "11111111-1111-4111-8111-111111111111");
+    global.crypto.randomUUID = jest.fn(() => "11111111-1111-4111-8111-111111111111") as unknown as typeof crypto.randomUUID;
   });
 
   afterAll(() => {
@@ -130,19 +130,17 @@ describe("PawaPayAPI", () => {
         depositId: "11111111-1111-4111-8111-111111111111",
         amount: "10",
         currency: "ZMW",
-        correspondent: "AIRTEL_ZMB",
         payer: {
-          type: "MSISDN",
-          address: {
-            value: "260971234567",
+          type: "MMO",
+          accountDetails: {
+            phoneNumber: "260971234567",
+            provider: "AIRTEL_ZMB",
           },
         },
-        statementDescription: "School fee payment",
-        customerTimestamp: expect.any(String),
-        callbackUrl: "https://example.com/api/v1/webhooks/pawapay",
+        customerMessage: "School fee payment",
         metadata: [
-          { fieldName: "reference", fieldValue: "ORDER-123" },
-          { fieldName: "description", fieldValue: "School fee payment" },
+          { reference: "ORDER-123" },
+          { description: "School fee payment" },
         ],
       });
       expect(result).toEqual(expect.objectContaining({
@@ -171,8 +169,11 @@ describe("PawaPayAPI", () => {
       expect(mockFetch).toHaveBeenCalledTimes(1);
       expect(mockFetch.mock.calls[0][0]).toBe("https://api.sandbox.pawapay.io/v2/deposits");
       expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual(expect.objectContaining({
-        correspondent: "MTN_MOMO_GHA",
         currency: "GHS",
+        payer: expect.objectContaining({
+          type: "MMO",
+          accountDetails: expect.objectContaining({ provider: "MTN_MOMO_GHA" }),
+        }),
       }));
       expect(result).toEqual(expect.objectContaining({
         status: "PENDING",

@@ -23,7 +23,7 @@ const depositSchema = z.object({
   currency: z.string().length(3, 'Currency must be a 3-letter code'),
   description: z.string().max(22).optional().default('WeduPay deposit'),
   provider: z.string().optional(),
-  country: z.string().length(2).optional(),
+  country: z.string().min(2).max(3).optional(),
   walletId: z.string().optional(),
 });
 

@@ -6,10 +6,10 @@
  * @endpoint POST /api/v1/webhooks/pawapay
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { processWebhook } from '@/services/webhook/webhook.processor';
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   const requestId = `WH-PAWAPAY-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   console.log(`[PawaPayWebhook] ${requestId} - Received webhook`);
 

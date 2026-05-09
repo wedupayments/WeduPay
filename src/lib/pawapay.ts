@@ -150,19 +150,17 @@ export class PawaPayAPI {
           depositId,
           amount: String(request.amount),
           currency: request.currency.toUpperCase(),
-          correspondent: provider,
           payer: {
-            type: "MSISDN",
-            address: {
-              value: this.formatPhoneNumber(request.phoneNumber),
+            type: "MMO",
+            accountDetails: {
+              phoneNumber: this.formatPhoneNumber(request.phoneNumber),
+              provider: provider,
             },
           },
-          statementDescription: request.description.slice(0, 22),
-          customerTimestamp: new Date().toISOString(),
-          ...(request.callbackUrl ? { callbackUrl: request.callbackUrl } : {}),
+          customerMessage: request.description.slice(0, 22),
           metadata: [
-            { fieldName: "reference", fieldValue: request.reference },
-            { fieldName: "description", fieldValue: request.description },
+            { reference: request.reference },
+            { description: request.description },
           ],
         }),
       });
@@ -227,18 +225,17 @@ export class PawaPayAPI {
           payoutId,
           amount: String(request.amount),
           currency: request.currency.toUpperCase(),
-          correspondent: provider,
           recipient: {
-            type: "MSISDN",
-            address: {
-              value: this.formatPhoneNumber(request.phoneNumber),
+            type: "MMO",
+            accountDetails: {
+              phoneNumber: this.formatPhoneNumber(request.phoneNumber),
+              provider: provider,
             },
           },
-          statementDescription: request.description.slice(0, 22),
-          customerTimestamp: new Date().toISOString(),
+          customerMessage: request.description.slice(0, 22),
           metadata: [
-            { fieldName: "reference", fieldValue: request.reference },
-            { fieldName: "description", fieldValue: request.description },
+            { reference: request.reference },
+            { description: request.description },
           ],
         }),
       });
