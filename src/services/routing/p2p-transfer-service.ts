@@ -8,6 +8,7 @@
 import { PrismaClient } from '@prisma/client';
 import { CrossBorderRoutingEngine } from './cross-border-routing';
 import { MoneyRoutingEngine } from './money-routing-engine';
+import { getWalletBalance } from '@/services/wallet-balance.service';
 
 const prisma = new PrismaClient();
 const crossBorderEngine = new CrossBorderRoutingEngine();
@@ -147,7 +148,15 @@ export class P2PTransferService {
     // Step 1: Get quote
     const quote = await this.getTransferQuote(request);
 
-    // Step 2: Run compliance checks
+    // Step 2: Check sender wallet balance
+    const walletBalance = await getWalletBalance(request.userId, quote.sendCurrency);
+    if (walletBalance.availableBalance < quote.totalDebit) {
+      throw new Error(
+        `Insufficient funds. Available: ${walletBalance.availableBalance.toFixed(2)} ${quote.sendCurrency}, required: ${quote.totalDebit.toFixed(2)} ${quote.sendCurrency}`
+      );
+    }
+
+    // Step 3: Run compliance checks
     const compliance = await this.runComplianceChecks({
       userId: request.userId,
       amount: quote.totalDebit,
@@ -160,45 +169,76 @@ export class P2PTransferService {
       throw new Error(`Compliance check failed: ${compliance.riskLevel} risk`);
     }
 
-    // Step 3: Create transfer record
-    const transfer = await prisma.p2PTransfer.create({
-      data: {
-        transferRef,
-        userId: request.userId,
-        senderPhone: '', // Would get from user profile
-        senderCountry: '', // Would get from user profile
-        senderWalletType: '',
-        recipientPhone: request.recipientPhone,
-        recipientName: request.recipientName,
-        recipientCountry: request.recipientCountry,
-        recipientWalletType: request.recipientWalletType || 'mobile_wallet',
-        sendAmount: quote.sendAmount,
-        sendCurrency: quote.sendCurrency,
-        receiveAmount: quote.receiveAmount,
-        receiveCurrency: quote.receiveCurrency,
-        exchangeRate: quote.exchangeRate,
-        transferFee: quote.fees.transferFee,
-        fxFee: quote.fees.fxFee,
-        totalFees: quote.fees.totalFees,
-        totalDebit: quote.totalDebit,
-        routingProvider: quote.route.provider,
-        routingProviderId: quote.route.provider,
-        status: compliance.requiresReview ? 'PENDING' : 'PROCESSING',
-        kycRequired: compliance.riskLevel !== 'LOW',
-        complianceCheck: JSON.stringify(compliance),
-        description: request.description,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-      },
+    // Step 4: Fetch sender profile for record
+    const senderProfile = await prisma.user.findUnique({
+      where: { id: request.userId },
+      select: { phoneNumber: true, country: true },
     });
 
-    // Step 4: If compliance requires review, return pending
+    // Step 5: Debit wallet atomically and create transfer record + transaction ledger entry
+    const [transfer, ,] = await prisma.$transaction([
+      prisma.p2PTransfer.create({
+        data: {
+          transferRef,
+          userId: request.userId,
+          senderPhone: senderProfile?.phoneNumber ?? '',
+          senderCountry: senderProfile?.country ?? '',
+          senderWalletType: 'mobile_wallet',
+          recipientPhone: request.recipientPhone,
+          recipientName: request.recipientName,
+          recipientCountry: request.recipientCountry,
+          recipientWalletType: request.recipientWalletType || 'mobile_wallet',
+          sendAmount: quote.sendAmount,
+          sendCurrency: quote.sendCurrency,
+          receiveAmount: quote.receiveAmount,
+          receiveCurrency: quote.receiveCurrency,
+          exchangeRate: quote.exchangeRate,
+          transferFee: quote.fees.transferFee,
+          fxFee: quote.fees.fxFee,
+          totalFees: quote.fees.totalFees,
+          totalDebit: quote.totalDebit,
+          routingProvider: quote.route.provider,
+          routingProviderId: quote.route.provider,
+          status: compliance.requiresReview ? 'PENDING_REVIEW' : 'PROCESSING',
+          kycRequired: compliance.riskLevel !== 'LOW',
+          complianceCheck: JSON.stringify(compliance),
+          description: request.description,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+      }),
+      // Debit sender wallet
+      prisma.wallet.updateMany({
+        where: { userId: request.userId, currency: quote.sendCurrency },
+        data: { balance: { decrement: quote.totalDebit } },
+      }),
+      // Create transaction ledger entry
+      prisma.transaction.create({
+        data: {
+          userId: request.userId,
+          amount: quote.totalDebit,
+          currency: quote.sendCurrency,
+          type: 'P2P_TRANSFER',
+          status: 'PROCESSING',
+          reference: transferRef,
+          metadata: {
+            recipientPhone: request.recipientPhone,
+            recipientCountry: request.recipientCountry,
+            receiveAmount: quote.receiveAmount,
+            receiveCurrency: quote.receiveCurrency,
+            exchangeRate: quote.exchangeRate,
+          },
+        },
+      }),
+    ]);
+
+    // Step 6: If compliance requires review, hold funds and return pending
     if (compliance.requiresReview) {
       return {
-        success: false,
+        success: true,
         transferId: transfer.id,
         transferRef: transfer.transferRef,
         status: 'PENDING_REVIEW',
-        message: 'Transfer requires manual compliance review',
+        message: 'Transfer submitted and is under compliance review. Funds are held pending approval.',
         recipientPhone: request.recipientPhone,
         recipientCountry: request.recipientCountry,
         receiveAmount: quote.receiveAmount,
@@ -207,7 +247,7 @@ export class P2PTransferService {
     }
 
     try {
-      // Step 5: Execute payment through routing engine
+      // Step 7: Execute payment through routing engine
       const paymentResult = await routingEngine.executePayment(
         {
           amount: quote.sendAmount,
@@ -230,21 +270,35 @@ export class P2PTransferService {
         }
       );
 
-      // Step 6: Update transfer status
       const status = paymentResult.success ? 'COMPLETED' : 'FAILED';
-      await prisma.p2PTransfer.update({
-        where: { id: transfer.id },
-        data: {
-          status,
-          providerReference: paymentResult.providerReference,
-          providerTransactionId: paymentResult.transactionId,
-          processedAt: new Date(),
-          completedAt: paymentResult.success ? new Date() : null,
-          failureReason: paymentResult.success ? null : paymentResult.message,
-        },
-      });
 
-      // Step 7: Save recipient if requested
+      // Step 8: Update transfer and transaction status
+      await prisma.$transaction([
+        prisma.p2PTransfer.update({
+          where: { id: transfer.id },
+          data: {
+            status,
+            providerReference: paymentResult.providerReference,
+            providerTransactionId: paymentResult.transactionId,
+            processedAt: new Date(),
+            completedAt: paymentResult.success ? new Date() : null,
+            failureReason: paymentResult.success ? null : paymentResult.message,
+          },
+        }),
+        prisma.transaction.updateMany({
+          where: { reference: transferRef },
+          data: { status: paymentResult.success ? 'COMPLETED' : 'FAILED' },
+        }),
+        // Refund wallet if payment failed
+        ...(!paymentResult.success ? [
+          prisma.wallet.updateMany({
+            where: { userId: request.userId, currency: quote.sendCurrency },
+            data: { balance: { increment: quote.totalDebit } },
+          }),
+        ] : []),
+      ]);
+
+      // Step 9: Save recipient if requested and payment succeeded
       if (request.saveRecipient && paymentResult.success) {
         await this.saveRecipient({
           userId: request.userId,
@@ -260,7 +314,9 @@ export class P2PTransferService {
         transferId: transfer.id,
         transferRef: transfer.transferRef,
         status,
-        message: paymentResult.message,
+        message: paymentResult.success
+          ? paymentResult.message
+          : `Payment failed: ${paymentResult.message}. Your funds have been refunded.`,
         recipientPhone: request.recipientPhone,
         recipientCountry: request.recipientCountry,
         receiveAmount: quote.receiveAmount,
@@ -270,21 +326,28 @@ export class P2PTransferService {
       };
 
     } catch (error) {
-      // Step 8: Handle failure
-      await prisma.p2PTransfer.update({
-        where: { id: transfer.id },
-        data: {
-          status: 'FAILED',
-          failureReason: (error as Error).message,
-        },
-      });
+      // Rollback: refund wallet and mark transfer failed
+      await prisma.$transaction([
+        prisma.p2PTransfer.update({
+          where: { id: transfer.id },
+          data: { status: 'FAILED', failureReason: (error as Error).message },
+        }),
+        prisma.transaction.updateMany({
+          where: { reference: transferRef },
+          data: { status: 'FAILED' },
+        }),
+        prisma.wallet.updateMany({
+          where: { userId: request.userId, currency: quote.sendCurrency },
+          data: { balance: { increment: quote.totalDebit } },
+        }),
+      ]);
 
       return {
         success: false,
         transferId: transfer.id,
         transferRef: transfer.transferRef,
         status: 'FAILED',
-        message: (error as Error).message,
+        message: `Transfer failed: ${(error as Error).message}. Your funds have been refunded.`,
         recipientPhone: request.recipientPhone,
         recipientCountry: request.recipientCountry,
         receiveAmount: quote.receiveAmount,

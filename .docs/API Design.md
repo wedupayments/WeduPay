@@ -38,10 +38,15 @@ For individual customers managing personal finances, mobile wallets, and P2P tra
 - `GET /wallets/history` - Comprehensive transaction audit logs
 
 ## P2P Payments & Transfers
-- `POST /transfers/p2p` - Send money directly to another user
-- `GET /transfers/p2p/quote` - Calculate FX and fees for transfer
-- `GET /transfers/p2p/history` - History of peer-to-peer sends/receives
-- `GET /transfers/p2p/recipients` - List of frequent/past recipients
+- `GET /wallets/balance?currency=KES` - Check available balance for a currency before sending
+- `POST /transfers/p2p/quote` - Calculate FX rate, fees, and total debit for a transfer (no money moved)
+- `POST /transfers/p2p` - Execute transfer: checks balance, debits wallet atomically, dispatches to provider, refunds on failure
+- `GET /transfers/p2p/history` - Paginated transfer history (`?page=1&limit=20&status=COMPLETED`)
+- `GET /transfers/p2p/recipients` - List saved recipients
+- `POST /transfers/p2p/recipients` - Save a new recipient
+- `DELETE /transfers/p2p/recipients?id=RECIPIENT-ID` - Remove a saved recipient
+
+> **Balance & atomicity:** `POST /transfers/p2p` enforces available balance server-side and writes the wallet debit, P2PTransfer record, and Transaction ledger entry in a single database transaction. If the payment provider call fails, the wallet is refunded in the same atomic rollback.
 
 ## Virtual Cards
 - `POST /cards` - Issue a new USD Virtual Card

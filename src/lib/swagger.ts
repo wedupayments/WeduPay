@@ -94,10 +94,60 @@ const options: swaggerJsdoc.Options = {
             userId: { type: "string", format: "uuid" },
             amount: { type: "number" },
             currency: { type: "string", example: "USD" },
-            status: { type: "string", enum: ["PENDING", "COMPLETED", "FAILED"] },
-            type: { type: "string", enum: ["PAYMENT", "TRANSFER", "TRANSFER_RECEIVED", "FUNDING"] },
+            status: { type: "string", enum: ["PENDING", "PROCESSING", "COMPLETED", "FAILED"] },
+            type: { type: "string", enum: ["PAYMENT", "TRANSFER", "TRANSFER_RECEIVED", "FUNDING", "WITHDRAWAL", "P2P_TRANSFER"] },
             reference: { type: "string" },
+            metadata: { type: "object", description: "Additional context — for P2P_TRANSFER includes recipientPhone, recipientCountry, receiveAmount, receiveCurrency, exchangeRate" },
             createdAt: { type: "string", format: "date-time" },
+          },
+        },
+        P2PTransferFees: {
+          type: "object",
+          properties: {
+            transferFee: { type: "number", description: "Tiered fee on send amount (0.5%–2%)" },
+            fxFee: { type: "number", description: "FX conversion fee embedded in target amount (1%)" },
+            totalFees: { type: "number", description: "transferFee + fxFee" },
+          },
+        },
+        P2PTransferQuote: {
+          type: "object",
+          properties: {
+            sendAmount: { type: "number", example: 5000 },
+            sendCurrency: { type: "string", example: "KES" },
+            receiveAmount: { type: "number", example: 91875 },
+            receiveCurrency: { type: "string", example: "TZS" },
+            exchangeRate: { type: "number", example: 19.45 },
+            fees: { $ref: "#/components/schemas/P2PTransferFees" },
+            totalDebit: { type: "number", example: 5125, description: "sendAmount + totalFees — this is the amount debited from the sender's wallet" },
+            estimatedDelivery: { type: "string", example: "Instant" },
+            route: {
+              type: "object",
+              properties: {
+                provider: { type: "string", example: "flutterwave" },
+                fxRoute: { type: "string", enum: ["direct", "via_usd", "via_eur"] },
+              },
+            },
+          },
+        },
+        P2PTransferRecord: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+            transferRef: { type: "string", example: "P2P-1714567890-abc" },
+            status: { type: "string", enum: ["PROCESSING", "COMPLETED", "FAILED", "PENDING_REVIEW"], description: "FAILED means wallet was refunded; PENDING_REVIEW means funds are held" },
+            sendAmount: { type: "number" },
+            sendCurrency: { type: "string" },
+            receiveAmount: { type: "number" },
+            receiveCurrency: { type: "string" },
+            exchangeRate: { type: "number" },
+            totalDebit: { type: "number" },
+            recipientPhone: { type: "string" },
+            recipientName: { type: "string" },
+            recipientCountry: { type: "string" },
+            providerReference: { type: "string" },
+            failureReason: { type: "string" },
+            createdAt: { type: "string", format: "date-time" },
+            completedAt: { type: "string", format: "date-time" },
           },
         },
         Wallet: {
@@ -289,7 +339,45 @@ const options: swaggerJsdoc.Options = {
         get: { tags: ["Users"], summary: "Get Transfer Details", description: "Retrieve info for specific transfer", security: [{ cookieAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "Transfer retrieved" } } }
       },
       "/transfers/p2p/recipients": {
-        get: { tags: ["Users"], summary: "P2P Recipients", description: "List past P2P transfer recipients", security: [{ cookieAuth: [] }], responses: { 200: { description: "Recipients retrieved" } } }
+        get: {
+          tags: ["Users"],
+          summary: "List saved recipients",
+          description: "List saved P2P transfer recipients for the authenticated user",
+          security: [{ cookieAuth: [] }],
+          responses: { 200: { description: "Recipients retrieved" } },
+        },
+        post: {
+          tags: ["Users"],
+          summary: "Save recipient",
+          description: "Manually save a recipient for future P2P transfers",
+          security: [{ cookieAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["phone", "country"],
+                  properties: {
+                    phone: { type: "string", example: "255712345678" },
+                    country: { type: "string", example: "TZ" },
+                    name: { type: "string", example: "John Doe" },
+                    walletType: { type: "string", default: "mobile_wallet" },
+                  },
+                },
+              },
+            },
+          },
+          responses: { 201: { description: "Recipient saved" } },
+        },
+        delete: {
+          tags: ["Users"],
+          summary: "Remove recipient",
+          description: "Delete a saved recipient by ID",
+          security: [{ cookieAuth: [] }],
+          parameters: [{ name: "id", in: "query", required: true, schema: { type: "string", format: "uuid" } }],
+          responses: { 200: { description: "Recipient removed" } },
+        },
       },
       "/transfers/p2p/{ref}": {
         get: { tags: ["Users"], summary: "P2P Reference Details", description: "Get specific P2P reference payload", security: [{ cookieAuth: [] }], parameters: [{ name: "ref", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "Details retrieved" } } }
@@ -325,13 +413,158 @@ const options: swaggerJsdoc.Options = {
         get: { tags: ["Merchants"], summary: "Get Settlement Details", description: "Get exact status of withdrawal", security: [{ cookieAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "Settlement retrieved" } } }
       },
       "/transfers/p2p": {
-        post: { tags: ["Users"], summary: "Peer-to-Peer Transfer", description: "Send funds directly to another user", security: [{ cookieAuth: [] }], responses: { 200: { description: "Transfer initiated" } } }
+        post: {
+          tags: ["Users"],
+          summary: "Execute P2P Transfer",
+          description: "Send funds cross-border to a recipient's mobile wallet. Atomically debits sender wallet, creates transfer record and transaction ledger entry. Auto-refunds on provider failure.",
+          security: [{ cookieAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["sendAmount", "sendCurrency", "recipientPhone", "recipientCountry"],
+                  properties: {
+                    sendAmount: { type: "number", minimum: 1, example: 5000, description: "Amount to send in sendCurrency" },
+                    sendCurrency: { type: "string", example: "KES", description: "3-letter ISO currency code" },
+                    recipientPhone: { type: "string", minLength: 10, example: "255712345678", description: "Recipient phone number with country code" },
+                    recipientCountry: { type: "string", example: "TZ", description: "ISO 3166-1 alpha-2 country code" },
+                    recipientName: { type: "string", example: "John Doe" },
+                    recipientWalletType: { type: "string", default: "mobile_wallet" },
+                    description: { type: "string", example: "Family support" },
+                    saveRecipient: { type: "boolean", default: false, description: "Persist recipient for future transfers" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: "Transfer result — check transfer.status for outcome",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean" },
+                      requestId: { type: "string" },
+                      transfer: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string", format: "uuid" },
+                          reference: { type: "string", example: "P2P-1714567890-abc" },
+                          status: { type: "string", enum: ["COMPLETED", "FAILED", "PENDING_REVIEW"], description: "FAILED = wallet refunded; PENDING_REVIEW = funds held for compliance" },
+                          message: { type: "string", nullable: true },
+                        },
+                      },
+                      recipient: { type: "object", properties: { phone: { type: "string" }, country: { type: "string" } } },
+                      amount: { type: "object", properties: { send: { type: "number" }, receive: { type: "number" }, currency: { type: "string" } } },
+                      delivery: { type: "object", properties: { estimated: { type: "string" }, providerReference: { type: "string" } } },
+                    },
+                  },
+                },
+              },
+            },
+            400: { $ref: "#/components/responses/BadRequest" },
+            401: { $ref: "#/components/responses/Unauthorized" },
+          },
+        },
       },
       "/transfers/p2p/quote": {
-        get: { tags: ["Users"], summary: "P2P Transfer Quote", description: "Get a quote (fees & fx) before sending a P2P transfer", security: [{ cookieAuth: [] }], responses: { 200: { description: "Quote generated" } } }
+        post: {
+          tags: ["Users"],
+          summary: "P2P Transfer Quote",
+          description: "Get FX rate, fees, and total debit for a prospective transfer. Does not move any money or create any records. Quote is advisory — live rate is re-fetched at execution.",
+          security: [{ cookieAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["sendAmount", "sendCurrency", "recipientPhone", "recipientCountry"],
+                  properties: {
+                    sendAmount: { type: "number", minimum: 1, example: 5000 },
+                    sendCurrency: { type: "string", example: "KES" },
+                    recipientPhone: { type: "string", example: "255712345678" },
+                    recipientCountry: { type: "string", example: "TZ" },
+                    recipientName: { type: "string" },
+                    recipientWalletType: { type: "string", default: "mobile_wallet" },
+                    description: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: "Quote generated — valid for 10 minutes",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean" },
+                      quote: { $ref: "#/components/schemas/P2PTransferQuote" },
+                      limits: {
+                        type: "object",
+                        properties: {
+                          transactionMin: { type: "number" },
+                          transactionMax: { type: "number" },
+                          dailyMax: { type: "number" },
+                          kycRequired: { type: "boolean" },
+                        },
+                      },
+                      validFor: { type: "integer", example: 600, description: "Quote validity in seconds" },
+                    },
+                  },
+                },
+              },
+            },
+            400: { $ref: "#/components/responses/BadRequest" },
+            401: { $ref: "#/components/responses/Unauthorized" },
+          },
+        },
       },
       "/transfers/p2p/history": {
-        get: { tags: ["Users"], summary: "P2P Transfer History", description: "View past peer-to-peer transfers", security: [{ cookieAuth: [] }], responses: { 200: { description: "History retrieved" } } }
+        get: {
+          tags: ["Users"],
+          summary: "P2P Transfer History",
+          description: "Paginated list of past P2P transfers for the authenticated user",
+          security: [{ cookieAuth: [] }],
+          parameters: [
+            { name: "page", in: "query", schema: { type: "integer", default: 1 } },
+            { name: "limit", in: "query", schema: { type: "integer", default: 20 } },
+            { name: "status", in: "query", schema: { type: "string", enum: ["COMPLETED", "FAILED", "PENDING_REVIEW", "PROCESSING"] } },
+          ],
+          responses: {
+            200: {
+              description: "Transfer history",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean" },
+                      transfers: { type: "array", items: { $ref: "#/components/schemas/P2PTransferRecord" } },
+                      pagination: {
+                        type: "object",
+                        properties: {
+                          page: { type: "integer" },
+                          limit: { type: "integer" },
+                          total: { type: "integer" },
+                          totalPages: { type: "integer" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            401: { $ref: "#/components/responses/Unauthorized" },
+          },
+        },
       },
       "/wallets/fund": {
         post: { tags: ["Users"], summary: "Fund Wallet", description: "Deposit funds into your wallet using mobile money/card", security: [{ cookieAuth: [] }], responses: { 200: { description: "Deposit request initiated" } } }
@@ -1309,69 +1542,8 @@ const options: swaggerJsdoc.Options = {
           },
         },
       },
-        post: {
-          tags: ["Admins"],
-          summary: "Smart payment routing",
-          description: "Automatically route payment to best provider",
-          security: [{ cookieAuth: [] }],
-          requestBody: {
-            required: true,
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  required: ["amount", "currency", "phoneNumber", "country", "reference"],
-                  properties: {
-                    amount: { type: "number" },
-                    currency: { type: "string" },
-                    phoneNumber: { type: "string" },
-                    country: { type: "string" },
-                    reference: { type: "string" },
-                    routingStrategy: { type: "string", enum: ["LOWEST_FEE", "FASTEST", "HIGHEST_SUCCESS_RATE"] },
-                    maxRetries: { type: "integer", minimum: 1, maximum: 5 },
-                  },
-                },
-              },
-            },
-          },
-          responses: {
-            200: {
-              description: "Payment routed successfully",
-            },
-          },
-        },
-        get: {
-          tags: ["Admins"],
-          summary: "Get fee quotes",
-          description: "Get fee quotes from all providers",
-          parameters: [
-            {
-              name: "amount",
-              in: "query",
-              required: true,
-              schema: { type: "number" },
-            },
-            {
-              name: "currency",
-              in: "query",
-              required: true,
-              schema: { type: "string" },
-            },
-            {
-              name: "country",
-              in: "query",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Fee quotes retrieved",
-            },
-          },
-        },
-      },
     },
+  },
   apis: ["./src/app/api/**/*.ts"],
 };
 

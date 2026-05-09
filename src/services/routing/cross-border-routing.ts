@@ -132,7 +132,7 @@ export class CrossBorderRoutingEngine {
   }): Promise<CrossBorderRoute[]> {
     const routes: CrossBorderRoute[] = [];
 
-    // Get providers that support both currencies
+    // Get providers that support this destination country
     const providers = await prisma.paymentProvider.findMany({
       where: {
         isActive: true,
@@ -146,7 +146,6 @@ export class CrossBorderRoutingEngine {
       const supportsSource = provider.supportedCurrencies.includes(context.sourceCurrency);
       const supportsTarget = provider.supportedCurrencies.includes(context.targetCurrency);
 
-      // Direct route - provider supports both currencies
       if (supportsSource && supportsTarget) {
         routes.push({
           provider: provider.name,
@@ -154,18 +153,10 @@ export class CrossBorderRoutingEngine {
           sourceCountry: context.destinationCountry,
           destinationCountry: context.destinationCountry,
           fxRoute: 'direct',
-          legs: [
-            {
-              fromCurrency: context.sourceCurrency,
-              toCurrency: context.targetCurrency,
-              rate: 0, // Will be calculated
-              provider: provider.name,
-            },
-          ],
+          legs: [{ fromCurrency: context.sourceCurrency, toCurrency: context.targetCurrency, rate: 0, provider: provider.name }],
         });
       }
 
-      // Via USD route
       if (provider.supportedCurrencies.includes('USD')) {
         routes.push({
           provider: provider.name,
@@ -174,39 +165,40 @@ export class CrossBorderRoutingEngine {
           destinationCountry: context.destinationCountry,
           fxRoute: 'via_usd',
           legs: [
-            {
-              fromCurrency: context.sourceCurrency,
-              toCurrency: 'USD',
-              rate: 0,
-            },
-            {
-              fromCurrency: 'USD',
-              toCurrency: context.targetCurrency,
-              rate: 0,
-            },
+            { fromCurrency: context.sourceCurrency, toCurrency: 'USD', rate: 0 },
+            { fromCurrency: 'USD', toCurrency: context.targetCurrency, rate: 0 },
           ],
         });
       }
+    }
 
-      // Via EUR route
-      if (provider.supportedCurrencies.includes('EUR')) {
+    // Fallback: if no DB providers cover this route, use a generic direct route
+    // so quoting always works via FX rates even without a configured provider.
+    if (routes.length === 0) {
+      const fallbackProvider = 'WEDUPAY_INTERNAL';
+      const fxRoute = context.sourceCurrency === context.targetCurrency ? 'direct' :
+        (['USD', 'EUR'].includes(context.sourceCurrency) || ['USD', 'EUR'].includes(context.targetCurrency))
+          ? 'direct' : 'via_usd';
+
+      if (fxRoute === 'direct') {
         routes.push({
-          provider: provider.name,
-          providerId: provider.id,
+          provider: fallbackProvider,
+          providerId: fallbackProvider,
           sourceCountry: context.destinationCountry,
           destinationCountry: context.destinationCountry,
-          fxRoute: 'via_eur',
+          fxRoute: 'direct',
+          legs: [{ fromCurrency: context.sourceCurrency, toCurrency: context.targetCurrency, rate: 0 }],
+        });
+      } else {
+        routes.push({
+          provider: fallbackProvider,
+          providerId: fallbackProvider,
+          sourceCountry: context.destinationCountry,
+          destinationCountry: context.destinationCountry,
+          fxRoute: 'via_usd',
           legs: [
-            {
-              fromCurrency: context.sourceCurrency,
-              toCurrency: 'EUR',
-              rate: 0,
-            },
-            {
-              fromCurrency: 'EUR',
-              toCurrency: context.targetCurrency,
-              rate: 0,
-            },
+            { fromCurrency: context.sourceCurrency, toCurrency: 'USD', rate: 0 },
+            { fromCurrency: 'USD', toCurrency: context.targetCurrency, rate: 0 },
           ],
         });
       }

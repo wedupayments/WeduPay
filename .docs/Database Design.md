@@ -18,6 +18,8 @@ Core entities:
 - Wallets
 - Transactions
 - Ledger Entries
+- P2PTransfers
+- TransferRecipients
 - Cards
 - Webhooks
 
@@ -134,27 +136,202 @@ currency (string)
 type (string)  
 status (string)  
 reference (string)  
+metadata (json)  
 created_at (timestamp)
 
 Transaction types:
 
-payment  
-transfer  
-withdrawal  
-deposit
+| Type | Description |
+|------|-------------|
+| `PAYMENT` | Incoming merchant payment |
+| `TRANSFER` | Internal wallet-to-wallet transfer |
+| `TRANSFER_RECEIVED` | Counterpart record created in the recipient's ledger when they receive a transfer |
+| `FUNDING` | Wallet top-up deposit |
+| `WITHDRAWAL` | Wallet withdrawal to mobile money |
+| `P2P_TRANSFER` | Cross-border P2P transfer (see P2PTransfer table) |
 
 Transaction statuses:
 
-pending  
-processing  
-completed  
-failed
+| Status | Description |
+|--------|-------------|
+| `PENDING` | Initiated, not yet processed |
+| `PROCESSING` | Dispatched to payment provider, awaiting confirmation |
+| `COMPLETED` | Successfully delivered |
+| `FAILED` | Failed; wallet refunded if applicable |
+
+For `P2P_TRANSFER` records, the `metadata` JSON field contains:
+
+```json
+{
+  "recipientPhone": "255712345678",
+  "recipientCountry": "TZ",
+  "receiveAmount": 91875,
+  "receiveCurrency": "TZS",
+  "exchangeRate": 19.45,
+  "p2pTransferId": "transfer-uuid"
+}
+```
 
 Example:
 
-| id | user_id | amount | currency | status |
-|----|--------|-------|---------|--------|
-| txn1 | user1 | 50 | USD | completed |
+| id | user_id | amount | currency | type | status |
+|----|--------|-------|---------|------|--------|
+| txn1 | user1 | 5125 | KES | P2P_TRANSFER | COMPLETED |
+
+---
+
+# P2PTransfer Table
+
+Stores cross-border P2P transfer records. Created atomically alongside the wallet debit and Transaction ledger entry.
+
+Fields:
+
+id (uuid)  
+userId (uuid) — sender  
+transferRef (string) — e.g. `P2P-1714567890-abc`  
+sendAmount (decimal)  
+sendCurrency (string)  
+receiveAmount (decimal)  
+receiveCurrency (string)  
+exchangeRate (decimal)  
+totalDebit (decimal) — sendAmount + all fees  
+transferFee (decimal)  
+fxFee (decimal)  
+senderPhone (string)  
+senderCountry (string)  
+recipientPhone (string)  
+recipientName (string)  
+recipientCountry (string)  
+recipientWalletType (string)  
+provider (string) — e.g. `flutterwave`, `WEDUPAY_INTERNAL`  
+providerReference (string, nullable)  
+status (string) — `PROCESSING` → `COMPLETED` / `FAILED` / `PENDING_REVIEW`  
+failureReason (string, nullable)  
+description (string, nullable)  
+complianceRiskScore (integer)  
+complianceRiskLevel (string) — `LOW` / `MEDIUM` / `HIGH`  
+transactionId (uuid, nullable) — FK to Transaction table  
+createdAt (timestamp)  
+completedAt (timestamp, nullable)
+
+Transfer statuses:
+
+| Status | Wallet State | Description |
+|--------|-------------|-------------|
+| `PROCESSING` | Debited | Payment dispatched to provider |
+| `COMPLETED` | Debited (final) | Funds delivered to recipient |
+| `FAILED` | Refunded | Provider failure; wallet balance restored atomically |
+| `PENDING_REVIEW` | Debited + held | Risk score ≥ 60; manual compliance review required |
+
+The sender's wallet is **always debited before** the provider is called. If the provider fails (exception or `success: false` response), the wallet debit is reversed in the same Prisma transaction that updates the transfer status to `FAILED`.
+
+Prisma model:
+
+```prisma
+model P2PTransfer {
+  id                  String    @id @default(uuid())
+  userId              String
+  transferRef         String    @unique
+  sendAmount          Float
+  sendCurrency        String
+  receiveAmount       Float
+  receiveCurrency     String
+  exchangeRate        Float
+  totalDebit          Float
+  transferFee         Float
+  fxFee               Float
+  senderPhone         String?
+  senderCountry       String?
+  recipientPhone      String
+  recipientName       String?
+  recipientCountry    String
+  recipientWalletType String    @default("mobile_wallet")
+  provider            String
+  providerReference   String?
+  status              String    @default("PROCESSING")
+  failureReason       String?
+  description         String?
+  complianceRiskScore Int       @default(0)
+  complianceRiskLevel String    @default("LOW")
+  transactionId       String?
+  createdAt           DateTime  @default(now())
+  completedAt         DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+}
+```
+
+Example:
+
+| transferRef | sendAmount | sendCurrency | receiveAmount | receiveCurrency | status |
+|-------------|-----------|-------------|--------------|----------------|--------|
+| P2P-1714567890-abc | 5000 | KES | 91875 | TZS | COMPLETED |
+
+---
+
+# TransferRecipient Table
+
+Stores saved recipients for repeat transfers. Created automatically when `saveRecipient: true` on a successful `POST /api/v1/transfers/p2p`, or manually via `POST /api/v1/transfers/p2p/recipients`.
+
+Fields:
+
+id (uuid)  
+userId (uuid) — owner  
+name (string)  
+phoneNumber (string)  
+country (string)  
+walletType (string) — default `mobile_wallet`  
+lastUsedAt (timestamp, nullable)  
+createdAt (timestamp)
+
+A recipient is identified by the (userId, phoneNumber, country) composite — updating an existing recipient updates in place rather than creating a duplicate.
+
+Prisma model:
+
+```prisma
+model TransferRecipient {
+  id          String    @id @default(uuid())
+  userId      String
+  name        String
+  phoneNumber String
+  country     String
+  walletType  String    @default("mobile_wallet")
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+```
+
+---
+
+# Compliance Scoring
+
+Every `executeTransfer` call runs `runComplianceChecks()` before any money moves. Scores accumulate additionally:
+
+| Condition | Score Added |
+|-----------|-------------|
+| Amount > 5,000 (send currency) | +20 |
+| Amount > 10,000 (send currency) | +30 |
+| High-risk recipient country | +40 |
+
+**Risk levels:**
+
+| Score Range | Level | Action |
+|-------------|-------|--------|
+| 0–29 | LOW | Auto-approved, payment dispatched |
+| 30–59 | MEDIUM | Auto-approved, monitoring flag set |
+| ≥ 60 | HIGH | `PENDING_REVIEW` — funds held, manual review required |
+
+Hard-fail checks (transfer throws before wallet debit if any fail):
+
+| Check | Fails when |
+|-------|-----------|
+| `amountThreshold` | `totalDebit >= 10,000` in send currency |
+| `sanctions` | Placeholder — always passes (production: integrate OFAC/UN API) |
+| `fraud` | Placeholder — always passes (production: ML scoring) |
+
+The `complianceRiskScore` and `complianceRiskLevel` fields on the `P2PTransfer` record store the result for audit purposes.
 
 ---
 
@@ -300,9 +477,10 @@ model Transaction {
   userId    String
   amount    Float
   currency  String
-  status    String
-  type      String
+  status    String   // PENDING | PROCESSING | COMPLETED | FAILED
+  type      String   // PAYMENT | TRANSFER | TRANSFER_RECEIVED | FUNDING | WITHDRAWAL | P2P_TRANSFER
   reference String
+  metadata  Json?    // For P2P_TRANSFER: recipientPhone, recipientCountry, receiveAmount, receiveCurrency, exchangeRate
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])

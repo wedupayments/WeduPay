@@ -90,6 +90,9 @@ export default function P2PTransferForm() {
   const [isTransferring, setIsTransferring] = useState<boolean>(false);
   const [transferError, setTransferError] = useState<string>('');
 
+  // Wallet balance
+  const [availableBalance, setAvailableBalance] = useState<number | null>(null);
+
   // Saved recipients
   const [savedRecipients, setSavedRecipients] = useState<Recipient[]>([]);
   const [showRecipients, setShowRecipients] = useState<boolean>(false);
@@ -99,7 +102,12 @@ export default function P2PTransferForm() {
 
   useEffect(() => {
     loadRecipients();
+    fetchBalance(sendCurrency);
   }, []);
+
+  useEffect(() => {
+    fetchBalance(sendCurrency);
+  }, [sendCurrency]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -109,6 +117,20 @@ export default function P2PTransferForm() {
     }, 500);
     return () => clearTimeout(timer);
   }, [sendAmount, recipientCountry, sendCurrency]);
+
+  const fetchBalance = async (currency: string) => {
+    try {
+      const response = await fetch(`/api/v1/wallets/balance?currency=${currency}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setAvailableBalance(data.data?.availableBalance ?? null);
+        }
+      }
+    } catch {
+      // non-critical — silently ignore
+    }
+  };
 
   const loadRecipients = async () => {
     try {
@@ -264,7 +286,11 @@ export default function P2PTransferForm() {
                 type="number"
                 value={sendAmount}
                 onChange={(e) => setSendAmount(Number(e.target.value))}
-                className="flex-1 px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className={`flex-1 px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 ${
+                  availableBalance !== null && sendAmount > availableBalance
+                    ? 'border-red-400 dark:border-red-500'
+                    : 'border-slate-300 dark:border-slate-600'
+                }`}
                 placeholder="Enter amount"
                 min="1"
               />
@@ -278,6 +304,16 @@ export default function P2PTransferForm() {
                 ))}
               </select>
             </div>
+            {availableBalance !== null && (
+              <p className={`mt-1.5 text-xs ${
+                sendAmount > availableBalance
+                  ? 'text-red-500 dark:text-red-400 font-medium'
+                  : 'text-slate-500 dark:text-slate-400'
+              }`}>
+                Available: {availableBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {sendCurrency}
+                {sendAmount > availableBalance && ' — insufficient funds'}
+              </p>
+            )}
           </div>
 
           {/* Recipient Country */}
@@ -384,7 +420,7 @@ export default function P2PTransferForm() {
               fetchQuote();
               setStep('quote');
             }}
-            disabled={!sendAmount || !recipientPhone || !recipientCountry}
+            disabled={!sendAmount || !recipientPhone || !recipientCountry || (availableBalance !== null && sendAmount > availableBalance)}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:cursor-not-allowed text-white disabled:text-slate-400 dark:disabled:text-slate-500 py-3 rounded-lg font-semibold transition"
           >
             Get Quote

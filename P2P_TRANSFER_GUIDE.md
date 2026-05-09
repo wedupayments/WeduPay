@@ -2,17 +2,39 @@
 
 ## Overview
 
-The P2P Cross-Border Transfer feature enables users to send money directly from their mobile wallet in one African country to a recipient's mobile wallet in another country. The system handles FX conversion, routing, compliance, and delivery automatically.
+The P2P Cross-Border Transfer feature enables users to send money directly from their WeduPay wallet to a recipient's mobile wallet in another African country. The system handles FX conversion, routing, compliance screening, wallet debiting, and automatic rollback on failure.
 
 ### Key Features
 
-- 🌍 **Cross-Border Transfers** - Send money across 30+ African countries
-- 💱 **Automatic FX Conversion** - Best exchange rates via routing optimization
-- 📱 **Direct to Mobile Wallet** - Funds land directly in recipient's M-Pesa, MTN, Airtel, etc.
-- ✅ **Compliance Checks** - Built-in AML/sanctions screening
-- 💰 **Transparent Fees** - See exact fees before sending
-- 📊 **Transfer Tracking** - Real-time status updates
-- 👥 **Saved Recipients** - Store frequent recipients for faster transfers
+- **Cross-Border Transfers** — Send money across 30+ African countries
+- **Real Balance Enforcement** — Transfers are blocked if the sender's wallet has insufficient funds; the UI shows live available balance before submission
+- **Atomic Wallet Debit** — The sender's wallet is debited, the transfer record is created, and a transaction ledger entry is written in a single database transaction
+- **Automatic Rollback** — If the payment provider call fails, the wallet balance is refunded atomically in the same operation
+- **Automatic FX Conversion** — Best exchange rate via provider routing and Open Exchange Rates
+- **Provider Fallback Routing** — When no configured payment provider covers a corridor, the engine falls back to a direct FX route so quoting always works
+- **Direct to Mobile Wallet** — Funds land directly in recipient's M-Pesa, MTN, Airtel, EcoCash, etc.
+- **Compliance Screening** — Built-in AML/risk scoring; high-risk transfers go to `PENDING_REVIEW` with funds held
+- **Transparent Fees** — Exact fees shown before sending; quote valid for 10 minutes
+- **Transfer History** — Full audit trail in wallet transaction history
+- **Saved Recipients** — Store frequent recipients for faster transfers
+
+---
+
+## Transfer Flow
+
+```
+1. User enters amount + recipient → balance checked live in UI
+2. GET /api/v1/wallets/balance?currency=KES  → show available balance
+3. POST /api/v1/transfers/p2p/quote          → FX rate + fee preview
+4. User confirms → POST /api/v1/transfers/p2p
+   ├── Balance re-checked server-side
+   ├── Compliance scored
+   ├── DB transaction: wallet debit + P2PTransfer record + Transaction ledger entry
+   ├── Payment dispatched to provider
+   │   ├── SUCCESS → status = COMPLETED, transaction = COMPLETED
+   │   └── FAILURE → wallet refunded atomically, status = FAILED, transaction = FAILED
+   └── PENDING_REVIEW → funds held, status = PENDING_REVIEW
+```
 
 ---
 
@@ -47,14 +69,41 @@ The P2P Cross-Border Transfer feature enables users to send money directly from 
 | Any supported | Any supported | Flutterwave | < 24 hours |
 | Any supported | Any supported | Africa's Talking | < 24 hours |
 
+> **Fallback routing:** If no provider in the database covers the requested corridor, the engine falls back to a `WEDUPAY_INTERNAL` route using live Open Exchange Rates. This ensures quoting is always available even before provider configuration is complete.
+
 ---
 
 ## Quick Start
 
+### 0. Check Available Balance
+
+```http
+GET /api/v1/wallets/balance?currency=KES
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "wallet-uuid",
+    "currency": "KES",
+    "balance": 12000.00,
+    "availableBalance": 10500.00,
+    "pendingBalance": 1500.00
+  }
+}
+```
+
+`availableBalance` = `balance` minus any amounts in PROCESSING transfers.
+
+---
+
 ### 1. Get a Transfer Quote
 
-```typescript
+```http
 POST /api/v1/transfers/p2p/quote
+Content-Type: application/json
 
 {
   "sendAmount": 5000,
@@ -89,18 +138,24 @@ POST /api/v1/transfers/p2p/quote
     }
   },
   "limits": {
-    "transactionMin": 1000,
-    "transactionMax": 1500000,
-    "dailyMax": 5000000,
+    "transactionMin": 1,
+    "transactionMax": 5000,
+    "dailyMax": 10000,
     "kycRequired": false
-  }
+  },
+  "validFor": 600
 }
 ```
 
+The quote is advisory — the live rate is re-fetched at execution time.
+
+---
+
 ### 2. Execute the Transfer
 
-```typescript
+```http
 POST /api/v1/transfers/p2p
+Content-Type: application/json
 
 {
   "sendAmount": 5000,
@@ -113,15 +168,25 @@ POST /api/v1/transfers/p2p
 }
 ```
 
-**Response:**
+**Server-side steps (in order):**
+1. Re-fetch live quote
+2. Check `availableBalance >= totalDebit` — throws `INSUFFICIENT_FUNDS` if not
+3. Run compliance scoring
+4. Atomically: debit wallet + create `P2PTransfer` + create `Transaction` (type `P2P_TRANSFER`)
+5. Dispatch to payment provider
+6. On success: mark COMPLETED
+7. On failure: refund wallet atomically + mark FAILED
+
+**Success response (`COMPLETED`):**
 ```json
 {
   "success": true,
+  "requestId": "REQ-1234567890-abc",
   "transfer": {
-    "id": "p2p-transfer-id",
-    "reference": "P2P-1234567890-abc",
+    "id": "transfer-uuid",
+    "reference": "P2P-1714567890-abc",
     "status": "COMPLETED",
-    "message": "Transfer successful"
+    "message": null
   },
   "recipient": {
     "phone": "255712345678",
@@ -144,150 +209,59 @@ POST /api/v1/transfers/p2p
 }
 ```
 
-### 3. Check Transfer Status
-
-```typescript
-GET /api/v1/transfers/p2p?ref=P2P-1234567890-abc
-```
-
-**Response:**
+**Compliance hold response (`PENDING_REVIEW`):**
 ```json
 {
   "success": true,
   "transfer": {
-    "transferRef": "P2P-1234567890-abc",
-    "status": "COMPLETED",
-    "sendAmount": 5000,
-    "sendCurrency": "KES",
-    "receiveAmount": 91875,
-    "receiveCurrency": "TZS",
-    "exchangeRate": 19.45,
-    "recipientPhone": "255712345678",
-    "recipientCountry": "TZ",
-    "recipientName": "John Doe",
-    "providerReference": "TXN-ABC123",
-    "createdAt": "2024-01-15T10:30:00Z",
-    "completedAt": "2024-01-15T10:30:15Z"
-  },
-  "statusHistory": [
-    {
-      "status": "INITIATED",
-      "timestamp": "2024-01-15T10:30:00Z",
-      "description": "Transfer initiated"
-    },
-    {
-      "status": "COMPLETED",
-      "timestamp": "2024-01-15T10:30:15Z",
-      "description": "Funds delivered to recipient"
-    }
-  ]
+    "status": "PENDING_REVIEW",
+    "message": "Transfer submitted and is under compliance review. Funds are held pending approval."
+  }
+}
+```
+Funds are debited and held. They are released when the compliance team approves or rejects.
+
+**Insufficient funds response (HTTP 500, thrown before any DB writes):**
+```json
+{
+  "success": false,
+  "error": "Insufficient funds. Available: 4500.00 KES, required: 5125.00 KES"
 }
 ```
 
----
-
-## API Reference
-
-### POST /api/v1/transfers/p2p/quote
-
-Get a quote for a cross-border P2P transfer.
-
-**Request Body:**
+**Payment failure response (wallet auto-refunded):**
 ```json
 {
-  "sendAmount": 5000,
-  "sendCurrency": "KES",
-  "recipientPhone": "255712345678",
-  "recipientCountry": "TZ",
-  "recipientName": "John Doe",
-  "recipientWalletType": "mobile_wallet",
-  "description": "Family support"
-}
-```
-
-**Response Fields:**
-| Field | Type | Description |
-|-------|------|-------------|
-| `sendAmount` | number | Amount to send |
-| `sendCurrency` | string | Sender's currency |
-| `receiveAmount` | number | Amount recipient gets |
-| `receiveCurrency` | string | Recipient's currency |
-| `exchangeRate` | number | FX rate applied |
-| `fees.transferFee` | number | Transfer fee |
-| `fees.fxFee` | number | FX conversion fee |
-| `fees.totalFees` | number | Total fees |
-| `totalDebit` | number | Total amount to debit |
-| `estimatedDelivery` | string | Delivery time estimate |
-| `route.provider` | string | Selected provider |
-| `route.fxRoute` | string | FX route type |
-
----
-
-### POST /api/v1/transfers/p2p
-
-Execute a cross-border P2P transfer.
-
-**Request Body:**
-```json
-{
-  "sendAmount": 5000,
-  "sendCurrency": "KES",
-  "recipientPhone": "255712345678",
-  "recipientCountry": "TZ",
-  "recipientName": "John Doe",
-  "recipientWalletType": "mobile_wallet",
-  "description": "Family support",
-  "saveRecipient": true
-}
-```
-
-**Status Values:**
-| Status | Description |
-|--------|-------------|
-| `COMPLETED` | Transfer successful, funds delivered |
-| `PROCESSING` | Transfer in progress |
-| `PENDING_REVIEW` | Awaiting compliance review |
-| `FAILED` | Transfer failed |
-| `REFUNDED` | Transfer refunded to sender |
-
----
-
-### GET /api/v1/transfers/p2p/:ref
-
-Get status of a specific transfer.
-
-**Response:**
-```json
-{
-  "success": true,
+  "success": false,
   "transfer": {
-    "transferRef": "P2P-1234567890-abc",
-    "status": "COMPLETED",
-    "sendAmount": 5000,
-    "sendCurrency": "KES",
-    "receiveAmount": 91875,
-    "receiveCurrency": "TZS",
-    "recipientPhone": "255712345678",
-    "recipientCountry": "TZ",
-    "recipientName": "John Doe",
-    "createdAt": "2024-01-15T10:30:00Z",
-    "completedAt": "2024-01-15T10:30:15Z"
+    "status": "FAILED",
+    "message": "Payment failed: Provider timeout. Your funds have been refunded."
   }
 }
 ```
 
 ---
 
-### GET /api/v1/transfers/p2p/history
+### 3. Check Transfer Status
 
-Get user's transfer history.
+```http
+GET /api/v1/transfers/p2p?ref=P2P-1714567890-abc
+```
+
+---
+
+### 4. View Transfer History
+
+```http
+GET /api/v1/transfers/p2p/history?page=1&limit=20&status=COMPLETED
+```
 
 **Query Parameters:**
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `page` | number | 1 | Page number |
-| `limit` | number | 20 | Items per page |
-| `status` | string | - | Filter by status |
+| `page` | number | `1` | Page number |
+| `limit` | number | `20` | Items per page |
+| `status` | string | — | Optional filter: `COMPLETED`, `FAILED`, `PENDING_REVIEW`, `PROCESSING` |
 
 **Response:**
 ```json
@@ -295,7 +269,7 @@ Get user's transfer history.
   "success": true,
   "transfers": [
     {
-      "transferRef": "P2P-1234567890-abc",
+      "transferRef": "P2P-1714567890-abc",
       "status": "COMPLETED",
       "sendAmount": 5000,
       "sendCurrency": "KES",
@@ -304,8 +278,8 @@ Get user's transfer history.
       "recipientPhone": "255712345678",
       "recipientName": "John Doe",
       "recipientCountry": "TZ",
-      "createdAt": "2024-01-15T10:30:00Z",
-      "completedAt": "2024-01-15T10:30:15Z"
+      "createdAt": "2026-05-09T10:30:00Z",
+      "completedAt": "2026-05-09T10:30:15Z"
     }
   ],
   "pagination": {
@@ -319,363 +293,165 @@ Get user's transfer history.
 
 ---
 
+## API Reference
+
+### POST /api/v1/transfers/p2p/quote
+
+Get a pre-transfer quote. Does **not** debit the wallet or create any records.
+
+**Request body:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `sendAmount` | number | Yes | Amount to send (must be positive) |
+| `sendCurrency` | string | Yes | 3-letter currency code |
+| `recipientPhone` | string | Yes | Min 10 digits, with country code |
+| `recipientCountry` | string | Yes | ISO 3166-1 alpha-2 country code |
+| `recipientName` | string | No | Recipient full name |
+| `recipientWalletType` | string | No | Default: `mobile_wallet` |
+| `description` | string | No | Transfer memo |
+
+---
+
+### POST /api/v1/transfers/p2p
+
+Execute the transfer. Debits wallet atomically.
+
+**Request body:** same fields as quote, plus:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `saveRecipient` | boolean | No | Save recipient for future transfers |
+
+**Transfer status values:**
+
+| Status | Wallet State | Description |
+|--------|-------------|-------------|
+| `PROCESSING` | Debited | Payment dispatched to provider |
+| `COMPLETED` | Debited (final) | Funds delivered to recipient |
+| `FAILED` | Refunded | Payment failed; wallet restored |
+| `PENDING_REVIEW` | Debited + held | Compliance review in progress |
+
+---
+
+### GET /api/v1/transfers/p2p/history
+
+**Query params:** `page`, `limit`, `status` — all optional, all default safely.
+
+---
+
 ### GET /api/v1/transfers/p2p/recipients
-
-Get user's saved recipients.
-
-**Response:**
-```json
-{
-  "success": true,
-  "recipients": [
-    {
-      "id": "recipient-id",
-      "name": "John Doe",
-      "phoneNumber": "255712345678",
-      "country": "TZ",
-      "walletType": "mobile_wallet",
-      "isVerified": true,
-      "lastUsedAt": "2024-01-15T10:30:00Z",
-      "createdAt": "2024-01-01T00:00:00Z"
-    }
-  ]
-}
-```
-
----
-
 ### POST /api/v1/transfers/p2p/recipients
-
-Save a recipient for future transfers.
-
-**Request Body:**
-```json
-{
-  "name": "John Doe",
-  "phoneNumber": "255712345678",
-  "country": "TZ",
-  "walletType": "mobile_wallet"
-}
-```
-
----
-
 ### DELETE /api/v1/transfers/p2p/recipients?id=RECIPIENT-ID
 
-Delete a saved recipient.
-
----
-
-## Transfer Limits
-
-### Default Limits by Country
-
-| Country | Currency | Min Transaction | Max Transaction | Daily Max | Monthly Max |
-|---------|----------|-----------------|-----------------|-----------|-------------|
-| Kenya | KES | 10 | 50,000 | 150,000 | 300,000 |
-| Tanzania | TZS | 1,000 | 1,500,000 | 5,000,000 | 15,000,000 |
-| Uganda | UGX | 1,000 | 1,500,000 | 5,000,000 | 15,000,000 |
-| Nigeria | NGN | 100 | 500,000 | 1,000,000 | 5,000,000 |
-| Ghana | GHS | 1 | 5,000 | 10,000 | 50,000 |
-| Zimbabwe | USD | 1 | 5,000 | 10,000 | 50,000 |
-| Zambia | ZMW | 10 | 50,000 | 100,000 | 500,000 |
-
-### KYC Requirements
-
-| Amount (USD equivalent) | KYC Required |
-|-------------------------|--------------|
-| < $100 | None |
-| $100 - $1,000 | Basic KYC (phone verification) |
-| $1,000 - $5,000 | Enhanced KYC (ID verification) |
-| > $5,000 | Premium KYC (proof of address) |
+Saved recipients are also auto-saved when `saveRecipient: true` on a successful transfer.
 
 ---
 
 ## Fee Structure
 
-### Transfer Fees
+### Transfer Fees (applied to `sendAmount`)
 
 | Amount Range | Fee Percentage | Min Fee | Max Fee |
 |--------------|----------------|---------|---------|
-| < $100 | 2% | $1 | $2 |
-| $100 - $1,000 | 1.5% | $2 | $15 |
-| $1,000 - $5,000 | 1% | $15 | $50 |
-| > $5,000 | 0.5% | $50 | $500 |
+| ≤ 1,000 | 2.0% | 1 unit | — |
+| 1,001 – 5,000 | 1.5% | — | — |
+| 5,001 – 10,000 | 1.0% | — | — |
+| > 10,000 | 0.5% | — | 500 units |
 
 ### FX Fees
 
-FX fees are built into the exchange rate as a spread:
-- **Major currencies (USD, EUR, GBP):** 1-2% spread
-- **African currencies:** 2-3% spread
-- **Cross-border within same currency zone (XOF, XAF):** 0.5-1% spread
+Built into the exchange rate as a spread applied in `CrossBorderRoutingEngine`:
+- **Direct route:** 2% spread + 1% margin on target amount
+- **Via USD:** compound spread across both legs
 
-### Example Calculation
-
-Sending 5,000 KES to Tanzania:
-
-```
-Send Amount:     5,000 KES
-Transfer Fee:       75 KES (1.5%)
-FX Fee:             50 KES (embedded in rate)
-Total Debit:     5,125 KES
-
-Exchange Rate:  1 KES = 19.45 TZS
-Receive Amount: 91,875 TZS
-```
+`totalDebit = sendAmount + transferFee + fxFee`
 
 ---
 
-## Compliance & Security
+## Compliance & Risk
 
-### Automated Checks
+Every transfer runs through `runComplianceChecks()` before any money moves:
 
-Every transfer goes through:
+| Check | Logic |
+|-------|-------|
+| Sanctions | Placeholder — always passes (production: integrate OFAC/UN API) |
+| Fraud | Placeholder — always passes (production: ML scoring) |
+| Amount threshold | Fails if `amount >= 10,000` in send currency |
+| Country risk | High-risk country codes increase risk score |
 
-1. **Sanctions Screening** - Check against OFAC, UN, EU sanctions lists
-2. **Fraud Detection** - Pattern analysis for suspicious activity
-3. **Amount Threshold** - Flag high-value transfers
-4. **Country Risk** - Enhanced screening for high-risk countries
+**Risk scoring:**
 
-### Compliance Status Flow
-
-```
-INITIATED → COMPLIANCE_CHECK → [REVIEW if needed] → PROCESSING → COMPLETED
-                                    ↓
-                               [REJECT if failed]
-```
-
-### Risk Levels
-
-| Risk Level | Score | Action |
+| Risk Score | Level | Action |
 |------------|-------|--------|
-| LOW | 0-29 | Auto-approve |
-| MEDIUM | 30-59 | Auto-approve with monitoring |
-| HIGH | 60-100 | Manual review required |
+| 0–29 | LOW | Auto-approved, payment dispatched immediately |
+| 30–59 | MEDIUM | Auto-approved, monitoring flag set |
+| 60–100 | HIGH | `PENDING_REVIEW` — funds held, manual review required |
+
+If compliance `passed === false`, the transfer throws before any wallet debit occurs.
 
 ---
 
 ## Error Handling
 
-### Common Errors
-
-| Error Code | Description | Resolution |
-|------------|-------------|------------|
-| `LIMIT_EXCEEDED` | Amount exceeds transfer limits | Reduce amount or complete KYC upgrade |
-| `COMPLIANCE_FAILED` | Failed compliance check | Contact support with documentation |
-| `INVALID_RECIPIENT` | Invalid phone number or country | Verify recipient details |
-| `INSUFFICIENT_FUNDS` | Sender has insufficient balance | Add funds to wallet |
-| `PROVIDER_UNAVAILABLE` | Payment provider temporarily down | Try again later or use alternative provider |
-| `EXPIRED_QUOTE` | Quote has expired (>10 min old) | Get a new quote |
-
-### Error Response Format
-
-```json
-{
-  "success": false,
-  "requestId": "REQ-123456",
-  "error": "LIMIT_EXCEEDED",
-  "message": "Amount exceeds daily transfer limit",
-  "details": {
-    "currentDailyTotal": 80000,
-    "dailyLimit": 100000,
-    "requestedAmount": 50000
-  }
-}
-```
+| Scenario | When it happens | Wallet impact |
+|----------|----------------|---------------|
+| `INSUFFICIENT_FUNDS` | `availableBalance < totalDebit` | Not touched |
+| `Compliance check failed` | Sanctions/fraud check failed | Not touched |
+| Payment provider error | Provider API exception | Auto-refunded |
+| Payment provider failure | Provider returns `success: false` | Auto-refunded |
+| `PENDING_REVIEW` | Risk score ≥ 60 | Debited + held |
 
 ---
 
-## Best Practices
+## Wallet & Ledger Impact
 
-### 1. Always Get a Quote First
+Each successful transfer execution creates:
 
-```typescript
-// Get quote before showing to user
-const quote = await fetch('/api/v1/transfers/p2p/quote', {
-  method: 'POST',
-  body: JSON.stringify(transferData),
-});
+1. **Wallet debit** — `wallet.balance` decremented by `totalDebit`
+2. **P2PTransfer record** — full transfer details in `p2p_transfers` table
+3. **Transaction record** — `type: P2P_TRANSFER`, `status: PROCESSING/COMPLETED/FAILED` in `transactions` table
 
-// Display quote to user for confirmation
-// Then execute on user confirmation
-```
-
-### 2. Save Frequent Recipients
-
-```typescript
-// Save recipient after successful transfer
-await fetch('/api/v1/transfers/p2p/recipients', {
-  method: 'POST',
-  body: JSON.stringify({
-    name: recipientName,
-    phoneNumber: recipientPhone,
-    country: recipientCountry,
-  }),
-});
-```
-
-### 3. Implement Status Polling
-
-```typescript
-// Poll transfer status every 5 seconds until completed
-async function pollTransferStatus(ref: string) {
-  const maxAttempts = 60; // 5 minutes max
-  let attempts = 0;
-
-  while (attempts < maxAttempts) {
-    const response = await fetch(`/api/v1/transfers/p2p?ref=${ref}`);
-    const data = await response.json();
-
-    if (data.transfer.status === 'COMPLETED' || data.transfer.status === 'FAILED') {
-      return data.transfer;
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 5000));
-    attempts++;
-  }
-
-  throw new Error('Transfer status timeout');
-}
-```
-
-### 4. Handle Compliance Reviews
-
-```typescript
-if (result.status === 'PENDING_REVIEW') {
-  // Notify user about review
-  showNotification(
-    'Transfer under review',
-    'Your transfer is being reviewed. This usually takes 1-2 hours.',
-    'info'
-  );
-
-  // Set up status polling
-  pollTransferStatus(result.transfer.reference);
-}
-```
+On failure/rollback:
+- Wallet balance incremented back by `totalDebit`
+- Transaction record updated to `FAILED`
+- P2PTransfer record updated to `FAILED` with `failureReason`
 
 ---
 
-## Webhook Integration
-
-### Transfer Status Webhook
-
-Configure webhook URL to receive real-time updates:
-
-```typescript
-POST /api/webhooks/p2p-transfer
-
-{
-  "event": "transfer.completed",
-  "transferRef": "P2P-1234567890-abc",
-  "status": "COMPLETED",
-  "sendAmount": 5000,
-  "sendCurrency": "KES",
-  "receiveAmount": 91875,
-  "receiveCurrency": "TZS",
-  "recipientPhone": "255712345678",
-  "recipientCountry": "TZ",
-  "completedAt": "2024-01-15T10:30:15Z"
-}
-```
-
-### Webhook Events
+## Webhook Events
 
 | Event | Description |
 |-------|-------------|
-| `transfer.initiated` | Transfer created |
-| `transfer.processing` | Payment initiated to provider |
+| `transfer.initiated` | Transfer created and wallet debited |
+| `transfer.processing` | Payment dispatched to provider |
 | `transfer.completed` | Funds delivered to recipient |
-| `transfer.failed` | Transfer failed |
-| `transfer.refunded` | Transfer refunded to sender |
-| `transfer.review_required` | Compliance review needed |
-
----
-
-## Testing
-
-### Test Phone Numbers
-
-| Country | Test Number | Result |
-|---------|-------------|--------|
-| Kenya | 254700000000 | Success |
-| Tanzania | 255710000000 | Success |
-| Nigeria | 2348000000000 | Success |
-| Ghana | 233200000000 | Success |
-| Any | 000000000000 | Failure (for testing error handling) |
-
-### Test Scenarios
-
-```typescript
-// Test successful transfer
-await testTransfer({
-  sendAmount: 1000,
-  recipientPhone: '254700000000',
-  recipientCountry: 'KE',
-  expectedStatus: 'COMPLETED',
-});
-
-// Test compliance review trigger
-await testTransfer({
-  sendAmount: 10000, // High amount
-  recipientPhone: '254700000000',
-  recipientCountry: 'KE',
-  expectedStatus: 'PENDING_REVIEW',
-});
-
-// Test failure handling
-await testTransfer({
-  sendAmount: 1000,
-  recipientPhone: '000000000000', // Invalid
-  recipientCountry: 'KE',
-  expectedStatus: 'FAILED',
-});
-```
+| `transfer.failed` | Transfer failed; wallet refunded |
+| `transfer.review_required` | Compliance review required; funds held |
 
 ---
 
 ## Troubleshooting
 
-### Issue: Transfer Stuck in Processing
+### "Insufficient funds" shown immediately on form
 
-**Cause:** Provider API timeout or network issue
+The form fetches `GET /api/v1/wallets/balance?currency=KES` on load and when the currency changes. If the amount field border turns red, the user's available balance is below the entered amount. The "Get Quote" button is disabled until the amount is corrected.
 
-**Solution:**
-```typescript
-// Check provider status
-const health = await fetch('/api/v1/routing/health');
+### Transfer stuck in PENDING_REVIEW
 
-// If provider unhealthy, system should auto-reroute
-// Contact support if still stuck after 24 hours
-```
+Funds are held pending manual compliance review. Typical resolution: 1–2 business hours. Contact support if unresolved after 24 hours.
 
-### Issue: Compliance Review Taking Too Long
+### Transfer FAILED, funds not refunded
 
-**Cause:** Manual review backlog or missing documentation
+The rollback is atomic — it runs in the same Prisma transaction as the status update. If the UI shows FAILED, the wallet balance has already been restored. Refresh the wallet balance page to confirm.
 
-**Solution:**
-1. Check email for documentation requests
-2. Submit required documents via support portal
-3. Typical review time: 1-2 business hours
+### Quote returns "No available routes"
 
-### Issue: Recipient Not Receiving Funds
-
-**Cause:** Wrong phone number or wallet type mismatch
-
-**Solution:**
-```typescript
-// Verify transfer details
-const status = await fetch(`/api/v1/transfers/p2p?ref=${transferRef}`);
-
-// If phone number wrong, contact support immediately for recall
-// If wallet type mismatch, system should auto-correct
-```
+This should no longer occur — the engine now falls back to a `WEDUPAY_INTERNAL` direct or via-USD route when no payment providers are configured for a corridor in the database.
 
 ---
 
 ## Support
-
-For issues or questions:
 
 - **Email:** support@wedupay.com
 - **Documentation:** https://docs.wedupay.com/p2p-transfers
@@ -683,6 +459,4 @@ For issues or questions:
 
 ---
 
-## License
-
-Proprietary - WeduPay
+*Proprietary — WeduPay*
