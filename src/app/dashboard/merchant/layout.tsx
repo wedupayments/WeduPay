@@ -1,6 +1,6 @@
 "use client";
 
-import { MerchantLayout } from "@/components/dashboard/MerchantLayout";
+import { MerchantLayout } from "@/shared/components/layout/MerchantLayout";
 import { DashboardErrorBoundary } from "@/components/dashboard/DashboardErrorBoundary";
 
 export default function MerchantLayoutWrapper({

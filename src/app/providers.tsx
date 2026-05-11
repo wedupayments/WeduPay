@@ -1,8 +1,8 @@
 "use client";
 
-import { ThemeProvider } from "@/components/ThemeProvider";
-import { ToastProvider } from "@/components/ui/Toast";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/shared/components/ThemeProvider";
+import { ToastProvider } from "@/shared/components/ui/Toast";
+import { AuthProvider } from "@/shared/auth/AuthContext";
 
 interface ProvidersProps {
   children: React.ReactNode;

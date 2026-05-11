@@ -1,6 +1,6 @@
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
-import { WaitlistForm } from "@/components/WaitlistForm";
+import { Navbar } from "@/shared/components/layout/Navbar";
+import { Footer } from "@/shared/components/layout/Footer";
+import { WaitlistForm } from "@/shared/components/WaitlistForm";
 import Image from "next/image";
 import Link from "next/link";
 

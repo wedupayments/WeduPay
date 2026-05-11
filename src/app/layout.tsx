@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 // import { Inter } from "next/font/google";
 import "./globals.css";
-import { VercelAnalytics } from "@/components/VercelAnalytics";
+import { VercelAnalytics } from "@/shared/components/VercelAnalytics";
 import { Providers } from "@/app/providers";
-import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
-import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
+import { PWAInstallPrompt } from "@/shared/components/PWAInstallPrompt";
+import { ServiceWorkerRegistration } from "@/shared/components/ServiceWorkerRegistration";
 
 // Force dynamic rendering to avoid static generation issues with context
 export const dynamic = 'force-dynamic';

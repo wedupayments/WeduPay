@@ -1,4 +1,4 @@
-import { AdminLayout } from "@/components/dashboard/AdminLayout";
+import { AdminLayout } from "@/shared/components/layout/AdminLayout";
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';

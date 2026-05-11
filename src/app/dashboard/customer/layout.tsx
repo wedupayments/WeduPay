@@ -1,6 +1,6 @@
 "use client";
 
-import { CustomerLayout } from "@/components/dashboard/CustomerLayout";
+import { CustomerLayout } from "@/shared/components/layout/CustomerLayout";
 
 export default function CustomerLayoutWrapper({
   children,

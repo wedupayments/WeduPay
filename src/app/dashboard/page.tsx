@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { getDashboardPathForUser } from "@/lib/auth-service";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/shared/auth/AuthContext";
 
 export default function DashboardPage() {
   const router = useRouter();

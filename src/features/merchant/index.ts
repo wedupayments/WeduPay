@@ -1,0 +1,9 @@
+export { default as MerchantDashboardPage } from './pages/MerchantDashboardPage';
+export { default as AnalyticsPage } from './pages/AnalyticsPage';
+export { default as ApiKeysPage } from './pages/ApiKeysPage';
+export { default as ExportsPage } from './pages/ExportsPage';
+export { default as PaymentLinksPage } from './pages/PaymentLinksPage';
+export { default as MerchantPaymentsPage } from './pages/MerchantPaymentsPage';
+export { default as MerchantSettingsPage } from './pages/MerchantSettingsPage';
+export { default as SettlementsPage } from './pages/SettlementsPage';
+export { default as WebhooksPage } from './pages/WebhooksPage';
