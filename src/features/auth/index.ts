@@ -5,3 +5,8 @@ export { default as ForgotPasswordPage } from './pages/ForgotPasswordPage';
 export { default as ResetPasswordPage } from './pages/ResetPasswordPage';
 export { AuthShell } from './components/AuthShell';
 export { PasswordField } from './components/PasswordField';
+export * from './types/auth.types';
+export * from './api/auth.api';
+export * from './hooks/useSession';
+export * from './hooks/useLogin';
+export * from './hooks/useRegister';
