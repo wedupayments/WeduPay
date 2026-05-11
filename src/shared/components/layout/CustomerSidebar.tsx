@@ -6,9 +6,9 @@ import { QuickFXCalculator } from "@/features/fx/components/QuickFXCalculator";
 
 const navItems = [
   { label: "Dashboard", icon: "dashboard", href: "/dashboard/customer", active: false },
+  { label: "Pay Tuition", icon: "school", href: "/dashboard/customer/pay", active: false },
   { label: "Send Money", icon: "send", href: "/dashboard/customer/transfers/send", active: false },
   { label: "Transfers", icon: "swap_horiz", href: "/dashboard/customer/transfers", active: false },
-  { label: "Payments", icon: "receipt_long", href: "/dashboard/customer/payments", active: false },
   { label: "History", icon: "history", href: "/dashboard/customer/history", active: false },
   { label: "Funding", icon: "account_balance_wallet", href: "/dashboard/customer/funding", active: false },
   { label: "Settings", icon: "settings", href: "/dashboard/customer/settings", active: false },
@@ -62,7 +62,7 @@ export function CustomerSidebar({ userName = "Alex Johnson", userId = "88291" }:
 
       <div className="p-4 border-t border-slate-200 dark:border-primary/10">
         <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-100 dark:bg-primary/5">
-          <div className="size-10 rounded-full bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center text-background-dark font-bold text-sm">
+          <div className="size-10 rounded-full bg-linear-to-br from-primary to-emerald-600 flex items-center justify-center text-background-dark font-bold text-sm">
             {userName.split(" ").map(n => n[0]).join("").slice(0, 2)}
           </div>
           <div className="overflow-hidden">

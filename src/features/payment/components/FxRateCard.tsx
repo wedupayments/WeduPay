@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Card } from '@/shared/components/ui/Card';
 import { Spinner } from '@/shared/components/ui/Spinner';
 import { formatAmount, formatUsd } from '@/shared/utils/currency';
@@ -16,7 +17,9 @@ interface FxRateCardProps {
 export function FxRateCard({ amountUsd, toCurrency, onRateLoaded }: FxRateCardProps) {
   const { data: rate, isLoading, error } = useFxRate('USD', toCurrency);
 
-  if (rate && onRateLoaded) onRateLoaded(rate.rate);
+  useEffect(() => {
+    if (rate && onRateLoaded) onRateLoaded(rate.rate);
+  }, [rate, onRateLoaded]);
 
   const localAmount = rate ? amountUsd * rate.rate : null;
 

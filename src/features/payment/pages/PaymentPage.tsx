@@ -45,8 +45,19 @@ export default function PaymentPage() {
     setStep('provider');
   }
 
-  function handleProviderNext(provider: ProviderKey, phoneNumber: string, currency: Currency) {
-    setForm((f) => ({ ...f, provider, phoneNumber }));
+  function handleProviderNext(provider: ProviderKey, phoneNumber: string, currency: Currency, rate: number) {
+    setForm((f) => ({
+      ...f,
+      provider,
+      phoneNumber,
+      quote: {
+        rate,
+        fromCurrency: 'USD',
+        toCurrency: currency,
+        fromAmount: f.amountUsd,
+        toAmount: parseFloat((f.amountUsd * rate).toFixed(2)),
+      },
+    }));
     setStep('confirm');
   }
 

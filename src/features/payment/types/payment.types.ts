@@ -60,10 +60,18 @@ export interface DepositStatus {
 
 export type PaymentStep = 'amount' | 'provider' | 'confirm' | 'processing' | 'success' | 'failed';
 
+export interface ComputedQuote {
+  rate: number;
+  fromCurrency: Currency;
+  toCurrency: Currency;
+  fromAmount: number;
+  toAmount: number;
+}
+
 export interface PaymentFormState {
   amountUsd: number;
   country: CountryCode | '';
   provider: ProviderKey | '';
   phoneNumber: string;
-  quote: FxQuote | null;
+  quote: ComputedQuote | null;
 }

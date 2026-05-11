@@ -12,7 +12,7 @@ import { useState } from 'react';
 interface ProviderSelectorProps {
   amountUsd: number;
   country: CountryCode;
-  onNext: (provider: ProviderKey, phoneNumber: string, currency: Currency) => void;
+  onNext: (provider: ProviderKey, phoneNumber: string, currency: Currency, rate: number) => void;
   onBack: () => void;
 }
 
@@ -20,6 +20,7 @@ export function ProviderSelector({ amountUsd, country, onNext, onBack }: Provide
   const [selectedProvider, setSelectedProvider] = useState<ProviderKey | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [fxRate, setFxRate] = useState<number>(0);
 
   const countryData = COUNTRIES.find((c) => c.code === country);
   const availableProviders = PHASE_1_PROVIDERS.filter((p) => p.country === country);
@@ -35,14 +36,22 @@ export function ProviderSelector({ amountUsd, country, onNext, onBack }: Provide
       setError('Enter your mobile money number');
       return;
     }
+    if (!fxRate) {
+      setError('Exchange rate not loaded yet, please wait');
+      return;
+    }
     setError(null);
-    onNext(selectedProvider, phoneNumber.trim(), chosenProvider.currency);
+    onNext(selectedProvider, phoneNumber.trim(), chosenProvider.currency, fxRate);
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {countryData && chosenProvider && (
-        <FxRateCard amountUsd={amountUsd} toCurrency={chosenProvider.currency} />
+        <FxRateCard
+          amountUsd={amountUsd}
+          toCurrency={chosenProvider.currency}
+          onRateLoaded={setFxRate}
+        />
       )}
 
       <div>
